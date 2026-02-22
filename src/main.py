@@ -32,7 +32,7 @@ init_db()
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
-app = FastAPI(title="tax-extractor", version="0.1.0-beta")
+app = FastAPI(title="taxclaw", version="0.1.0-beta")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -161,7 +161,7 @@ def doc_export(doc_id: str):
     return Response(
         csv_text,
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=tax-extractor-{doc_id}.csv"},
+        headers={"Content-Disposition": f"attachment; filename=taxclaw-{doc_id}.csv"},
     )
 
 
@@ -171,5 +171,5 @@ def export_all():
     return Response(
         csv_text,
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=tax-extractor-all.csv"},
+        headers={"Content-Disposition": "attachment; filename=taxclaw-all.csv"},
     )

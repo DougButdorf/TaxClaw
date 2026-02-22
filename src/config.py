@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 
 PRIVACY_WARNING = """⚠️ PRIVACY WARNING
-You have configured tax-extractor to use a cloud-hosted AI model.
+You have configured taxclaw to use a cloud-hosted AI model.
 Tax documents contain sensitive personal information including Social Security Numbers,
 income data, and financial holdings. When using cloud models, document content is
 transmitted to a third-party AI provider outside your local control.
@@ -17,7 +17,7 @@ For maximum privacy, keep model_backend: local (uses Ollama on your machine).
 
 If you understand and accept this, set:
   privacy_acknowledged: true
-in ~/.config/tax-extractor/config.yaml and restart.
+in ~/.config/taxclaw/config.yaml and restart.
 """
 
 
@@ -33,7 +33,7 @@ class Config:
     cloud_api_key: str = ""
     privacy_acknowledged: bool = False
     port: int = 8421
-    data_dir: str = "~/.local/share/tax-extractor/"
+    data_dir: str = "~/.local/share/taxclaw/"
 
     @property
     def data_path(self) -> Path:
@@ -49,7 +49,7 @@ class Config:
 
 
 def load_config() -> Config:
-    cfg_path = Path(os.path.expanduser("~/.config/tax-extractor/config.yaml"))
+    cfg_path = Path(os.path.expanduser("~/.config/taxclaw/config.yaml"))
     if cfg_path.exists():
         raw: dict[str, Any] = yaml.safe_load(cfg_path.read_text()) or {}
     else:

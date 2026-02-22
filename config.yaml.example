@@ -4,4 +4,4 @@ cloud_model: claude-haiku-4-5
 cloud_api_key: ""  # or use ANTHROPIC_API_KEY env var
 privacy_acknowledged: false
 port: 8421
-data_dir: ~/.local/share/tax-extractor/
+data_dir: ~/.local/share/taxclaw/
