@@ -7,17 +7,7 @@ from typing import Any
 
 import yaml
 
-PRIVACY_WARNING = """⚠️ PRIVACY WARNING
-You have configured taxclaw to use a cloud-hosted AI model.
-Tax documents contain sensitive personal information including Social Security Numbers,
-income data, and financial holdings. When using cloud models, document content is
-transmitted to a third-party AI provider outside your local control.
-
-For maximum privacy, keep model_backend: local (uses Ollama on your machine).
-
-If you understand and accept this, set:
-  privacy_acknowledged: true
-in ~/.config/taxclaw/config.yaml and restart.
+PRIVACY_WARNING = """> ⚠️ PRIVACY WARNING: You have configured TaxClaw to use a cloud-hosted AI model. Tax documents contain sensitive personal and financial information including Social Security Numbers, income, and asset holdings. When using cloud models, document content is transmitted to a third-party AI provider outside your local control. This provider may log requests for safety monitoring. For maximum privacy, use local models (the default). Only continue if you understand and accept this. Set `privacy_acknowledged: true` in config.yaml to confirm.
 """
 
 

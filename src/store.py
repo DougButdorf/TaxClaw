@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 import hashlib
+import mimetypes
 import os
 import shutil
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import fitz
 
 from .config import Config
 from .db import db, json_dumps, row_to_dict
+
+
+MAX_BYTES = 100 * 1024 * 1024  # 100MB hard limit
 
 
 def sha256_file(path: str) -> str:
@@ -22,24 +26,73 @@ def sha256_file(path: str) -> str:
     return h.hexdigest()
 
 
-def ingest_file(src_path: str, cfg: Config) -> tuple[str, str, str]:
-    """Copy to uploads dir and return (dest_path, file_hash, original_filename)."""
-    file_hash = sha256_file(src_path)
-    original_filename = os.path.basename(src_path)
-    dest_name = f"{file_hash[:12]}_{original_filename}"
-    dest_path = str(cfg.uploads_dir / dest_name)
-    if not os.path.exists(dest_path):
-        shutil.copy2(src_path, dest_path)
-    return dest_path, file_hash, original_filename
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
-def create_document_record(*, cfg: Config, file_path: str, file_hash: str, original_filename: str, filer: str | None, tax_year: int | None, doc_type: str, page_count: int) -> str:
+def ingest_file(src_path: str, cfg: Config) -> tuple[str, str, str, str]:
+    """Copy to data_dir/files/{sha256}.{ext} and return (dest_path, file_hash, original_filename, mime_type)."""
+
+    src = Path(src_path)
+    if not src.exists():
+        raise FileNotFoundError(src_path)
+
+    size = src.stat().st_size
+    if size > MAX_BYTES:
+        raise ValueError(f"file too large ({size} bytes) — max is {MAX_BYTES}")
+
+    file_hash = sha256_file(str(src))
+    original_filename = src.name
+
+    ext = src.suffix.lower().lstrip(".")
+    if not ext:
+        ext = "bin"
+
+    files_dir = cfg.data_path / "files"
+    files_dir.mkdir(parents=True, exist_ok=True)
+
+    dest_path = files_dir / f"{file_hash}.{ext}"
+    if not dest_path.exists():
+        shutil.copy2(str(src), str(dest_path))
+
+    mime_type, _enc = mimetypes.guess_type(str(dest_path))
+    mime_type = mime_type or "application/octet-stream"
+    return str(dest_path), file_hash, original_filename, mime_type
+
+
+def create_document_record(
+    *,
+    cfg: Config,
+    file_path: str,
+    file_hash: str,
+    original_filename: str,
+    mime_type: str,
+    filer: str | None,
+    tax_year: int | None,
+    doc_type: str,
+    page_count: int,
+    classification_confidence: float | None,
+) -> str:
     doc_id = str(uuid.uuid4())
     with db() as con:
         con.execute(
-            """INSERT INTO documents (id, file_path, file_hash, original_filename, tax_year, doc_type, filer, page_count, status)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'processing')""",
-            (doc_id, file_path, file_hash, original_filename, tax_year, doc_type, filer, page_count),
+            """INSERT INTO documents (
+                id, file_path, file_hash, original_filename, mime_type,
+                tax_year, doc_type, filer,
+                page_count, status, classification_confidence
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'processing', ?)""",
+            (
+                doc_id,
+                file_path,
+                file_hash,
+                original_filename,
+                mime_type,
+                tax_year,
+                doc_type,
+                filer,
+                page_count,
+                classification_confidence,
+            ),
         )
     return doc_id
 
@@ -56,7 +109,13 @@ def get_document(doc_id: str) -> dict[str, Any] | None:
         return row_to_dict(r)
 
 
-def list_documents(*, filer: str | None = None, year: int | None = None, doc_type: str | None = None) -> list[dict[str, Any]]:
+def list_documents(
+    *,
+    filer: str | None = None,
+    year: int | None = None,
+    doc_type: str | None = None,
+    needs_review: int | None = None,
+) -> list[dict[str, Any]]:
     q = "SELECT * FROM documents WHERE 1=1"
     params: list[Any] = []
     if filer:
@@ -68,18 +127,66 @@ def list_documents(*, filer: str | None = None, year: int | None = None, doc_typ
     if doc_type:
         q += " AND doc_type = ?"
         params.append(doc_type)
+    if needs_review is not None:
+        q += " AND needs_review = ?"
+        params.append(int(needs_review))
     q += " ORDER BY created_at DESC"
     with db() as con:
         rows = con.execute(q, tuple(params)).fetchall()
         return [row_to_dict(r) for r in rows if r is not None]  # type: ignore
 
 
-def store_extraction(*, doc_id: str, form_type: str, data: Any, confidence: float | None = None) -> None:
+def store_raw_extraction(*, doc_id: str, form_type: str, data: Any, confidence: float | None = None) -> str:
+    section_id = str(uuid.uuid4())
     with db() as con:
+        con.execute(
+            """INSERT INTO form_sections (
+                id, document_id, form_type, section_page_start, section_page_end, raw_json, confidence
+            ) VALUES (?, ?, ?, NULL, NULL, ?, ?)""",
+            (section_id, doc_id, form_type, json_dumps(data), confidence),
+        )
         con.execute(
             "INSERT INTO form_extractions (id, document_id, form_type, raw_json, confidence) VALUES (?, ?, ?, ?, ?)",
             (str(uuid.uuid4()), doc_id, form_type, json_dumps(data), confidence),
         )
+    return section_id
+
+
+def _walk_fields(obj: Any, prefix: str = "") -> Iterable[tuple[str, Any]]:
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            p = f"{prefix}{k}" if not prefix else f"{prefix}.{k}"
+            yield from _walk_fields(v, p)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            p = f"{prefix}[{i}]"
+            yield from _walk_fields(v, p)
+    else:
+        yield prefix, obj
+
+
+def store_extracted_fields(*, doc_id: str, section_id: str | None, data: Any) -> None:
+    rows: list[tuple[str, str, str | None]] = []
+    for path, value in _walk_fields(data):
+        if not path:
+            continue
+        if value is None:
+            v = None
+        elif isinstance(value, (str, int, float, bool)):
+            v = str(value)
+        else:
+            v = json_dumps(value)
+        rows.append((str(uuid.uuid4()), path, v))
+
+    with db() as con:
+        # delete prior extracted fields for doc (v0.1 keeps only latest)
+        con.execute("DELETE FROM extracted_fields WHERE document_id=?", (doc_id,))
+        for row_id, path, v in rows:
+            con.execute(
+                """INSERT INTO extracted_fields (id, document_id, section_id, field_path, field_value, confidence)
+                   VALUES (?, ?, ?, ?, ?, NULL)""",
+                (row_id, doc_id, section_id, path, v),
+            )
 
 
 def store_1099da_transactions(*, doc_id: str, extraction: dict[str, Any]) -> None:
@@ -87,6 +194,7 @@ def store_1099da_transactions(*, doc_id: str, extraction: dict[str, Any]) -> Non
     if not isinstance(txns, list):
         return
     with db() as con:
+        con.execute("DELETE FROM transactions_1099da WHERE document_id=?", (doc_id,))
         for t in txns:
             if not isinstance(t, dict):
                 continue
@@ -136,23 +244,50 @@ def store_1099da_transactions(*, doc_id: str, extraction: dict[str, Any]) -> Non
             )
 
 
-def mark_processed(*, doc_id: str, overall_confidence: float | None = None, notes: str | None = None) -> None:
+def mark_processed(
+    *,
+    doc_id: str,
+    overall_confidence: float | None = None,
+    needs_review: bool | None = None,
+    notes: str | None = None,
+) -> None:
     with db() as con:
         con.execute(
             """UPDATE documents
-               SET status='processed', extracted_at=?, overall_confidence=COALESCE(?, overall_confidence), notes=COALESCE(?, notes)
+               SET status='processed', extracted_at=?,
+                   overall_confidence=COALESCE(?, overall_confidence),
+                   needs_review=COALESCE(?, needs_review),
+                   notes=COALESCE(?, notes)
                WHERE id=?""",
-            (datetime.utcnow().isoformat(timespec="seconds"), overall_confidence, notes, doc_id),
+            (_utc_now_iso(), overall_confidence, int(needs_review) if needs_review is not None else None, notes, doc_id),
+        )
+
+
+def mark_needs_review(*, doc_id: str, notes: str | None = None) -> None:
+    with db() as con:
+        con.execute(
+            "UPDATE documents SET status='needs_review', needs_review=1, extracted_at=?, notes=COALESCE(?, notes) WHERE id=?",
+            (_utc_now_iso(), notes, doc_id),
+        )
+
+
+def update_document_metadata(*, doc_id: str, filer: str | None, tax_year: int | None, doc_type: str | None, notes: str | None) -> None:
+    with db() as con:
+        con.execute(
+            """UPDATE documents
+               SET filer=COALESCE(?, filer),
+                   tax_year=COALESCE(?, tax_year),
+                   doc_type=COALESCE(?, doc_type),
+                   notes=COALESCE(?, notes)
+               WHERE id=?""",
+            (filer, tax_year, doc_type, notes, doc_id),
         )
 
 
 def delete_document(doc_id: str) -> None:
     with db() as con:
-        # fetch file_path for cleanup
         r = con.execute("SELECT file_path FROM documents WHERE id=?", (doc_id,)).fetchone()
         file_path = r[0] if r else None
-        con.execute("DELETE FROM transactions_1099da WHERE document_id=?", (doc_id,))
-        con.execute("DELETE FROM form_extractions WHERE document_id=?", (doc_id,))
         con.execute("DELETE FROM documents WHERE id=?", (doc_id,))
 
     if file_path and os.path.exists(file_path):

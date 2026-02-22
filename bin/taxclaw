@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [ ! -x "$SKILL_DIR/venv/bin/python" ]; then
+  echo "taxclaw: venv not found. Run: bash $SKILL_DIR/setup.sh" >&2
+  exit 2
+fi
+
+exec "$SKILL_DIR/venv/bin/python" -c "from src.cli import main; raise SystemExit(main())" "$@"

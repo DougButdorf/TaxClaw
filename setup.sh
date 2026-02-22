@@ -13,16 +13,7 @@ mkdir -p "$DATA_DIR" "$CONFIG_DIR"
 python3 -m venv "$VENV_DIR"
 
 "$VENV_DIR/bin/pip" install --upgrade pip
-"$VENV_DIR/bin/pip" install \
-  fastapi \
-  "uvicorn[standard]" \
-  pymupdf \
-  anthropic \
-  ollama \
-  pillow \
-  jinja2 \
-  python-multipart \
-  pyyaml
+"$VENV_DIR/bin/pip" install -r "$SKILL_DIR/requirements.txt"
 
 if [ ! -f "$CONFIG_PATH" ]; then
   cp "$SKILL_DIR/config.yaml.example" "$CONFIG_PATH"

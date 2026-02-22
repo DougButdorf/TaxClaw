@@ -6,7 +6,10 @@
       <div class="muted">{{ doc.original_filename }} • {{ doc.doc_type }} • {{ doc.page_count }} pages</div>
     </div>
     <div class="row">
-      <a href="/doc/{{ doc.id }}/export.csv"><button>Export CSV</button></a>
+      <a href="/doc/{{ doc.id }}/download" class="muted">Download original</a>
+      <a href="/doc/{{ doc.id }}/export.wide.csv"><button>Export wide CSV</button></a>
+      <a href="/doc/{{ doc.id }}/export.long.csv"><button>Export long CSV</button></a>
+      <a href="/doc/{{ doc.id }}/export.json"><button>Export JSON</button></a>
       <form method="post" action="/doc/{{ doc.id }}/delete" onsubmit="return confirm('Delete this document? This removes it from the DB and deletes the stored file.');">
         <button class="danger" type="submit">Delete</button>
       </form>
@@ -14,17 +17,37 @@
   </div>
 
   <div class="card" style="margin-bottom: 14px;">
-    <div class="row" style="gap: 18px;">
-      <div><div class="muted">Status</div><div>{{ doc.status }}</div></div>
-      <div><div class="muted">Tax year</div><div>{{ doc.tax_year or '' }}</div></div>
-      <div><div class="muted">Filer</div><div>{{ doc.filer or '' }}</div></div>
-      <div><div class="muted">Confidence</div><div>{{ '%.2f'|format(doc.overall_confidence or 0) }}</div></div>
+    <div class="row" style="gap: 18px; align-items: flex-start;">
+      <div style="flex: 1;">
+        <div class="muted" style="margin-bottom: 6px;">Preview</div>
+        <img src="/doc/{{ doc.id }}/preview.png" style="max-width: 100%; border-radius: 8px; border: 1px solid #222;" />
+      </div>
+      <div style="width: 360px;">
+        <div class="muted" style="margin-bottom: 6px;">Metadata</div>
+        <form method="post" action="/doc/{{ doc.id }}/update">
+          <label class="muted">Doc type</label>
+          <input name="doc_type" value="{{ doc.doc_type or '' }}" />
+          <label class="muted">Tax year</label>
+          <input name="year" value="{{ doc.tax_year or '' }}" />
+          <label class="muted">Filer</label>
+          <input name="filer" value="{{ doc.filer or '' }}" />
+          <label class="muted">Notes</label>
+          <textarea name="notes" rows="4">{{ doc.notes or '' }}</textarea>
+          <div style="height: 8px;"></div>
+          <button type="submit">Save</button>
+        </form>
+        <div style="height: 12px;"></div>
+        <div class="row" style="gap: 18px;">
+          <div><div class="muted">Status</div><div>{{ doc.status }}</div></div>
+          <div><div class="muted">Needs review</div><div>{{ doc.needs_review }}</div></div>
+        </div>
+        <div style="height: 8px;"></div>
+        <div class="row" style="gap: 18px;">
+          <div><div class="muted">Classify conf</div><div>{{ '%.2f'|format(doc.classification_confidence or 0) }}</div></div>
+          <div><div class="muted">Overall conf</div><div>{{ '%.2f'|format(doc.overall_confidence or 0) }}</div></div>
+        </div>
+      </div>
     </div>
-    {% if doc.notes %}
-      <div style="height: 10px;"></div>
-      <div class="pill warn">notes</div>
-      <pre>{{ doc.notes }}</pre>
-    {% endif %}
   </div>
 
   {% if doc.doc_type == '1099-DA' and transactions %}
@@ -68,6 +91,25 @@
       </table>
     </div>
   {% endif %}
+
+  <div class="card" style="margin-bottom: 14px;">
+    <h2 style="margin:0 0 10px 0; font-size: 16px;">Extracted fields</h2>
+    {% if fields and fields|length > 0 %}
+      <table>
+        <thead><tr><th>Field</th><th>Value</th></tr></thead>
+        <tbody>
+          {% for k,v in fields %}
+            <tr>
+              <td class="muted">{{ k }}</td>
+              <td>{{ v or '' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="muted">No extracted fields stored.</div>
+    {% endif %}
+  </div>
 
   <div class="card">
     <h2 style="margin:0 0 10px 0; font-size: 16px;">Raw extraction JSON</h2>

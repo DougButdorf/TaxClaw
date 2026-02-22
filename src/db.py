@@ -15,25 +15,85 @@ CREATE TABLE IF NOT EXISTS documents (
   file_path TEXT NOT NULL,
   file_hash TEXT NOT NULL UNIQUE,
   original_filename TEXT,
+  mime_type TEXT,
+
   tax_year INTEGER,
   doc_type TEXT,
   filer TEXT,
+
   payer_name TEXT,
   payer_tin TEXT,
   recipient_name TEXT,
   recipient_tin TEXT,
   account_number TEXT,
+
   page_count INTEGER,
-  extracted_at DATETIME,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  extracted_at TEXT,
+
+  classification_confidence REAL,
   overall_confidence REAL,
+
+  needs_review INTEGER NOT NULL DEFAULT 0,
   status TEXT DEFAULT 'received',
-  notes TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  notes TEXT
 );
 
+CREATE INDEX IF NOT EXISTS idx_documents_tax_year ON documents(tax_year);
+CREATE INDEX IF NOT EXISTS idx_documents_doc_type ON documents(doc_type);
+CREATE INDEX IF NOT EXISTS idx_documents_needs_review ON documents(needs_review);
+
+CREATE TABLE IF NOT EXISTS form_sections (
+  id TEXT PRIMARY KEY,
+  document_id TEXT NOT NULL,
+
+  form_type TEXT NOT NULL,
+  section_page_start INTEGER,
+  section_page_end INTEGER,
+
+  raw_json TEXT,
+  confidence REAL,
+
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+
+  FOREIGN KEY(document_id) REFERENCES documents(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_form_sections_document_id ON form_sections(document_id);
+
+-- Generic normalized extracted fields table
+CREATE TABLE IF NOT EXISTS extracted_fields (
+  id TEXT PRIMARY KEY,
+  document_id TEXT NOT NULL,
+  section_id TEXT,
+
+  field_path TEXT NOT NULL,             -- e.g. 'payer_name' or 'transactions[0].proceeds'
+  field_value TEXT,
+  confidence REAL,
+
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+
+  FOREIGN KEY(document_id) REFERENCES documents(id) ON DELETE CASCADE,
+  FOREIGN KEY(section_id) REFERENCES form_sections(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_extracted_fields_document_id ON extracted_fields(document_id);
+CREATE INDEX IF NOT EXISTS idx_extracted_fields_field_path ON extracted_fields(field_path);
+
+-- Legacy/raw extraction storage (kept for audit/debug)
+CREATE TABLE IF NOT EXISTS form_extractions (
+  id TEXT PRIMARY KEY,
+  document_id TEXT REFERENCES documents(id) ON DELETE CASCADE,
+  form_type TEXT NOT NULL,
+  raw_json TEXT,
+  confidence REAL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- v0.1 typed table for 1099-DA transactions
 CREATE TABLE IF NOT EXISTS transactions_1099da (
   id TEXT PRIMARY KEY,
-  document_id TEXT REFERENCES documents(id),
+  document_id TEXT REFERENCES documents(id) ON DELETE CASCADE,
   asset_code TEXT,
   asset_name TEXT,
   units TEXT,
@@ -65,14 +125,25 @@ CREATE TABLE IF NOT EXISTS transactions_1099da (
   raw_json TEXT
 );
 
-CREATE TABLE IF NOT EXISTS form_extractions (
+CREATE TABLE IF NOT EXISTS review_queue (
   id TEXT PRIMARY KEY,
-  document_id TEXT REFERENCES documents(id),
-  form_type TEXT NOT NULL,
-  raw_json TEXT,
+  document_id TEXT NOT NULL,
+
+  field_path TEXT NOT NULL,
+  extracted_value TEXT,
   confidence REAL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+
+  resolved INTEGER NOT NULL DEFAULT 0,
+  corrected_value TEXT,
+  resolved_at TEXT,
+
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+
+  FOREIGN KEY(document_id) REFERENCES documents(id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_review_queue_document_id ON review_queue(document_id);
+CREATE INDEX IF NOT EXISTS idx_review_queue_resolved ON review_queue(resolved);
 """
 
 
