@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+# Ensure `src/` is importable when invoked as a script.
+SKILL_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SKILL_DIR))
+
+from src.classify import classify_document
+from src.config import load_config
+from src.db import init_db
+from src.exporter import export_all_csv, export_doc_csv
+from src.extract import extract_document, pretty_json
+from src.store import (
+    create_document_record,
+    get_document_by_hash,
+    ingest_file,
+    list_documents,
+    mark_processed,
+    page_count_for_pdf,
+    store_1099da_transactions,
+    store_extraction,
+)
+
+
+def cmd_ingest(args: argparse.Namespace) -> int:
+    cfg = load_config()
+    init_db()
+
+    dest_path, file_hash, original_filename = ingest_file(args.path, cfg)
+    existing = get_document_by_hash(file_hash)
+    if existing:
+        print(existing["id"])
+        return 0
+
+    page_count = page_count_for_pdf(dest_path) if dest_path.lower().endswith(".pdf") else 1
+
+    cls = classify_document(dest_path, cfg)
+    doc_type = cls.get("doc_type") or "unknown"
+
+    doc_id = create_document_record(
+        cfg=cfg,
+        file_path=dest_path,
+        file_hash=file_hash,
+        original_filename=original_filename,
+        filer=args.filer,
+        tax_year=args.year,
+        doc_type=doc_type,
+        page_count=page_count,
+    )
+
+    extracted = extract_document(dest_path, doc_type, cfg)
+    store_extraction(doc_id=doc_id, form_type=doc_type, data=extracted, confidence=cls.get("confidence"))
+    if doc_type == "1099-DA" and isinstance(extracted, dict):
+        store_1099da_transactions(doc_id=doc_id, extraction=extracted)
+    mark_processed(doc_id=doc_id, overall_confidence=float(cls.get("confidence") or 0.5))
+
+    print(doc_id)
+    return 0
+
+
+def cmd_list(args: argparse.Namespace) -> int:
+    init_db()
+    docs = list_documents(filer=args.filer, year=args.year, doc_type=args.type)
+    for d in docs:
+        print(f"{d['id']}\t{d.get('doc_type')}\t{d.get('tax_year')}\t{d.get('filer')}\t{d.get('status')}")
+    return 0
+
+
+def cmd_export(args: argparse.Namespace) -> int:
+    init_db()
+    if args.all:
+        sys.stdout.write(export_all_csv())
+        return 0
+    if not args.id:
+        print("--id required unless --all", file=sys.stderr)
+        return 2
+    sys.stdout.write(export_doc_csv(args.id))
+    return 0
+
+
+def cmd_serve(args: argparse.Namespace) -> int:
+    # defer import so config privacy guard runs
+    import os
+    import uvicorn
+
+    cfg = load_config()
+    init_db()
+    os.chdir(str(SKILL_DIR))
+    uvicorn.run("src.main:app", host="127.0.0.1", port=cfg.port, reload=True)
+    return 0
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(prog="tax-extract")
+    sp = p.add_subparsers(dest="cmd", required=True)
+
+    p_ing = sp.add_parser("ingest", help="ingest + classify + extract")
+    p_ing.add_argument("path")
+    p_ing.add_argument("--filer", default=None)
+    p_ing.add_argument("--year", type=int, default=None)
+    p_ing.set_defaults(func=cmd_ingest)
+
+    p_ls = sp.add_parser("list", help="list documents")
+    p_ls.add_argument("--filer", default=None)
+    p_ls.add_argument("--year", type=int, default=None)
+    p_ls.add_argument("--type", default=None)
+    p_ls.set_defaults(func=cmd_list)
+
+    p_ex = sp.add_parser("export", help="export csv")
+    p_ex.add_argument("--id", default=None)
+    p_ex.add_argument("--all", action="store_true")
+    p_ex.set_defaults(func=cmd_export)
+
+    p_sv = sp.add_parser("serve", help="run web ui")
+    p_sv.set_defaults(func=cmd_serve)
+
+    args = p.parse_args()
+    return int(args.func(args))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

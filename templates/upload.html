@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1 style="margin:0 0 14px 0; font-size: 20px;">Upload</h1>
+
+  <div class="card">
+    <form method="post" action="/upload" enctype="multipart/form-data" class="row" style="align-items:flex-start;">
+      <div style="flex:1; min-width: 320px;">
+        <div class="muted" style="margin-bottom: 8px;">Choose a PDF (or image). For best results, use the original PDF rather than a screenshot.</div>
+        <input type="file" name="file" required />
+        <div style="height: 10px;"></div>
+        <div class="row">
+          <input name="filer" placeholder="filer (optional)" />
+          <input name="year" placeholder="tax year (optional)" />
+        </div>
+        <div style="height: 12px;"></div>
+        <button type="submit">Upload + Extract</button>
+      </div>
+      <div style="flex:1; min-width: 280px;" class="muted">
+        <div class="pill">Local-first</div>
+        <div style="height: 10px;"></div>
+        <div>When configured for <b>local</b> models (Ollama), your docs never leave your machine.</div>
+        <div style="height: 8px;"></div>
+        <div>If you switch to <b>cloud</b> models, you must acknowledge the privacy warning in the config file.</div>
+      </div>
+    </form>
+  </div>
+{% endblock %}

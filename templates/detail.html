@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="row" style="justify-content: space-between; margin-bottom: 14px;">
+    <div>
+      <h1 style="margin:0; font-size: 20px;">Document {{ doc.id[:8] }}</h1>
+      <div class="muted">{{ doc.original_filename }} • {{ doc.doc_type }} • {{ doc.page_count }} pages</div>
+    </div>
+    <div class="row">
+      <a href="/doc/{{ doc.id }}/export.csv"><button>Export CSV</button></a>
+      <form method="post" action="/doc/{{ doc.id }}/delete" onsubmit="return confirm('Delete this document? This removes it from the DB and deletes the stored file.');">
+        <button class="danger" type="submit">Delete</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="row" style="gap: 18px;">
+      <div><div class="muted">Status</div><div>{{ doc.status }}</div></div>
+      <div><div class="muted">Tax year</div><div>{{ doc.tax_year or '' }}</div></div>
+      <div><div class="muted">Filer</div><div>{{ doc.filer or '' }}</div></div>
+      <div><div class="muted">Confidence</div><div>{{ '%.2f'|format(doc.overall_confidence or 0) }}</div></div>
+    </div>
+    {% if doc.notes %}
+      <div style="height: 10px;"></div>
+      <div class="pill warn">notes</div>
+      <pre>{{ doc.notes }}</pre>
+    {% endif %}
+  </div>
+
+  {% if doc.doc_type == '1099-DA' and transactions %}
+    <div class="card" style="margin-bottom: 14px;">
+      <h2 style="margin:0 0 10px 0; font-size: 16px;">1099-DA Transactions ({{ transactions|length }})</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Units</th>
+            <th>Date acquired</th>
+            <th>Date sold</th>
+            <th>Proceeds</th>
+            <th>Cost basis</th>
+            <th>Term</th>
+            <th>8949</th>
+            <th>Noncovered</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in transactions %}
+            <tr>
+              <td>{{ t.asset_name or '' }} <span class="muted">{{ t.asset_code or '' }}</span></td>
+              <td>{{ t.units or '' }}</td>
+              <td>{{ t.date_acquired or '' }}</td>
+              <td>{{ t.date_sold or '' }}</td>
+              <td>{{ t.proceeds or '' }}</td>
+              <td>
+                {% if t.cost_basis %}
+                  {{ t.cost_basis }}
+                {% else %}
+                  <span class="pill warn">missing</span>
+                {% endif %}
+              </td>
+              <td>{{ t.gain_loss_term or '' }}</td>
+              <td>{{ t.form_8949_code or '' }}</td>
+              <td>{{ t.noncovered or '' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <h2 style="margin:0 0 10px 0; font-size: 16px;">Raw extraction JSON</h2>
+    {% if extraction_pretty %}
+      <pre>{{ extraction_pretty }}</pre>
+    {% else %}
+      <div class="muted">No extraction stored.</div>
+    {% endif %}
+  </div>
+{% endblock %}

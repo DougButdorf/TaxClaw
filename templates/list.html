@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="row" style="justify-content: space-between; margin-bottom: 14px;">
+    <h1 style="margin:0; font-size: 20px;">Documents</h1>
+    <a href="/upload"><button>Upload</button></a>
+  </div>
+
+  <div class="card" style="margin-bottom: 14px;">
+    <form method="get" action="/" class="row">
+      <input name="filer" placeholder="filer" value="{{ filters.filer }}" />
+      <input name="year" placeholder="year" value="{{ filters.year }}" />
+      <input name="type" placeholder="type (e.g. W-2, 1099-DA)" value="{{ filters.type }}" />
+      <button type="submit">Filter</button>
+      <a href="/" class="muted">Reset</a>
+    </form>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Type</th>
+          <th>Year</th>
+          <th>Filer</th>
+          <th>Status</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in docs %}
+          <tr>
+            <td><a href="/doc/{{ d.id }}">{{ d.id[:8] }}</a></td>
+            <td>{{ d.doc_type or 'unknown' }}</td>
+            <td>{{ d.tax_year or '' }}</td>
+            <td>{{ d.filer or '' }}</td>
+            <td>
+              {% if d.status == 'processed' %}
+                <span class="pill ok">processed</span>
+              {% elif d.status == 'needs_review' %}
+                <span class="pill warn">needs_review</span>
+              {% else %}
+                <span class="pill">{{ d.status }}</span>
+              {% endif %}
+            </td>
+            <td class="muted">{{ d.created_at }}</td>
+          </tr>
+        {% endfor %}
+        {% if docs|length == 0 %}
+          <tr><td colspan="6" class="muted">No documents yet.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
