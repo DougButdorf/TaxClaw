@@ -12,6 +12,29 @@ optional: ollama (for local model mode)
 
 Local-first AI tax document extraction skill for OpenClaw.
 
+## 🔐 Security & Permissions Manifest
+
+TaxClaw declares the following permissions transparently. Review before installing.
+
+| Permission | What & Why | Default |
+|---|---|---|
+| **Read filesystem** | Reads uploaded PDF/image files you provide | Required |
+| **Write filesystem** | Stores extracted data at `~/.local/share/taxclaw/` and config at `~/.config/taxclaw/` | Required |
+| **Network (local only)** | Binds to `localhost:8421` only — no external network access in default mode | Required |
+| **Network (cloud AI)** | Only if you explicitly enable cloud mode in config + acknowledge privacy warning | Opt-in only |
+| **Credentials** | None read or stored — no API keys required in local-only mode | N/A |
+| **Sensitive data** | Tax documents stay on your machine. Nothing is sent externally in default (Ollama) mode | Local-only |
+
+**TaxClaw does NOT:**
+- Exfiltrate documents, fields, or extracted data
+- Read files outside of paths you explicitly provide to ingest
+- Phone home, send telemetry, or contact external servers (default mode)
+- Store or transmit SSN, EIN, or account numbers to any third party
+
+**If you enable cloud mode (Claude):** A mandatory privacy warning is displayed. You must explicitly set `cloud_acknowledged: true` in config before processing begins.
+
+**Audit this skill:** Source code is fully open at [github.com/DougButdorf/TaxClaw](https://github.com/DougButdorf/TaxClaw) (MIT License). Read it before you install it.
+
 ## Setup
 
 ```bash
