@@ -24,18 +24,20 @@ DOC_BASE_COLS = [
 
 
 def _doc_row(doc: Any) -> dict[str, Any]:
+    """Normalize a sqlite3.Row (or dict) into a plain dict for exports."""
+    d = dict(doc)
     return {
-        "document_id": doc["id"],
-        "doc_type": doc.get("doc_type"),
-        "tax_year": doc.get("tax_year"),
-        "filer": doc.get("filer"),
-        "payer_name": doc.get("payer_name"),
-        "recipient_name": doc.get("recipient_name"),
-        "account_number": doc.get("account_number"),
-        "classification_confidence": doc.get("classification_confidence"),
-        "overall_confidence": doc.get("overall_confidence"),
-        "needs_review": doc.get("needs_review"),
-        "created_at": doc.get("created_at"),
+        "document_id": d.get("id"),
+        "doc_type": d.get("doc_type"),
+        "tax_year": d.get("tax_year"),
+        "filer": d.get("filer"),
+        "payer_name": d.get("payer_name"),
+        "recipient_name": d.get("recipient_name"),
+        "account_number": d.get("account_number"),
+        "classification_confidence": d.get("classification_confidence"),
+        "overall_confidence": d.get("overall_confidence"),
+        "needs_review": d.get("needs_review"),
+        "created_at": d.get("created_at"),
     }
 
 
