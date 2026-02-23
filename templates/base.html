@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{ title or 'taxclaw' }}</title>
+  <title>{{ title or 'TaxClaw' }}</title>
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <style>
     :root {
@@ -24,7 +24,8 @@
     a:hover { text-decoration: underline; }
     .layout { display:flex; min-height: 100vh; }
     .sidebar { width: 260px; background: var(--panel); border-right: 1px solid var(--border); padding: 18px; }
-    .brand { font-weight: 700; letter-spacing: 0.3px; margin-bottom: 10px; }
+    .brand-logo { font-size: 2.2rem; line-height: 1; margin-bottom: 4px; }
+    .brand { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.3px; margin-bottom: 6px; }
     .nav a { display:block; padding: 10px 10px; border-radius: 8px; color: var(--text); }
     .nav a:hover { background: rgba(148,163,184,0.1); }
     .main { flex:1; padding: 22px; }
@@ -47,12 +48,14 @@
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="brand">taxclaw</div>
+      <div class="brand-logo">🧾🦀</div>
+      <div class="brand">TaxClaw</div>
       <div class="muted" style="margin-bottom:14px;">Local-first tax doc extraction</div>
       <nav class="nav">
         <a href="/">Documents</a>
+        <a href="/review">Review queue</a>
         <a href="/upload">Upload</a>
-        <a href="/export.csv">Export all CSV</a>
+        <a href="/settings">Settings</a>
       </nav>
     </aside>
 

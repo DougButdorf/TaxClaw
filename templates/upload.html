@@ -3,25 +3,84 @@
   <h1 style="margin:0 0 14px 0; font-size: 20px;">Upload</h1>
 
   <div class="card">
-    <form method="post" action="/upload" enctype="multipart/form-data" class="row" style="align-items:flex-start;">
+    <form id="upload-form" method="post" action="/upload" enctype="multipart/form-data" class="row" style="align-items:flex-start;">
       <div style="flex:1; min-width: 320px;">
-        <div class="muted" style="margin-bottom: 8px;">Choose a PDF (or image). For best results, use the original PDF rather than a screenshot.</div>
-        <input type="file" name="file" required />
-        <div style="height: 10px;"></div>
-        <div class="row">
-          <input name="filer" placeholder="filer (optional)" />
-          <input name="year" placeholder="tax year (optional)" />
+        <div class="muted" style="margin-bottom: 10px;">Drop a PDF here (or click to choose a file). For best results, use the original PDF rather than a screenshot.</div>
+
+        <div id="drop-zone" style="border: 2px dashed rgba(148,163,184,0.35); background: rgba(15,23,42,0.35); border-radius: 14px; padding: 18px; cursor: pointer;">
+          <div class="row" style="justify-content: space-between;">
+            <div>
+              <div style="font-weight: 600;">Drag & drop your file</div>
+              <div id="file-hint" class="muted" style="font-size: 13px; margin-top: 4px;">PDF recommended • images supported</div>
+            </div>
+            <div class="pill">Drop zone</div>
+          </div>
+          <div style="height: 12px;"></div>
+          <input id="file-input" type="file" name="file" required style="width:100%;" />
         </div>
+
         <div style="height: 12px;"></div>
         <button type="submit">Upload + Extract</button>
       </div>
+
       <div style="flex:1; min-width: 280px;" class="muted">
         <div class="pill">Local-first</div>
         <div style="height: 10px;"></div>
         <div>When configured for <b>local</b> models (Ollama), your docs never leave your machine.</div>
         <div style="height: 8px;"></div>
-        <div>If you switch to <b>cloud</b> models, you must acknowledge the privacy warning in the config file.</div>
+        <div>If you switch to <b>cloud</b> models, you must explicitly opt in on the <a href="/settings">settings</a> page.</div>
       </div>
     </form>
   </div>
+
+  <script>
+    (function () {
+      const dz = document.getElementById('drop-zone');
+      const input = document.getElementById('file-input');
+      const hint = document.getElementById('file-hint');
+
+      if (!dz || !input) return;
+
+      function setActive(active) {
+        if (active) {
+          dz.style.borderColor = 'rgba(96,165,250,0.8)';
+          dz.style.background = 'rgba(96,165,250,0.08)';
+        } else {
+          dz.style.borderColor = 'rgba(148,163,184,0.35)';
+          dz.style.background = 'rgba(15,23,42,0.35)';
+        }
+      }
+
+      dz.addEventListener('click', () => input.click());
+
+      ;['dragenter','dragover'].forEach(evt => {
+        dz.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setActive(true);
+        });
+      });
+
+      ;['dragleave','drop'].forEach(evt => {
+        dz.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setActive(false);
+        });
+      });
+
+      dz.addEventListener('drop', (e) => {
+        const files = e.dataTransfer && e.dataTransfer.files;
+        if (!files || files.length === 0) return;
+        input.files = files;
+        if (hint) hint.textContent = files[0].name;
+      });
+
+      input.addEventListener('change', () => {
+        if (input.files && input.files[0] && hint) {
+          hint.textContent = input.files[0].name;
+        }
+      });
+    })();
+  </script>
 {% endblock %}

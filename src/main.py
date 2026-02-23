@@ -4,6 +4,7 @@ import json
 import uuid
 from pathlib import Path
 from typing import Any
+from urllib.request import urlopen
 
 import fitz
 from fastapi import FastAPI, File, Form, Request, UploadFile
@@ -11,7 +12,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Resp
 from fastapi.templating import Jinja2Templates
 
 from .classify import classify_document
-from .config import load_config
+from .config import CONFIG_PATH, load_config, save_config
 from .db import db, init_db
 from .exporter import export_all_csv_long, export_all_csv_wide, export_all_json, export_doc_csv_long, export_doc_csv_wide, export_doc_json
 from .extract import extract_document, pretty_json
@@ -37,7 +38,31 @@ init_db()
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
-app = FastAPI(title="taxclaw", version="0.1.0-beta")
+app = FastAPI(title="TaxClaw", version="0.1.0-beta")
+
+
+def _ollama_tags() -> list[str]:
+    """Return installed Ollama model tags, best-effort."""
+    try:
+        with urlopen("http://localhost:11434/api/tags", timeout=1.5) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        models = data.get("models") or []
+        out: list[str] = []
+        for m in models:
+            name = m.get("name")
+            if isinstance(name, str) and name:
+                out.append(name)
+        return sorted(set(out))
+    except Exception:
+        return []
+
+
+def _cloud_models() -> list[str]:
+    # Keep this small; can expand later.
+    return [
+        "claude-haiku-4-5",
+        "claude-sonnet-4-5",
+    ]
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -75,13 +100,79 @@ def upload_form(request: Request):
     return templates.TemplateResponse("upload.html", {"request": request})
 
 
+@app.get("/settings", response_class=HTMLResponse)
+def settings(request: Request):
+    cfg_now = load_config()
+    local_models = _ollama_tags()
+
+    status_level = "full_local" if cfg_now.model_backend == "local" else "partial_local"
+    needs_privacy_ack = bool(cfg_now.model_backend == "cloud" and not cfg_now.privacy_acknowledged)
+
+    return templates.TemplateResponse(
+        "settings.html",
+        {
+            "request": request,
+            "cfg": cfg_now,
+            "local_models": local_models,
+            "cloud_models": _cloud_models(),
+            "cloud_model": cfg_now.cloud_model,
+            "status_level": status_level,
+            "needs_privacy_ack": needs_privacy_ack,
+            "config_path": str(CONFIG_PATH),
+            "error": None,
+        },
+    )
+
+
+@app.post("/settings", response_class=HTMLResponse)
+async def settings_save(
+    request: Request,
+    model_backend: str = Form(...),
+    local_model: str = Form(default=""),
+    cloud_model: str = Form(default=""),
+    privacy_acknowledged: str | None = Form(default=None),
+):
+    cfg_now = load_config()
+
+    cfg_now.model_backend = "cloud" if model_backend == "cloud" else "local"
+    if local_model:
+        cfg_now.local_model = local_model
+    if cloud_model:
+        cfg_now.cloud_model = cloud_model
+    cfg_now.privacy_acknowledged = bool(privacy_acknowledged) if cfg_now.model_backend == "cloud" else False
+
+    if cfg_now.model_backend == "cloud" and not cfg_now.privacy_acknowledged:
+        return templates.TemplateResponse(
+            "settings.html",
+            {
+                "request": request,
+                "cfg": cfg_now,
+                "local_models": _ollama_tags(),
+                "cloud_models": _cloud_models(),
+                "cloud_model": cfg_now.cloud_model,
+                "status_level": "partial_local",
+                "needs_privacy_ack": True,
+                "config_path": str(CONFIG_PATH),
+                "error": "Cloud mode requires privacy confirmation.",
+            },
+        )
+
+    save_config(cfg=cfg_now)
+    global cfg
+    cfg = load_config()
+    return RedirectResponse(url="/settings", status_code=303)
+
+
 @app.post("/upload")
 async def upload(
     request: Request,
     file: UploadFile = File(...),
-    filer: str | None = Form(default=None),
-    year: int | None = Form(default=None),
 ):
+    filer: str | None = None
+    year: int | None = None
+    if cfg.model_backend == "cloud" and not cfg.privacy_acknowledged:
+        return RedirectResponse(url="/settings", status_code=303)
+
     # save incoming upload to temp
     incoming = cfg.data_path / "incoming"
     incoming.mkdir(parents=True, exist_ok=True)
