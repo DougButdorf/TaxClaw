@@ -127,40 +127,50 @@
       const form = document.getElementById('settings-form');
       const cloudModel = document.getElementById('cloud-model');
       const ack = document.getElementById('privacy-ack');
-      if (!form || !cloudModel || !ack) return;
+      const cloudRadio = form.querySelector('input[name="model_backend"][value="cloud"]');
+      const localRadio = form.querySelector('input[name="model_backend"][value="local"]');
+      if (!form || !cloudModel || !ack || !cloudRadio) return;
 
-      function cloudConfirmIfNeeded() {
-        const cloudSelected = form.querySelector('input[name="model_backend"][value="cloud"]').checked;
-        if (!cloudSelected) return true;
-        if (ack.checked) return true;
+      // Inline warning banner — shown when cloud is selected and ack not yet checked
+      const banner = document.createElement('div');
+      banner.id = 'cloud-warn-banner';
+      banner.style.cssText = 'display:none; margin-top:10px; padding:12px 14px; border-radius:10px; border:1px solid rgba(245,158,11,0.5); background:rgba(245,158,11,0.08); font-size:13px; color:#f59e0b; line-height:1.5;';
+      banner.innerHTML = '⚠️ <strong>Cloud mode selected.</strong> Your tax documents — including SSNs, income figures, and account numbers — will be sent to an external AI provider. Check the box below to confirm you accept this.';
+      const cloudSection = document.getElementById('cloud-section');
+      if (cloudSection) cloudSection.prepend(banner);
 
-        const ok = window.confirm('⚠️ Your tax documents will be sent to an external AI provider. This includes document content, which may contain SSNs, income, and account numbers. Are you sure?');
-        if (ok) {
-          ack.checked = true;
-          return true;
-        }
-        // revert to local
-        form.querySelector('input[name="model_backend"][value="local"]').checked = true;
-        return false;
+      // Inline submit error
+      const submitErr = document.createElement('div');
+      submitErr.id = 'cloud-submit-err';
+      submitErr.style.cssText = 'display:none; margin-top:8px; color:#ef4444; font-size:13px;';
+      submitErr.textContent = '⚠️ You must check the privacy acknowledgment before saving cloud mode.';
+      const saveRow = form.querySelector('.row');
+      if (saveRow) saveRow.before(submitErr);
+
+      function updateBanner() {
+        const isCloud = cloudRadio.checked;
+        banner.style.display = (isCloud && !ack.checked) ? 'block' : 'none';
+        submitErr.style.display = 'none';
       }
 
-      // when user selects cloud backend, force confirm
       form.querySelectorAll('input[name="model_backend"]').forEach((el) => {
-        el.addEventListener('change', () => {
-          if (el.value === 'cloud') cloudConfirmIfNeeded();
-        });
+        el.addEventListener('change', updateBanner);
       });
-
-      // if they change cloud model while not acknowledged, confirm
-      cloudModel.addEventListener('change', () => {
-        cloudConfirmIfNeeded();
-      });
+      ack.addEventListener('change', updateBanner);
 
       form.addEventListener('submit', (e) => {
-        if (!cloudConfirmIfNeeded()) {
+        if (cloudRadio.checked && !ack.checked) {
           e.preventDefault();
+          submitErr.style.display = 'block';
+          banner.style.display = 'block';
+          ack.closest('label').style.outline = '2px solid #f59e0b';
+          ack.closest('label').style.borderRadius = '6px';
+          ack.closest('label').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       });
+
+      // Init on page load
+      updateBanner();
     })();
   </script>
 {% endblock %}
