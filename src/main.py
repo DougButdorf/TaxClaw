@@ -258,6 +258,28 @@ def documents_list(
     needs_review: int | None = None,
 ):
     docs = list_documents(filer=filer, year=year, doc_type=type, needs_review=needs_review)
+
+    # Populate filter dropdowns from DB so users can't mistype values.
+    with db() as con:
+        filers = [
+            r[0]
+            for r in con.execute(
+                "SELECT DISTINCT filer FROM documents WHERE filer IS NOT NULL AND filer != '' ORDER BY filer"
+            ).fetchall()
+        ]
+        years = [
+            r[0]
+            for r in con.execute(
+                "SELECT DISTINCT tax_year FROM documents WHERE tax_year IS NOT NULL ORDER BY tax_year DESC"
+            ).fetchall()
+        ]
+        doc_types = [
+            r[0]
+            for r in con.execute(
+                "SELECT DISTINCT doc_type FROM documents WHERE doc_type IS NOT NULL AND doc_type != '' ORDER BY doc_type"
+            ).fetchall()
+        ]
+
     return templates.TemplateResponse(
         "list.html",
         {
@@ -268,6 +290,11 @@ def documents_list(
                 "year": year or "",
                 "type": type or "",
                 "needs_review": "" if needs_review is None else str(int(needs_review)),
+            },
+            "filter_options": {
+                "filers": filers,
+                "years": years,
+                "doc_types": doc_types,
             },
         },
     )
