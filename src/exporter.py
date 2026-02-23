@@ -3,9 +3,39 @@ from __future__ import annotations
 import csv
 import io
 import json
+from datetime import datetime, timezone
 from typing import Any
 
 from .db import db
+
+
+TAXCLAW_VERSION = "0.1.0-beta"
+
+
+def _notice_generated_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _csv_generated_human() -> str:
+    # Human-friendly local timestamp for CSV comment headers
+    return datetime.now().isoformat(sep=" ", timespec="seconds")
+
+
+def _csv_notice_block(generated: str) -> str:
+    return (
+        f"# TaxClaw Data Export | Generated: {generated}\n"
+        "# NOTICE: This data was extracted by AI from tax documents. Values may contain errors.\n"
+        "# Verify all figures against your original source documents before use. Not tax advice.\n"
+        "# Outbranch Network LLC makes no warranty as to accuracy. Use at your own risk.\n"
+    )
+
+
+def _json_notice_obj() -> dict[str, Any]:
+    return {
+        "generated": _notice_generated_iso(),
+        "disclaimer": "AI-extracted data. May contain errors. Verify against source documents before use. Not tax advice. Outbranch Network LLC makes no warranty of accuracy.",
+        "taxclaw_version": TAXCLAW_VERSION,
+    }
 
 
 DOC_BASE_COLS = [
@@ -57,6 +87,7 @@ def export_doc_json(doc_id: str) -> str:
         ).fetchall()
 
     payload = {
+        "_taxclaw_notice": _json_notice_obj(),
         "document": dict(doc),
         "extraction": extraction,
         "extracted_fields": [
@@ -69,7 +100,10 @@ def export_doc_json(doc_id: str) -> str:
 def export_all_json() -> str:
     with db() as con:
         docs = con.execute("SELECT * FROM documents ORDER BY created_at DESC").fetchall()
-        payload = [dict(d) for d in docs]
+        payload = {
+            "_taxclaw_notice": _json_notice_obj(),
+            "documents": [dict(d) for d in docs],
+        }
     return json.dumps(payload, ensure_ascii=False, indent=2)
 
 
@@ -84,6 +118,7 @@ def export_doc_csv_long(doc_id: str) -> str:
         ).fetchall()
 
     buf = io.StringIO()
+    buf.write(_csv_notice_block(_csv_generated_human()))
     headers = DOC_BASE_COLS + ["field_path", "field_value", "confidence"]
     w = csv.DictWriter(buf, fieldnames=headers)
     w.writeheader()
@@ -98,6 +133,7 @@ def export_doc_csv_long(doc_id: str) -> str:
 
 def export_all_csv_long() -> str:
     buf = io.StringIO()
+    buf.write(_csv_notice_block(_csv_generated_human()))
     headers = DOC_BASE_COLS + ["field_path", "field_value", "confidence"]
     w = csv.DictWriter(buf, fieldnames=headers)
     w.writeheader()
@@ -135,6 +171,7 @@ def export_doc_csv_wide(doc_id: str) -> str:
 
     headers = list(flat.keys())
     buf = io.StringIO()
+    buf.write(_csv_notice_block(_csv_generated_human()))
     w = csv.DictWriter(buf, fieldnames=headers)
     w.writeheader()
     w.writerow(flat)
@@ -156,6 +193,7 @@ def export_all_csv_wide() -> str:
 
     headers = DOC_BASE_COLS + sorted(all_paths)
     buf = io.StringIO()
+    buf.write(_csv_notice_block(_csv_generated_human()))
     w = csv.DictWriter(buf, fieldnames=headers)
     w.writeheader()
 

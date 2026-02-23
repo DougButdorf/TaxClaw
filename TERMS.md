@@ -70,7 +70,7 @@ IN NO EVENT SHALL OUTBRANCH NETWORK LLC, ITS MEMBERS, OFFICERS, EMPLOYEES, CONTR
 Outbranch Network LLC's total maximum liability to you for any and all claims arising from your use of TaxClaw shall not exceed:
 
 - **$0 (zero dollars)** — if you are using TaxClaw under the free/MIT open-source tier at no charge
-- **$29 (twenty-nine dollars)** — if you are a Pro tier subscriber, limited to the amount actually paid to Outbranch Network in the twelve (12) months preceding the claim
+- **The amount actually paid by you** — if you are a Pro tier subscriber, limited to the total fees paid to Outbranch Network LLC in the twelve (12) months immediately preceding the claim, regardless of the then-current Pro tier price
 
 These caps are essential terms of these Terms of Use. If you do not accept them, do not use TaxClaw.
 

@@ -1,6 +1,14 @@
 # 🧾🦀 TaxClaw
 **Your taxes. Your machine. Your data.**
 
+> **DISCLAIMER:** TaxClaw is a data extraction tool, not a tax preparation or tax advice service.
+> It extracts text fields printed on tax documents and stores them in a local database for your
+> review. TaxClaw does not prepare tax returns, file returns, compute cost basis, or provide
+> tax, legal, or financial advice of any kind. AI extraction may produce errors — **always
+> verify extracted data against your original documents before use.** Outbranch Network LLC
+> is not a law firm, CPA firm, or tax preparation service. Use of this software does not create
+> a professional relationship of any kind. See [Terms of Use](TERMS.md) and [Privacy Policy](PRIVACY.md).
+
 TaxClaw turns messy tax PDFs into clean, reviewable structured data — **locally by default** — so you can stop retyping boxes like it’s 1999.
 
 - 🔒 **Local-first privacy**: PDFs + extracted data stored locally (SQLite)
