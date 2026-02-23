@@ -30,12 +30,12 @@
     {# Action buttons #}
     <div class="row" style="gap: 8px; flex-wrap: wrap; align-items: center;">
       <a href="/doc/{{ doc.id }}/download" class="btn">⬇ Download original</a>
-      <a href="/doc/{{ doc.id }}/export.wide.csv" class="btn export-link" data-export="wide">📊 Export to Spreadsheet</a>
+      <a href="/doc/{{ doc.id }}/export.wide.csv?csrf={{ csrf_token }}" class="btn export-link" data-export="wide">📊 Export to Spreadsheet</a>
       <details style="display:inline-block; position:relative;">
         <summary class="btn" style="list-style:none; cursor:pointer;">Advanced export ▾</summary>
         <div style="position:absolute; left:0; top:110%; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:6px; z-index:10; min-width:200px;">
-          <a href="/doc/{{ doc.id }}/export.long.csv" class="btn export-link" data-export="long" title="One row per field — useful for pivot tables and database imports" style="white-space:nowrap;">🗃 Data Analysis Export</a>
-          <a href="/doc/{{ doc.id }}/export.json" class="btn export-link" data-export="json" title="Raw structured data including AI extraction metadata" style="white-space:nowrap;">🛠 Developer Export (JSON)</a>
+          <a href="/doc/{{ doc.id }}/export.long.csv?csrf={{ csrf_token }}" class="btn export-link" data-export="long" title="One row per field — useful for pivot tables and database imports" style="white-space:nowrap;">🗃 Data Analysis Export</a>
+          <a href="/doc/{{ doc.id }}/export.json?csrf={{ csrf_token }}" class="btn export-link" data-export="json" title="Raw structured data including AI extraction metadata" style="white-space:nowrap;">🛠 Developer Export (JSON)</a>
         </div>
       </details>
       <span id="del-wrap">
@@ -43,6 +43,7 @@
         <span id="del-confirm-{{ doc.id }}" style="display:none; align-items:center; gap:6px;">
           <span class="muted" style="font-size:12px;">Delete this document?</span>
           <form method="post" action="/doc/{{ doc.id }}/delete" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
             <button class="danger" type="submit">Yes, delete</button>
           </form>
           <button type="button" onclick="document.getElementById('del-confirm-{{ doc.id }}').style.display='none'; document.querySelector('#del-wrap > button').style.display='inline';">Cancel</button>
@@ -82,6 +83,7 @@
         <div>
           <div class="muted" style="font-size:11px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Document info</div>
           <form method="post" action="/doc/{{ doc.id }}/update">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
             <div style="display:flex; flex-direction:column; gap:10px;">
 
               <div>
@@ -177,10 +179,12 @@
           <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
             {% if doc.needs_review %}
               <form method="post" action="/doc/{{ doc.id }}/mark-reviewed" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
                 <button type="submit" style="font-size:12px; padding:5px 10px; opacity:.9;">✓ Mark as reviewed</button>
               </form>
             {% else %}
               <form method="post" action="/doc/{{ doc.id }}/flag-review" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
                 <button type="submit" style="font-size:12px; padding:5px 10px; opacity:.8;">🚩 Flag for review</button>
               </form>
             {% endif %}
@@ -270,6 +274,7 @@
       const root = document.querySelector('[data-doc-id]');
       if (!root) return;
       const docId = root.getAttribute('data-doc-id');
+      const csrfToken = {{ csrf_token|tojson }};
 
       function sanitizeDollarInput(s) {
         if (s == null) return '';
@@ -367,6 +372,7 @@
             if (isDollar) v = sanitizeDollarInput(v);
 
             const body = new URLSearchParams();
+            body.set('csrf_token', csrfToken);
             body.set('value', v);
 
             const resp = await fetch(`/doc/${encodeURIComponent(docId)}/fields/${encodeURIComponent(fieldPath)}`, {

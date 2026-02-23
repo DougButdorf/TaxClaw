@@ -13,7 +13,7 @@ from typing import Any
 from urllib.request import urlopen
 
 import fitz
-from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -830,8 +830,21 @@ def doc_delete(request: Request, doc_id: str, csrf_token: str = Form(...)):
 
 
 @app.post("/doc/{doc_id}/fields/{field_path:path}")
-async def doc_field_update(doc_id: str, field_path: str, value: str = Form(...)):
+async def doc_field_update(
+    request: Request,
+    doc_id: str,
+    field_path: str,
+    csrf_token: str = Form(...),
+    value: str = Form(...),
+):
     """Inline edit of a single extracted field value."""
+
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf_token)
+    except Exception:
+        return JSONResponse({"ok": False, "error": "forbidden"}, status_code=403)
+
     # Normalize (UI may send surrounding whitespace)
     v = value.strip()
 
@@ -851,14 +864,26 @@ async def doc_field_update(doc_id: str, field_path: str, value: str = Form(...))
 
 
 @app.post("/doc/{doc_id}/mark-reviewed")
-def doc_mark_reviewed(doc_id: str):
+def doc_mark_reviewed(request: Request, doc_id: str, csrf_token: str = Form(...)):
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf_token)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+
     with db() as con:
         con.execute("UPDATE documents SET needs_review=0 WHERE id=?", (doc_id,))
     return RedirectResponse(url=f"/doc/{doc_id}", status_code=303)
 
 
 @app.post("/doc/{doc_id}/flag-review")
-def doc_flag_review(doc_id: str):
+def doc_flag_review(request: Request, doc_id: str, csrf_token: str = Form(...)):
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf_token)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+
     with db() as con:
         con.execute("UPDATE documents SET needs_review=1 WHERE id=?", (doc_id,))
     return RedirectResponse(url=f"/doc/{doc_id}", status_code=303)
@@ -904,7 +929,13 @@ def doc_preview_page_png(doc_id: str, page: int = 0):
 
 
 @app.get("/doc/{doc_id}/export.wide.csv")
-def doc_export_wide(doc_id: str):
+def doc_export_wide(request: Request, doc_id: str, csrf: str = Query("")):
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+
     csv_text = export_doc_csv_wide(doc_id)
     return Response(
         csv_text,
@@ -914,7 +945,13 @@ def doc_export_wide(doc_id: str):
 
 
 @app.get("/doc/{doc_id}/export.long.csv")
-def doc_export_long(doc_id: str):
+def doc_export_long(request: Request, doc_id: str, csrf: str = Query("")):
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+
     csv_text = export_doc_csv_long(doc_id)
     return Response(
         csv_text,
@@ -924,7 +961,13 @@ def doc_export_long(doc_id: str):
 
 
 @app.get("/doc/{doc_id}/export.json")
-def doc_export_json(doc_id: str):
+def doc_export_json(request: Request, doc_id: str, csrf: str = Query("")):
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+
     txt = export_doc_json(doc_id)
     return Response(
         txt,
@@ -934,7 +977,13 @@ def doc_export_json(doc_id: str):
 
 
 @app.get("/export.wide.csv")
-def export_all_wide():
+def export_all_wide(request: Request, csrf: str = Query("")):
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+
     csv_text = export_all_csv_wide()
     return Response(
         csv_text,
@@ -944,7 +993,13 @@ def export_all_wide():
 
 
 @app.get("/export.long.csv")
-def export_all_long():
+def export_all_long(request: Request, csrf: str = Query("")):
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+
     csv_text = export_all_csv_long()
     return Response(
         csv_text,
@@ -954,7 +1009,13 @@ def export_all_long():
 
 
 @app.get("/export.json")
-def export_all_as_json():
+def export_all_as_json(request: Request, csrf: str = Query("")):
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+
     txt = export_all_json()
     return Response(
         txt,
@@ -964,8 +1025,14 @@ def export_all_as_json():
 
 
 @app.get("/export.originals.zip")
-def export_all_originals_zip():
+def export_all_originals_zip(request: Request, csrf: str = Query("")):
     """Bundle every stored original document into a single ZIP for handoff to a tax preparer or the IRS."""
+
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf)
+    except Exception:
+        return Response("Forbidden", status_code=403)
     with db() as con:
         rows = con.execute(
             "SELECT id, original_filename, file_path, tax_year FROM documents ORDER BY created_at ASC"
@@ -1144,7 +1211,8 @@ _PRIVACY_PATH = Path(__file__).parent.parent / "PRIVACY.md"
 def terms_page(request: Request):
     md_text = _TERMS_PATH.read_text(encoding="utf-8") if _TERMS_PATH.exists() else "# Terms of Use\n\nNot found."
     content_html = _md_to_html(md_text)
-    return templates.TemplateResponse(
+    return _render(
+        request,
         "terms.html",
         {"request": request, "title": "Terms of Use — TaxClaw", "content": content_html},
     )
@@ -1154,7 +1222,8 @@ def terms_page(request: Request):
 def privacy_page(request: Request):
     md_text = _PRIVACY_PATH.read_text(encoding="utf-8") if _PRIVACY_PATH.exists() else "# Privacy Policy\n\nNot found."
     content_html = _md_to_html(md_text)
-    return templates.TemplateResponse(
+    return _render(
+        request,
         "privacy.html",
         {"request": request, "title": "Privacy Policy — TaxClaw", "content": content_html},
     )
@@ -1162,12 +1231,13 @@ def privacy_page(request: Request):
 
 @app.get("/faq", response_class=HTMLResponse)
 def faq_page(request: Request):
-    return templates.TemplateResponse("faq.html", {"request": request, "title": "FAQ — TaxClaw"})
+    return _render(request, "faq.html", {"request": request, "title": "FAQ — TaxClaw"})
 
 
 @app.get("/contact", response_class=HTMLResponse)
 def contact_page(request: Request, sent: bool = False, error: str | None = None):
-    return templates.TemplateResponse(
+    return _render(
+        request,
         "contact.html",
         {
             "request": request,
@@ -1181,6 +1251,7 @@ def contact_page(request: Request, sent: bool = False, error: str | None = None)
 @app.post("/contact")
 async def contact_submit(
     request: Request,
+    csrf_token: str = Form(...),
     name: str = Form(default=""),
     email: str = Form(default=""),
     subject: str = Form(default=""),
@@ -1192,6 +1263,12 @@ async def contact_submit(
     import urllib.request as _ur
 
     FORMSPREE_ID = "xpqjowpa"
+
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf_token)
+    except Exception:
+        return Response("Forbidden", status_code=403)
 
     payload = _up.urlencode(
         {
@@ -1215,7 +1292,8 @@ async def contact_submit(
             if result.get("ok"):
                 return RedirectResponse(url="/contact?sent=true", status_code=303)
     except Exception as e:
-        return templates.TemplateResponse(
+        return _render(
+            request,
             "contact.html",
             {
                 "request": request,

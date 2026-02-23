@@ -26,7 +26,7 @@ class Config:
     data_dir: str = "~/.local/share/taxclaw/"
 
     # Security limits
-    max_upload_bytes: int = 50 * 1024 * 1024  # 50MB
+    max_upload_bytes: int = 10 * 1024 * 1024  # 10MB
     storage_cap_bytes: int = 2 * 1024 * 1024 * 1024  # 2GB total stored originals
 
     @property

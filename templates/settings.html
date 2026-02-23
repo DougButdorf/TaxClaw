@@ -24,6 +24,7 @@
 
   <div class="card">
     <form method="post" action="/settings" id="settings-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
       <div style="display:grid; grid-template-columns: 1fr; gap: 14px;">
 
         <div>

@@ -19,6 +19,7 @@
 
   <div class="card" id="upload-card">
     <form id="upload-form" method="post" action="/upload" enctype="multipart/form-data" style="max-width: 560px; margin: 0 auto;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
       <div class="muted" style="margin-bottom: 14px; text-align:center;">
         For best results, upload the original PDF.
       </div>
@@ -36,7 +37,7 @@
           min-width: min(420px, 100%);
         ">📎 Choose a tax document</button>
 
-        <input id="file-input" type="file" name="file" required accept=".pdf,.PDF" style="display:none;" />
+        <input id="file-input" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.tiff,.webp" style="display:none;" />
 
         <div id="file-name" class="muted" style="font-size: 13px; min-height: 18px; text-align:center;"></div>
 

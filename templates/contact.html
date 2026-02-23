@@ -25,6 +25,7 @@
 
     <div class="card">
       <form method="post" action="/contact">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <div style="display:grid; grid-template-columns: 1fr; gap: 12px;">
           <div>
             <label class="muted" style="display:block; font-size: 11px; margin-bottom: 6px;">Request type</label>

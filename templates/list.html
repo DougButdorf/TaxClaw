@@ -57,10 +57,10 @@
   <div class="row" style="justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
     <div class="muted" style="font-size: 12px;">Export all:</div>
     <div class="row" style="gap: 10px; flex-wrap: wrap;">
-      <a class="btn" href="/export.wide.csv" style="min-width: 200px; text-align: center;">📊 Spreadsheet</a>
-      <a class="btn" href="/export.long.csv" style="min-width: 200px; text-align: center;">🗃 Data Analysis</a>
-      <a class="btn" href="/export.json" style="min-width: 200px; text-align: center;">🛠 Developer JSON</a>
-      <a class="btn" href="/export.originals.zip" style="min-width: 200px; text-align: center;">📦 All originals (.zip)</a>
+      <a class="btn" href="/export.wide.csv?csrf={{ csrf_token }}" style="min-width: 200px; text-align: center;">📊 Spreadsheet</a>
+      <a class="btn" href="/export.long.csv?csrf={{ csrf_token }}" style="min-width: 200px; text-align: center;">🗃 Data Analysis</a>
+      <a class="btn" href="/export.json?csrf={{ csrf_token }}" style="min-width: 200px; text-align: center;">🛠 Developer JSON</a>
+      <a class="btn" href="/export.originals.zip?csrf={{ csrf_token }}" style="min-width: 200px; text-align: center;">📦 All originals (.zip)</a>
     </div>
   </div>
 
