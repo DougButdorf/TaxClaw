@@ -63,7 +63,8 @@ def _ollama_model_info() -> list[dict]:
             if not isinstance(name, str) or not name:
                 continue
             families = m.get("details", {}).get("families") or []
-            vision = "clip" in families
+            # 'clip' = llava/moondream style; 'glmocr' = GLM-OCR; expand as new models arrive
+            vision = any(f in families for f in ("clip", "glmocr", "qwen2vl", "internvl"))
             out.append({"name": name, "vision": vision})
         return sorted(out, key=lambda x: (not x["vision"], x["name"]))  # vision models first
     except Exception:
