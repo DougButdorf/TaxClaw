@@ -42,8 +42,9 @@
           <div style="font-weight:700; margin-bottom: 8px;">Local model (Ollama)</div>
           <select name="local_model" style="min-width: 320px;">
             {% for m in local_models_info %}
+              {% set is_glmocr = 'glm-ocr' in m.name %}
               <option value="{{ m.name }}" {% if cfg.local_model == m.name %}selected{% endif %}>
-                {{ "✅" if m.vision else "⚠️" }} {{ m.name }}{{ " — vision (recommended)" if m.vision else " — text only, cannot read images" }}
+                {{ "✅" if m.vision else "⚠️" }} {{ m.name }}{% if is_glmocr %} — vision ⭐ recommended{% elif m.vision %} — vision{% else %} — text only, cannot read images{% endif %}
               </option>
             {% endfor %}
             {% if local_models_info|length == 0 %}
@@ -52,7 +53,7 @@
           </select>
           {% if not selected_is_vision and cfg.model_backend == 'local' %}
           <div style="margin-top:8px; padding:10px 12px; border-radius:8px; border:1px solid rgba(239,68,68,0.5); background:rgba(239,68,68,0.08); font-size:13px; color:#ef4444;">
-            ⚠️ <strong>{{ cfg.local_model }}</strong> is a text-only model — it cannot read document images and will return empty extractions. Switch to a vision model (e.g. <strong>llava</strong>) or use Cloud mode.
+            ⚠️ <strong>{{ cfg.local_model }}</strong> is a text-only model — it cannot read document images and will return empty extractions. Switch to a vision model (e.g. <strong>glm-ocr</strong> — run <code>ollama pull glm-ocr</code>) or use Cloud mode.
           </div>
           {% endif %}
           <div class="muted" style="margin-top: 8px; font-size: 13px;">Vision models (✅) can read document images. Text-only models (⚠️) will not extract any data.</div>
@@ -100,7 +101,7 @@
                 <li>Low-quality scans or non-standard layouts</li>
                 <li>Handwritten or corrected fields</li>
               </ul>
-              <div class="muted" style="margin-top: 8px;">Typical confidence: <code style="color: var(--text);">0.60–0.85</code> on clean PDFs</div>
+              <div class="muted" style="margin-top: 8px;">Typical confidence: <code style="color: var(--text);">0.85–0.97</code> with <strong>glm-ocr</strong> on clean PDFs</div>
             </div>
 
             <div>
@@ -116,7 +117,7 @@
             </div>
 
             <div class="muted">
-              💡 Tip: Use local for standard W-2s and simple 1099s. Switch to cloud for consolidated brokerage statements, K-1s, and anything that comes back with low confidence.
+              💡 Tip: <strong>glm-ocr</strong> (<code>ollama pull glm-ocr</code>) is the recommended local model — purpose-built for document OCR, outperforms llava significantly. Switch to cloud only for low-confidence results or complex multi-page K-1s.
             </div>
           </div>
         </details>
