@@ -231,8 +231,8 @@ def dashboard(request: Request):
     )
 
 
-@app.get("/affiliate-info", response_class=HTMLResponse)
-def affiliate_info(request: Request):
+@app.get("/digital_assets", response_class=HTMLResponse)
+def digital_assets(request: Request):
     return templates.TemplateResponse(
         "affiliate.html",
         {
@@ -240,6 +240,12 @@ def affiliate_info(request: Request):
             "title": "Crypto tools • TaxClaw",
         },
     )
+
+
+@app.get("/affiliate-info")
+def affiliate_info_redirect() -> RedirectResponse:
+    # Back-compat for old links
+    return RedirectResponse(url="/digital_assets", status_code=301)
 
 
 @app.get("/documents", response_class=HTMLResponse)

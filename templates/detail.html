@@ -406,29 +406,26 @@
     })();
   </script>
 
-  {% if doc.doc_type in ['1099-DA', '1099-B', 'consolidated-1099'] %}
-    <div class="card" style="margin-bottom: 14px; border-color: rgba(96,165,250,0.35); background: rgba(17,24,39,0.92);">
-      <div style="font-size: 16px; font-weight: 900; margin-bottom: 6px;">🪙 Got a {{ doc.doc_type }}? Your next step is cost basis reconciliation.</div>
+  {% if doc.doc_type == '1099-DA' %}
+    <div class="card" style="margin-bottom: 14px; border-color: rgba(96,165,250,0.5); background: rgba(17,24,39,0.92);">
+      <div style="font-size: 18px; font-weight: 950; margin-bottom: 6px;">🪙 You extracted your 1099-DA. Now get your cost basis right.</div>
       <div class="muted" style="line-height: 1.6;">
-        TaxClaw extracted your proceeds — but cost basis often isn't on the form. To complete your crypto tax picture, you'll need a reconciliation tool:
+        Extracted proceeds are just step 1. Without cost basis, you can't calculate your gains — and the IRS will assume $0.
       </div>
       <div class="row" style="margin-top: 12px; gap: 10px;">
-        <a class="btn" href="https://koinly.io/?via=4C2DBEFF&utm_source=affiliate" target="_blank" rel="noopener">→ Try Koinly</a>
-      </div>
-      <div class="muted" style="margin-top: 10px; font-size: 12px;">
-        ⚠️ Affiliate disclosure: TaxClaw earns a commission if you purchase Koinly via the link above. This doesn't affect your extracted data.
+        <a class="btn" href="/digital_assets">See what to do next →</a>
       </div>
     </div>
   {% endif %}
 
   <div id="post-export-msg" class="muted" style="display:none; margin: 6px 0 14px 0; font-size: 13px;">
-    ✅ Export ready. Need to reconcile cost basis?
-    <a href="https://koinly.io/?via=4C2DBEFF&utm_source=affiliate" target="_blank" rel="noopener">Try Koinly →</a>
+    ✅ Export ready. Next step: cost basis.
+    <a href="/digital_assets">See what to do next →</a>
   </div>
 
   <script>
     (function () {
-      const isCrypto = {{ 'true' if doc.doc_type in ['1099-DA', '1099-B', 'consolidated-1099'] else 'false' }};
+      const isCrypto = {{ 'true' if doc.doc_type == '1099-DA' else 'false' }};
       if (!isCrypto) return;
 
       const msg = document.getElementById('post-export-msg');
