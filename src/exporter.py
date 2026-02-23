@@ -40,6 +40,7 @@ def _json_notice_obj() -> dict[str, Any]:
 
 DOC_BASE_COLS = [
     "document_id",
+    "display_name",
     "doc_type",
     "tax_year",
     "filer",
@@ -58,6 +59,7 @@ def _doc_row(doc: Any) -> dict[str, Any]:
     d = dict(doc)
     return {
         "document_id": d.get("id"),
+        "display_name": d.get("display_name"),
         "doc_type": d.get("doc_type"),
         "tax_year": d.get("tax_year"),
         "filer": d.get("filer"),

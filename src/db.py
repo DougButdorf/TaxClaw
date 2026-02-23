@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS documents (
 
   payer_name TEXT,
   payer_tin TEXT,
+  display_name TEXT,
   recipient_name TEXT,
   recipient_tin TEXT,
   account_number TEXT,
@@ -166,6 +167,29 @@ def init_db() -> None:
     con = connect()
     try:
         con.executescript(SCHEMA)
+
+        # Lightweight migrations for existing DBs.
+        cols = [r[1] for r in con.execute("PRAGMA table_info(documents)").fetchall()]
+        if "display_name" not in cols:
+            con.execute("ALTER TABLE documents ADD COLUMN display_name TEXT;")
+
+        # Best-effort backfill for existing rows.
+        con.execute(
+            """UPDATE documents
+               SET display_name = CASE
+                 WHEN payer_name IS NOT NULL AND TRIM(payer_name) != '' AND tax_year IS NOT NULL
+                   THEN payer_name || ' — ' || doc_type || ' — ' || tax_year
+                 WHEN payer_name IS NOT NULL AND TRIM(payer_name) != ''
+                   THEN payer_name || ' — ' || doc_type
+                 WHEN tax_year IS NOT NULL
+                   THEN doc_type || ' — ' || tax_year
+                 ELSE doc_type
+               END
+               WHERE (display_name IS NULL OR TRIM(display_name)='')
+                 AND doc_type IS NOT NULL AND TRIM(doc_type) != ''
+            """
+        )
+
         con.commit()
     finally:
         con.close()

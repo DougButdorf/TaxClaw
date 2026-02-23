@@ -2,7 +2,13 @@
 {% block content %}
   <div class="row" style="justify-content: space-between; margin-bottom: 14px;">
     <div>
-      <h1 style="margin:0; font-size: 20px;">Document {{ doc.id[:8] }}</h1>
+      {% if doc.display_name %}
+        <h1 style="margin:0; font-size: 20px;">{{ doc.display_name }}</h1>
+        <div class="muted" style="font-size: 12px; margin-top: 2px;">{{ doc.id }}</div>
+      {% else %}
+        <h1 style="margin:0; font-size: 20px;">Document {{ doc.id[:8] }}</h1>
+        <div class="muted" style="font-size: 12px; margin-top: 2px;">{{ doc.id }}</div>
+      {% endif %}
       <div class="muted">{{ doc.original_filename }} • {{ doc.doc_type }} • {{ doc.page_count }} pages</div>
     </div>
     <div class="row" style="flex-direction: column; align-items: flex-end; gap: 8px;">
@@ -31,6 +37,8 @@
       <div style="width: 360px;">
         <div class="muted" style="margin-bottom: 6px;">Metadata</div>
         <form method="post" action="/doc/{{ doc.id }}/update">
+          <label class="muted">Name</label>
+          <input name="display_name" value="{{ doc.display_name or '' }}" placeholder="e.g. Brex Treasury LLC — 1099-DIV — 2023" />
           <label class="muted">Doc type</label>
           <input name="doc_type" value="{{ doc.doc_type or '' }}" />
           <label class="muted">Tax year</label>

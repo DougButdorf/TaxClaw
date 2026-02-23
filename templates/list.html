@@ -45,7 +45,7 @@
     <table>
       <thead>
         <tr>
-          <th>ID</th>
+          <th>Document</th>
           <th>Type</th>
           <th>Year</th>
           <th>Filer</th>
@@ -58,7 +58,16 @@
       <tbody>
         {% for d in docs %}
           <tr>
-            <td><a href="/doc/{{ d.id }}">{{ d.id[:8] }}</a></td>
+            <td>
+              <a href="/doc/{{ d.id }}">
+                {% if d.display_name %}
+                  <div style="font-weight: 700;">{{ d.display_name }}</div>
+                  <div class="muted" style="font-size: 12px; margin-top: 2px;">{{ d.id[:8] }}</div>
+                {% else %}
+                  {{ d.id[:8] }}
+                {% endif %}
+              </a>
+            </td>
             <td>{{ d.doc_type or 'unknown' }}</td>
             <td>{{ d.tax_year or '' }}</td>
             <td>{{ d.filer or '' }}</td>

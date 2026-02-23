@@ -271,16 +271,85 @@ def mark_needs_review(*, doc_id: str, notes: str | None = None) -> None:
         )
 
 
-def update_document_metadata(*, doc_id: str, filer: str | None, tax_year: int | None, doc_type: str | None, notes: str | None) -> None:
-    with db() as con:
-        con.execute(
-            """UPDATE documents
+_MISSING = object()
+
+
+def update_document_metadata(
+    *,
+    doc_id: str,
+    filer: str | None,
+    tax_year: int | None,
+    doc_type: str | None,
+    notes: str | None,
+    display_name: str | None | object = _MISSING,
+) -> None:
+    q = (
+        """UPDATE documents
                SET filer=COALESCE(?, filer),
                    tax_year=COALESCE(?, tax_year),
                    doc_type=COALESCE(?, doc_type),
-                   notes=COALESCE(?, notes)
-               WHERE id=?""",
-            (filer, tax_year, doc_type, notes, doc_id),
+                   notes=COALESCE(?, notes)"""
+    )
+    params: list[Any] = [filer, tax_year, doc_type, notes]
+
+    if display_name is not _MISSING:
+        q += ", display_name=?"
+        params.append(display_name)
+
+    q += " WHERE id=?"
+    params.append(doc_id)
+
+    with db() as con:
+        con.execute(q, tuple(params))
+
+
+def _clean_payer_name(payer: str) -> str:
+    # Collapse whitespace
+    s = " ".join(payer.strip().split())
+    if not s:
+        return s
+
+    # Title-case, but preserve common all-caps abbreviations.
+    parts: list[str] = []
+    for tok in s.split(" "):
+        if tok.isupper() and len(tok) <= 4:
+            parts.append(tok)
+        else:
+            parts.append(tok[:1].upper() + tok[1:].lower() if tok else tok)
+    s2 = " ".join(parts)
+
+    # Hard max length (UI-friendly)
+    if len(s2) > 40:
+        s2 = s2[:40].rstrip()
+    return s2
+
+
+def generate_display_name(*, payer: str | None, doc_type: str | None, tax_year: int | None) -> str | None:
+    dt = (doc_type or "").strip()
+    if not dt:
+        return None
+
+    yr = str(tax_year) if tax_year else ""
+    p = _clean_payer_name(payer) if isinstance(payer, str) else ""
+
+    if p and yr:
+        return f"{p} — {dt} — {yr}"
+    if p:
+        return f"{p} — {dt}"
+    if yr:
+        return f"{dt} — {yr}"
+    return dt
+
+
+def set_display_name_if_empty(*, doc_id: str, display_name: str | None) -> None:
+    if not display_name:
+        return
+    with db() as con:
+        con.execute(
+            """UPDATE documents
+               SET display_name=?
+               WHERE id=? AND (display_name IS NULL OR TRIM(display_name)='')""",
+            (display_name, doc_id),
         )
 
 

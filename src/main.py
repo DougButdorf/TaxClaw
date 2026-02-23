@@ -22,6 +22,7 @@ from .review import compute_needs_review, compute_overall_confidence, missing_re
 from .store import (
     create_document_record,
     delete_document,
+    generate_display_name,
     get_document,
     get_document_by_hash,
     ingest_file,
@@ -29,6 +30,7 @@ from .store import (
     mark_needs_review,
     mark_processed,
     page_count_for_pdf,
+    set_display_name_if_empty,
     store_1099da_transactions,
     store_extracted_fields,
     store_raw_extraction,
@@ -296,10 +298,41 @@ async def upload(
             payer_name = None
             recipient_name = None
             account_number = None
+            payer_guess = None
             if isinstance(header, dict):
                 payer_name = header.get("payer_name")
                 recipient_name = header.get("recipient_name")
                 account_number = header.get("account_number")
+
+                # Payer name varies by form
+                for k in ["payer_name", "employer_name", "payer", "employer", "box_c", "recipient_name"]:
+                    v = header.get(k)
+                    if isinstance(v, str) and v.strip():
+                        payer_guess = v
+                        break
+
+            year_guess = None
+            if isinstance(header, dict):
+                for k in ["tax_year", "year", "taxYear"]:
+                    v = header.get(k)
+                    if isinstance(v, int) and v > 1900:
+                        year_guess = v
+                        break
+                    if isinstance(v, str) and v.strip().isdigit():
+                        try:
+                            iv = int(v.strip())
+                            if iv > 1900:
+                                year_guess = iv
+                                break
+                        except Exception:
+                            pass
+
+            display_name = generate_display_name(
+                payer=payer_guess or payer_name,
+                doc_type=doc_type,
+                tax_year=year_guess or year,
+            )
+
             with db() as con:
                 con.execute(
                     """UPDATE documents
@@ -308,6 +341,8 @@ async def upload(
                        WHERE id=?""",
                     (payer_name, recipient_name, account_number, overall, int(nr), doc_id),
                 )
+
+            set_display_name_if_empty(doc_id=doc_id, display_name=display_name)
 
         mark_processed(doc_id=doc_id, overall_confidence=overall, needs_review=nr)
     except Exception as e:
@@ -360,12 +395,18 @@ def doc_detail(request: Request, doc_id: str):
 @app.post("/doc/{doc_id}/update")
 async def doc_update(
     doc_id: str,
+    display_name: str | None = Form(default=None),
     filer: str | None = Form(default=None),
     year: int | None = Form(default=None),
     doc_type: str | None = Form(default=None),
     notes: str | None = Form(default=None),
 ):
-    update_document_metadata(doc_id=doc_id, filer=filer, tax_year=year, doc_type=doc_type, notes=notes)
+    # Allow clearing the name
+    dn = None
+    if display_name is not None:
+        dn = display_name.strip() or None
+
+    update_document_metadata(doc_id=doc_id, filer=filer, tax_year=year, doc_type=doc_type, notes=notes, display_name=dn)
     return RedirectResponse(url=f"/doc/{doc_id}", status_code=303)
 
 
