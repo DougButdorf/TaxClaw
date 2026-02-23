@@ -909,3 +909,71 @@ def privacy_page(request: Request):
         "privacy.html",
         {"request": request, "title": "Privacy Policy — TaxClaw", "content": content_html},
     )
+
+
+@app.get("/faq", response_class=HTMLResponse)
+def faq_page(request: Request):
+    return templates.TemplateResponse("faq.html", {"request": request, "title": "FAQ — TaxClaw"})
+
+
+@app.get("/contact", response_class=HTMLResponse)
+def contact_page(request: Request, sent: bool = False, error: str | None = None):
+    return templates.TemplateResponse(
+        "contact.html",
+        {
+            "request": request,
+            "title": "Contact & Feature Requests — TaxClaw",
+            "sent": sent,
+            "error": error,
+        },
+    )
+
+
+@app.post("/contact")
+async def contact_submit(
+    request: Request,
+    name: str = Form(default=""),
+    email: str = Form(default=""),
+    subject: str = Form(default=""),
+    message: str = Form(...),
+    request_type: str = Form(default="feedback"),
+):
+    import json as _json
+    import urllib.parse as _up
+    import urllib.request as _ur
+
+    FORMSPREE_ID = "xpqjowpa"
+
+    payload = _up.urlencode(
+        {
+            "name": name,
+            "email": email,
+            "_subject": f"[TaxClaw {request_type.title()}] {subject or message[:60]}",
+            "message": message,
+            "request_type": request_type,
+            "_replyto": email,
+        }
+    ).encode()
+
+    try:
+        req = _ur.Request(
+            f"https://formspree.io/f/{FORMSPREE_ID}",
+            data=payload,
+            headers={"Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded"},
+        )
+        with _ur.urlopen(req, timeout=8) as resp:
+            result = _json.loads(resp.read())
+            if result.get("ok"):
+                return RedirectResponse(url="/contact?sent=true", status_code=303)
+    except Exception as e:
+        return templates.TemplateResponse(
+            "contact.html",
+            {
+                "request": request,
+                "title": "Contact & Feature Requests — TaxClaw",
+                "sent": False,
+                "error": f"Couldn't send — please email lando@outbranch.net directly. ({e})",
+            },
+        )
+
+    return RedirectResponse(url="/contact?sent=true", status_code=303)
