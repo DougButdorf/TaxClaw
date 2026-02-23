@@ -1,6 +1,6 @@
 ---
 name: taxclaw
-version: "0.1.0-beta"
+version: "0.1.1"
 description: "Extract, store, and export tax documents (W-2, 1099-DA, all 1099 variants, K-1) using AI. Local-first — your documents never leave your machine. Web UI at localhost:8421."
 argument-hint: "open TaxClaw, extract my 1099, parse this tax form, process my W-2"
 allowed-tools: Bash, Read, Write
