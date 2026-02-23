@@ -184,7 +184,13 @@ def review_queue(request: Request):
 
 @app.get("/upload", response_class=HTMLResponse)
 def upload_form(request: Request):
-    return templates.TemplateResponse("upload.html", {"request": request})
+    cfg_now = load_config()
+    return templates.TemplateResponse("upload.html", {
+        "request": request,
+        "model_backend": cfg_now.model_backend,
+        "cloud_model": cfg_now.cloud_model,
+        "local_model": cfg_now.local_model,
+    })
 
 
 @app.get("/settings", response_class=HTMLResponse)

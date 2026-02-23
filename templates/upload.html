@@ -36,7 +36,7 @@
           min-width: min(420px, 100%);
         ">📎 Choose a tax document</button>
 
-        <input id="file-input" type="file" name="file" required style="display:none;" />
+        <input id="file-input" type="file" name="file" required accept=".pdf,.PDF" style="display:none;" />
 
         <div id="file-name" class="muted" style="font-size: 13px; min-height: 18px; text-align:center;"></div>
 
@@ -52,7 +52,11 @@
         ">Upload + Extract</button>
 
         <div class="muted" style="font-size: 11px; text-align:center; margin-top: 2px;">
-          🔒 Your documents stay on your machine. Always. <a href="/settings">Change in Settings →</a>
+          {% if model_backend == 'cloud' %}
+          ☁️ Cloud mode — document content will be sent to <strong>{{ cloud_model }}</strong>. <a href="/settings">Change in Settings →</a>
+          {% else %}
+          🔒 Local mode — your documents stay on this machine. <a href="/settings">Change in Settings →</a>
+          {% endif %}
         </div>
       </div>
     </form>
@@ -66,7 +70,13 @@
       </div>
       <div id="progress-pct" class="muted" style="font-size:13px;">0%</div>
       <div class="muted" style="font-size:12px; margin-top:12px; line-height:1.5;">
-        AI extraction can take up to a minute for multi-page documents.<br>Hang tight — your data never leaves this machine.
+        {% if model_backend == 'cloud' %}
+        AI extraction can take up to a minute for multi-page documents.<br>
+        ☁️ Using <strong>{{ cloud_model }}</strong> — document content is being sent to the cloud model you selected in <a href="/settings">Settings</a>.
+        {% else %}
+        AI extraction can take up to a minute for multi-page documents.<br>
+        🔒 Running locally on <strong>{{ local_model }}</strong> — your data never leaves this machine.
+        {% endif %}
       </div>
     </div>
   </div>
