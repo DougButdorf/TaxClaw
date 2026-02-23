@@ -3,7 +3,9 @@ from __future__ import annotations
 import html as html_module
 import io
 import json
+import os
 import re
+import secrets
 import uuid
 import zipfile
 from pathlib import Path
@@ -11,9 +13,10 @@ from typing import Any
 from urllib.request import urlopen
 
 import fitz
-from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from .classify import classify_document
 from .config import CONFIG_PATH, load_config, save_config
@@ -29,6 +32,7 @@ from .store import (
     get_document_by_hash,
     ingest_file,
     list_documents,
+    mark_error,
     mark_needs_review,
     mark_processed,
     page_count_for_pdf,
@@ -45,6 +49,97 @@ init_db()
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
 app = FastAPI(title="TaxClaw", version="0.1.0-beta")
+
+
+# ---------------------------------------------------------------------------
+# Security middleware (headers + loopback host/origin enforcement)
+# ---------------------------------------------------------------------------
+
+ALLOWED_HOSTS = {"127.0.0.1:8421", "localhost:8421"}
+ALLOWED_ORIGINS = {"http://127.0.0.1:8421", "http://localhost:8421"}
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        return response
+
+
+class LoopbackHostOriginMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.method in {"POST", "DELETE"}:
+            host = (request.headers.get("host") or "").lower()
+            if host not in ALLOWED_HOSTS:
+                return Response("Forbidden", status_code=403)
+
+            origin = request.headers.get("origin")
+            if origin is not None and origin not in ALLOWED_ORIGINS:
+                return Response("Forbidden", status_code=403)
+
+        return await call_next(request)
+
+
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(LoopbackHostOriginMiddleware)
+
+
+# ---------------------------------------------------------------------------
+# Security helpers (CSRF + origin/host checks)
+# ---------------------------------------------------------------------------
+
+CSRF_COOKIE = "taxclaw_csrf"
+
+
+def _is_loopback_host(hostname: str | None) -> bool:
+    if not hostname:
+        return False
+    h = hostname.lower()
+    return h in {"127.0.0.1", "localhost"} or h.endswith(".localhost")
+
+
+def _get_or_create_csrf_token(request: Request) -> str:
+    tok = request.cookies.get(CSRF_COOKIE)
+    if isinstance(tok, str) and tok.strip():
+        return tok
+    return secrets.token_urlsafe(32)
+
+
+def _assert_same_origin(request: Request) -> None:
+    """Basic localhost CSRF defense.
+
+    We only intend to serve loopback traffic. If the app is ever exposed beyond
+    localhost, this (plus CSRF tokens) reduces risk of drive-by POSTs.
+    """
+
+    host = request.url.hostname
+    if not _is_loopback_host(host):
+        raise ValueError("TaxClaw only allows loopback (localhost) requests")
+
+    origin = request.headers.get("origin")
+    if origin:
+        # Allow only localhost/127.0.0.1 origins (any port)
+        if not (origin.startswith("http://127.0.0.1") or origin.startswith("http://localhost")):
+            raise ValueError("invalid Origin")
+
+
+def _require_csrf(request: Request, token: str | None) -> None:
+    cookie_tok = request.cookies.get(CSRF_COOKIE)
+    if not cookie_tok or not token or token != cookie_tok:
+        raise ValueError("missing/invalid CSRF token")
+
+
+def _render(request: Request, name: str, context: dict[str, Any]) -> Response:
+    tok = _get_or_create_csrf_token(request)
+    ctx = dict(context)
+    ctx.setdefault("csrf_token", tok)
+    resp = templates.TemplateResponse(name, ctx)
+    # Double-submit cookie (HTTP-only so JS can't read it, but the form token can).
+    if request.cookies.get(CSRF_COOKIE) != tok:
+        resp.set_cookie(CSRF_COOKIE, tok, httponly=True, samesite="lax")
+    return resp
 
 
 def _ollama_model_info() -> list[dict]:
@@ -220,7 +315,8 @@ def dashboard(request: Request):
         rows = con.execute("SELECT * FROM documents ORDER BY created_at DESC LIMIT 5").fetchall()
         recent_docs = [{k: r[k] for k in r.keys()} for r in rows]
 
-    return templates.TemplateResponse(
+    return _render(
+        request,
         "dashboard.html",
         {
             "request": request,
@@ -234,7 +330,8 @@ def dashboard(request: Request):
 
 @app.get("/digital_assets", response_class=HTMLResponse)
 def digital_assets(request: Request):
-    return templates.TemplateResponse(
+    return _render(
+        request,
         "affiliate.html",
         {
             "request": request,
@@ -280,7 +377,8 @@ def documents_list(
             ).fetchall()
         ]
 
-    return templates.TemplateResponse(
+    return _render(
+        request,
         "list.html",
         {
             "request": request,
@@ -303,13 +401,13 @@ def documents_list(
 @app.get("/review", response_class=HTMLResponse)
 def review_queue(request: Request):
     docs = list_documents(needs_review=1)
-    return templates.TemplateResponse("review.html", {"request": request, "docs": docs})
+    return _render(request, "review.html", {"request": request, "docs": docs})
 
 
 @app.get("/upload", response_class=HTMLResponse)
 def upload_form(request: Request):
     cfg_now = load_config()
-    return templates.TemplateResponse("upload.html", {
+    return _render(request, "upload.html", {
         "request": request,
         "model_backend": cfg_now.model_backend,
         "cloud_model": cfg_now.cloud_model,
@@ -328,7 +426,8 @@ def settings(request: Request):
     status_level = "full_local" if cfg_now.model_backend == "local" else "partial_local"
     needs_privacy_ack = bool(cfg_now.model_backend == "cloud" and not cfg_now.privacy_acknowledged)
 
-    return templates.TemplateResponse(
+    return _render(
+        request,
         "settings.html",
         {
             "request": request,
@@ -350,12 +449,19 @@ def settings(request: Request):
 @app.post("/settings", response_class=HTMLResponse)
 async def settings_save(
     request: Request,
+    csrf_token: str = Form(...),
     model_backend: str = Form(...),
     local_model: str = Form(default=""),
     cloud_model: str = Form(default=""),
     privacy_acknowledged: str | None = Form(default=None),
 ):
     cfg_now = load_config()
+
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf_token)
+    except Exception:
+        return Response("Forbidden", status_code=403)
 
     cfg_now.model_backend = "cloud" if model_backend == "cloud" else "local"
     if local_model:
@@ -367,7 +473,8 @@ async def settings_save(
     if cfg_now.model_backend == "cloud" and not cfg_now.privacy_acknowledged:
         _lmi = _ollama_model_info()
         _vm = {m["name"] for m in _lmi if m["vision"]}
-        return templates.TemplateResponse(
+        return _render(
+            request,
             "settings.html",
             {
                 "request": request,
@@ -394,24 +501,138 @@ async def settings_save(
 @app.post("/upload")
 async def upload(
     request: Request,
+    csrf_token: str = Form(...),
     file: UploadFile = File(...),
 ):
     filer: str | None = None
     year: int | None = None
+
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf_token)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+
     if cfg.model_backend == "cloud" and not cfg.privacy_acknowledged:
         return RedirectResponse(url="/settings", status_code=303)
 
-    # save incoming upload to temp
     incoming = cfg.data_path / "incoming"
     incoming.mkdir(parents=True, exist_ok=True)
-    tmp_path = incoming / f"{uuid.uuid4()}_{file.filename}"
-    tmp_path.write_bytes(await file.read())
 
-    dest_path, file_hash, original_filename, mime_type = ingest_file(str(tmp_path), cfg, original_name=file.filename)
+    MAX_UPLOAD_MB = 50
+    MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
+
+    raw_name = file.filename or "upload"
+
+    # Sanitize for display/DB use only (never trust user-provided path segments)
+    safe_name = Path(raw_name).name
+    safe_name = safe_name.replace("..", "").replace("/", "").replace("\\", "")
+    safe_name = re.sub(r"[\x00-\x1f\x7f]", "", safe_name).strip()
+
+    ext_to_mime = {
+        ".pdf": "application/pdf",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }
+
+    claimed_ext = Path(safe_name).suffix.lower()
+    if claimed_ext not in ext_to_mime:
+        return _render(
+            request,
+            "upload.html",
+            {
+                "request": request,
+                "model_backend": cfg.model_backend,
+                "cloud_model": cfg.cloud_model,
+                "local_model": cfg.local_model,
+                "error": f"Unsupported file extension: {claimed_ext or '(none)'}",
+            },
+        )
+
     try:
-        tmp_path.unlink(missing_ok=True)
-    except Exception:
-        pass
+        data = await file.read(MAX_UPLOAD_BYTES + 1)
+        if len(data) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail=f"File too large. Max {MAX_UPLOAD_MB}MB.")
+
+        def _detect_mime(buf: bytes) -> str:
+            if buf.startswith(b"%PDF"):
+                return "application/pdf"
+            if buf.startswith(b"\x89PNG\r\n\x1a\n"):
+                return "image/png"
+            if buf.startswith(b"\xff\xd8\xff"):
+                return "image/jpeg"
+            return "application/octet-stream"
+
+        detected = _detect_mime(data[:2048])
+        expected = ext_to_mime[claimed_ext]
+        if detected != expected:
+            return _render(
+                request,
+                "upload.html",
+                {
+                    "request": request,
+                    "model_backend": cfg.model_backend,
+                    "cloud_model": cfg.cloud_model,
+                    "local_model": cfg.local_model,
+                    "error": f"Unsupported file type: {detected}",
+                },
+            )
+
+        if not safe_name:
+            safe_name = f"upload{claimed_ext}"
+
+        # Internal UUID-based path for disk writes
+        tmp_path = incoming / f"{uuid.uuid4().hex}{claimed_ext}"
+        tmp_path.write_bytes(data)
+    except HTTPException as e:
+        return _render(
+            request,
+            "upload.html",
+            {
+                "request": request,
+                "model_backend": cfg.model_backend,
+                "cloud_model": cfg.cloud_model,
+                "local_model": cfg.local_model,
+                "error": e.detail,
+            },
+        )
+    except Exception as e:
+        return _render(
+            request,
+            "upload.html",
+            {
+                "request": request,
+                "model_backend": cfg.model_backend,
+                "cloud_model": cfg.cloud_model,
+                "local_model": cfg.local_model,
+                "error": f"Upload failed: {str(e)}",
+            },
+        )
+
+    try:
+        dest_path, file_hash, original_filename, mime_type = ingest_file(str(tmp_path), cfg, original_name=safe_name)
+    except Exception as e:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+        return _render(
+            request,
+            "upload.html",
+            {
+                "request": request,
+                "model_backend": cfg.model_backend,
+                "cloud_model": cfg.cloud_model,
+                "local_model": cfg.local_model,
+                "error": f"Unsupported or unsafe upload: {str(e)}",
+            },
+        )
+    finally:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
 
     existing = get_document_by_hash(file_hash)
     if existing:
@@ -419,9 +640,15 @@ async def upload(
 
     page_count = page_count_for_pdf(dest_path) if dest_path.lower().endswith(".pdf") else 1
 
-    cls = classify_document(dest_path, cfg)
-    doc_type = cls.get("doc_type") or "unknown"
-    classification_confidence = float(cls.get("confidence") or 0.0)
+    doc_type = "unknown"
+    classification_confidence = 0.0
+    classify_note: str | None = None
+    try:
+        cls = classify_document(dest_path, cfg)
+        doc_type = cls.get("doc_type") or "unknown"
+        classification_confidence = float(cls.get("confidence") or 0.0)
+    except Exception as e:
+        classify_note = f"classification failed: {str(e)}"
 
     doc_id = create_document_record(
         cfg=cfg,
@@ -435,6 +662,9 @@ async def upload(
         page_count=page_count,
         classification_confidence=classification_confidence,
     )
+
+    if classify_note:
+        update_document_metadata(doc_id=doc_id, filer=None, tax_year=None, doc_type=None, notes=classify_note)
 
     try:
         extracted = extract_document(dest_path, doc_type, cfg)
@@ -513,7 +743,8 @@ async def upload(
 
         mark_processed(doc_id=doc_id, overall_confidence=overall, needs_review=nr)
     except Exception as e:
-        mark_needs_review(doc_id=doc_id, notes=str(e))
+        # Hard failure (including JSON parse errors) → mark error, don't crash.
+        mark_error(doc_id=doc_id, error=str(e))
 
     return RedirectResponse(url=f"/doc/{doc_id}", status_code=303)
 
@@ -546,7 +777,8 @@ def doc_detail(request: Request, doc_id: str):
             ).fetchall()
             txns = [{k: r[k] for k in r.keys()} for r in rows2]
 
-    return templates.TemplateResponse(
+    return _render(
+        request,
         "detail.html",
         {
             "request": request,
@@ -561,13 +793,21 @@ def doc_detail(request: Request, doc_id: str):
 
 @app.post("/doc/{doc_id}/update")
 async def doc_update(
+    request: Request,
     doc_id: str,
+    csrf_token: str = Form(...),
     display_name: str | None = Form(default=None),
     filer: str | None = Form(default=None),
     year: int | None = Form(default=None),
     doc_type: str | None = Form(default=None),
     notes: str | None = Form(default=None),
 ):
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf_token)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+
     # Allow clearing the name
     dn = None
     if display_name is not None:
@@ -578,7 +818,13 @@ async def doc_update(
 
 
 @app.post("/doc/{doc_id}/delete")
-def doc_delete(doc_id: str):
+def doc_delete(request: Request, doc_id: str, csrf_token: str = Form(...)):
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf_token)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+
     delete_document(doc_id)
     return RedirectResponse(url="/documents", status_code=303)
 
@@ -758,8 +1004,11 @@ def export_all_originals_zip():
                 manifest_lines.append(f"{'[FILE MISSING] ' + (orig_name or doc_id):<60} {doc_id}")
                 continue
 
-            # Deduplicate filenames in ZIP
+            # Deduplicate filenames in ZIP (and sanitize arcnames)
             zip_name = orig_name or f"{doc_id}.pdf"
+            zip_name = Path(zip_name).name
+            zip_name = zip_name.replace("..", "").replace("/", "").replace("\\", "")
+
             if zip_name in seen:
                 seen[zip_name] += 1
                 stem, _, ext = zip_name.rpartition(".")

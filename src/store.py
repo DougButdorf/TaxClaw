@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import mimetypes
 import os
 import shutil
 import uuid
@@ -15,7 +14,46 @@ from .config import Config
 from .db import db, json_dumps, row_to_dict
 
 
-MAX_BYTES = 100 * 1024 * 1024  # 100MB hard limit
+ALLOWED_UPLOAD_EXTS = {"pdf", "png", "jpg", "jpeg", "tiff", "webp"}
+
+
+def sniff_mime_type(path: Path) -> str:
+    """Best-effort file type sniffing based on magic bytes.
+
+    We avoid heavy dependencies (e.g., libmagic) and only support the formats
+    TaxClaw explicitly allows.
+    """
+
+    head = b""
+    with open(path, "rb") as f:
+        head = f.read(64)
+
+    if head.startswith(b"%PDF-"):
+        return "application/pdf"
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if head.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if head.startswith(b"II*\x00") or head.startswith(b"MM\x00*"):
+        return "image/tiff"
+    # WEBP: RIFF....WEBP
+    if len(head) >= 12 and head[0:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return "image/webp"
+
+    return "application/octet-stream"
+
+
+def _dir_size_bytes(p: Path) -> int:
+    total = 0
+    if not p.exists():
+        return 0
+    for fp in p.glob("*"):
+        try:
+            if fp.is_file():
+                total += fp.stat().st_size
+        except Exception:
+            continue
+    return total
 
 
 def sha256_file(path: str) -> str:
@@ -33,7 +71,11 @@ def _utc_now_iso() -> str:
 def ingest_file(src_path: str, cfg: Config, original_name: str | None = None) -> tuple[str, str, str, str]:
     """Copy to data_dir/files/{sha256}.{ext} and return (dest_path, file_hash, original_filename, mime_type).
 
-    Pass original_name to preserve the user's upload filename instead of the temp path name.
+    Security notes:
+    - Enforces max upload size.
+    - Enforces extension allowlist.
+    - Sniffs magic bytes to confirm declared type.
+    - Enforces a coarse total storage cap.
     """
 
     src = Path(src_path)
@@ -41,26 +83,51 @@ def ingest_file(src_path: str, cfg: Config, original_name: str | None = None) ->
         raise FileNotFoundError(src_path)
 
     size = src.stat().st_size
-    if size > MAX_BYTES:
-        raise ValueError(f"file too large ({size} bytes) — max is {MAX_BYTES}")
+    if size > int(cfg.max_upload_bytes):
+        raise ValueError(f"file too large ({size} bytes) — max is {int(cfg.max_upload_bytes)}")
+
+    original_filename = original_name or src.name
+    safe_original_name = Path(original_filename).name
+
+    # Extension allowlist (from user-visible name when provided)
+    ext = Path(safe_original_name).suffix.lower().lstrip(".") or src.suffix.lower().lstrip(".")
+    if ext == "jpg":
+        ext = "jpeg"
+
+    if ext not in ALLOWED_UPLOAD_EXTS:
+        raise ValueError(f"unsupported file type: .{ext}")
+
+    # Magic-byte sniff. We accept JPEG for both jpg/jpeg extension.
+    sniffed = sniff_mime_type(src)
+    if ext == "pdf" and sniffed != "application/pdf":
+        raise ValueError("file extension .pdf does not match detected type")
+    if ext in {"jpeg"} and sniffed != "image/jpeg":
+        raise ValueError("file extension .jpg/.jpeg does not match detected type")
+    if ext == "png" and sniffed != "image/png":
+        raise ValueError("file extension .png does not match detected type")
+    if ext == "tiff" and sniffed != "image/tiff":
+        raise ValueError("file extension .tiff does not match detected type")
+    if ext == "webp" and sniffed != "image/webp":
+        raise ValueError("file extension .webp does not match detected type")
 
     file_hash = sha256_file(str(src))
-    original_filename = original_name or src.name
-
-    ext = src.suffix.lower().lstrip(".")
-    if not ext:
-        ext = "bin"
 
     files_dir = cfg.data_path / "files"
     files_dir.mkdir(parents=True, exist_ok=True)
 
     dest_path = files_dir / f"{file_hash}.{ext}"
+
+    # Storage cap is enforced only when we would create a new stored object.
     if not dest_path.exists():
+        used = _dir_size_bytes(files_dir)
+        if used + size > int(cfg.storage_cap_bytes):
+            raise ValueError(
+                f"storage cap exceeded (used {used} bytes, adding {size} bytes, cap {int(cfg.storage_cap_bytes)} bytes)"
+            )
         shutil.copy2(str(src), str(dest_path))
 
-    mime_type, _enc = mimetypes.guess_type(str(dest_path))
-    mime_type = mime_type or "application/octet-stream"
-    return str(dest_path), file_hash, original_filename, mime_type
+    mime_type = sniffed
+    return str(dest_path), file_hash, safe_original_name, mime_type
 
 
 def create_document_record(
@@ -271,6 +338,18 @@ def mark_needs_review(*, doc_id: str, notes: str | None = None) -> None:
         con.execute(
             "UPDATE documents SET status='needs_review', needs_review=1, extracted_at=?, notes=COALESCE(?, notes) WHERE id=?",
             (_utc_now_iso(), notes, doc_id),
+        )
+
+
+def mark_error(*, doc_id: str, error: str) -> None:
+    # Keep errors short/UI-friendly; full stack traces are not shown.
+    msg = " ".join(str(error).strip().split())
+    if len(msg) > 500:
+        msg = msg[:500].rstrip() + "…"
+    with db() as con:
+        con.execute(
+            "UPDATE documents SET status='error', extracted_at=?, notes=COALESCE(?, notes) WHERE id=?",
+            (_utc_now_iso(), msg, doc_id),
         )
 
 

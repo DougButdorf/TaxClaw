@@ -25,6 +25,10 @@ class Config:
     port: int = 8421
     data_dir: str = "~/.local/share/taxclaw/"
 
+    # Security limits
+    max_upload_bytes: int = 50 * 1024 * 1024  # 50MB
+    storage_cap_bytes: int = 2 * 1024 * 1024 * 1024  # 2GB total stored originals
+
     @property
     def data_path(self) -> Path:
         return Path(_expand_path(self.data_dir))
@@ -84,6 +88,8 @@ def save_config(*, cfg: Config) -> None:
             "privacy_acknowledged": bool(cfg.privacy_acknowledged),
             "port": int(cfg.port),
             "data_dir": cfg.data_dir,
+            "max_upload_bytes": int(cfg.max_upload_bytes),
+            "storage_cap_bytes": int(cfg.storage_cap_bytes),
         }
     )
 
