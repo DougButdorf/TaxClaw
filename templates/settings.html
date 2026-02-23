@@ -71,6 +71,49 @@
           </label>
         </div>
 
+        <details style="
+          border: 1px solid rgba(148,163,184,0.22);
+          background: rgba(15,23,42,0.35);
+          border-radius: 14px;
+          padding: 12px 12px;
+        ">
+          <summary style="cursor:pointer; font-weight: 700; list-style: none;">
+            📊 How model choice affects extraction quality
+          </summary>
+          <div style="height: 10px;"></div>
+
+          <div style="display:grid; grid-template-columns: 1fr; gap: 12px; font-size: 13px;">
+            <div>
+              <div style="font-weight:700; margin-bottom: 6px;">Local (Ollama)</div>
+              <div class="muted">✅ Free · ✅ Fully private · your data never leaves this machine</div>
+              <div style="height: 8px;"></div>
+              <div class="muted" style="margin-bottom: 6px;">⚠️ Smaller models may struggle with:</div>
+              <ul class="muted" style="margin: 0 0 0 18px;">
+                <li>Complex multi-copy forms (consolidated 1099s, K-1s)</li>
+                <li>Low-quality scans or non-standard layouts</li>
+                <li>Handwritten or corrected fields</li>
+              </ul>
+              <div class="muted" style="margin-top: 8px;">Typical confidence: <code style="color: var(--text);">0.60–0.85</code> on clean PDFs</div>
+            </div>
+
+            <div>
+              <div style="font-weight:700; margin-bottom: 6px;">Cloud (Claude / OpenAI)</div>
+              <ul class="muted" style="margin: 0 0 0 18px;">
+                <li>✅ Higher accuracy on complex forms</li>
+                <li>✅ Better handling of edge cases and poor scans</li>
+                <li>✅ Confidence typically <code style="color: var(--text);">0.85–0.97</code></li>
+              </ul>
+              <div style="height: 8px;"></div>
+              <div class="muted">⚠️ Your document content leaves this machine — see <a href="/privacy">Privacy Policy</a></div>
+              <div class="muted">⚠️ Requires API key or cloud subscription</div>
+            </div>
+
+            <div class="muted">
+              💡 Tip: Use local for standard W-2s and simple 1099s. Switch to cloud for consolidated brokerage statements, K-1s, and anything that comes back with low confidence.
+            </div>
+          </div>
+        </details>
+
         <div class="row" style="justify-content: space-between;">
           <button type="submit">Save</button>
           <a class="muted" href="/">Back to documents</a>
