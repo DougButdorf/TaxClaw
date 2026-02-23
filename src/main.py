@@ -47,20 +47,32 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templa
 app = FastAPI(title="TaxClaw", version="0.1.0-beta")
 
 
-def _ollama_tags() -> list[str]:
-    """Return installed Ollama model tags, best-effort."""
+def _ollama_model_info() -> list[dict]:
+    """Return installed Ollama models with vision capability flag.
+
+    Vision models have 'clip' in their families list (e.g. llava, moondream).
+    Text-only models silently ignore images and will return all-null extractions.
+    """
     try:
         with urlopen("http://localhost:11434/api/tags", timeout=1.5) as r:
             data = json.loads(r.read().decode("utf-8"))
         models = data.get("models") or []
-        out: list[str] = []
+        out: list[dict] = []
         for m in models:
             name = m.get("name")
-            if isinstance(name, str) and name:
-                out.append(name)
-        return sorted(set(out))
+            if not isinstance(name, str) or not name:
+                continue
+            families = m.get("details", {}).get("families") or []
+            vision = "clip" in families
+            out.append({"name": name, "vision": vision})
+        return sorted(out, key=lambda x: (not x["vision"], x["name"]))  # vision models first
     except Exception:
         return []
+
+
+def _ollama_tags() -> list[str]:
+    """Return installed Ollama model names, best-effort (for backward compat)."""
+    return [m["name"] for m in _ollama_model_info()]
 
 
 def _cloud_models() -> list[str]:
@@ -178,7 +190,10 @@ def upload_form(request: Request):
 @app.get("/settings", response_class=HTMLResponse)
 def settings(request: Request):
     cfg_now = load_config()
-    local_models = _ollama_tags()
+    local_models_info = _ollama_model_info()
+    local_models = [m["name"] for m in local_models_info]
+    vision_models = {m["name"] for m in local_models_info if m["vision"]}
+    selected_is_vision = cfg_now.local_model in vision_models
 
     status_level = "full_local" if cfg_now.model_backend == "local" else "partial_local"
     needs_privacy_ack = bool(cfg_now.model_backend == "cloud" and not cfg_now.privacy_acknowledged)
@@ -189,6 +204,9 @@ def settings(request: Request):
             "request": request,
             "cfg": cfg_now,
             "local_models": local_models,
+            "local_models_info": local_models_info,
+            "vision_models": vision_models,
+            "selected_is_vision": selected_is_vision,
             "cloud_models": _cloud_models(),
             "cloud_model": cfg_now.cloud_model,
             "status_level": status_level,
@@ -217,12 +235,17 @@ async def settings_save(
     cfg_now.privacy_acknowledged = bool(privacy_acknowledged) if cfg_now.model_backend == "cloud" else False
 
     if cfg_now.model_backend == "cloud" and not cfg_now.privacy_acknowledged:
+        _lmi = _ollama_model_info()
+        _vm = {m["name"] for m in _lmi if m["vision"]}
         return templates.TemplateResponse(
             "settings.html",
             {
                 "request": request,
                 "cfg": cfg_now,
-                "local_models": _ollama_tags(),
+                "local_models": [m["name"] for m in _lmi],
+                "local_models_info": _lmi,
+                "vision_models": _vm,
+                "selected_is_vision": cfg_now.local_model in _vm,
                 "cloud_models": _cloud_models(),
                 "cloud_model": cfg_now.cloud_model,
                 "status_level": "partial_local",
