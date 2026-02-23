@@ -454,6 +454,7 @@ async def upload(
             recipient_name = None
             account_number = None
             payer_guess = None
+            filer_guess = None
             if isinstance(header, dict):
                 payer_name = header.get("payer_name")
                 recipient_name = header.get("recipient_name")
@@ -464,6 +465,14 @@ async def upload(
                     v = header.get(k)
                     if isinstance(v, str) and v.strip():
                         payer_guess = v
+                        break
+
+                # Filer = the person/entity who received this form (the taxpayer)
+                # Try recipient_name first, then form-specific fields
+                for k in ["recipient_name", "employee_name", "partner_name", "shareholder_name", "beneficiary_name"]:
+                    v = header.get(k)
+                    if isinstance(v, str) and v.strip():
+                        filer_guess = v.strip()
                         break
 
             year_guess = None
@@ -491,10 +500,13 @@ async def upload(
             with db() as con:
                 con.execute(
                     """UPDATE documents
-                       SET payer_name=COALESCE(?, payer_name), recipient_name=COALESCE(?, recipient_name), account_number=COALESCE(?, account_number),
+                       SET payer_name=COALESCE(?, payer_name),
+                           recipient_name=COALESCE(?, recipient_name),
+                           account_number=COALESCE(?, account_number),
+                           filer=COALESCE(filer, ?),
                            overall_confidence=?, needs_review=?
                        WHERE id=?""",
-                    (payer_name, recipient_name, account_number, overall, int(nr), doc_id),
+                    (payer_name, recipient_name, account_number, filer_guess, overall, int(nr), doc_id),
                 )
 
             set_display_name_if_empty(doc_id=doc_id, display_name=display_name)
