@@ -12,7 +12,7 @@ from urllib.request import urlopen
 
 import fitz
 from fastapi import FastAPI, File, Form, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from .classify import classify_document
@@ -146,9 +146,9 @@ def _format_dollar(raw: str) -> str:
         return str(raw)
 
 
-def _format_fields(fields: list[tuple[str, Any]]) -> list[tuple[str, str]]:
-    """Return (human_label, formatted_value) pairs for template rendering."""
-    result = []
+def _format_fields(fields: list[tuple[str, Any]]) -> list[tuple[str, str, str]]:
+    """Return (raw_key, human_label, formatted_value) triples for template rendering."""
+    result: list[tuple[str, str, str]] = []
     for key, val in fields:
         label = _format_field_label(key)
         if val is None or val == "" or val == "null":
@@ -156,7 +156,7 @@ def _format_fields(fields: list[tuple[str, Any]]) -> list[tuple[str, str]]:
         str_val = str(val)
         if _is_dollar_field(key):
             str_val = _format_dollar(str_val)
-        result.append((label, str_val))
+        result.append((key, label, str_val))
     return result
 
 
@@ -535,6 +535,41 @@ async def doc_update(
 def doc_delete(doc_id: str):
     delete_document(doc_id)
     return RedirectResponse(url="/documents", status_code=303)
+
+
+@app.post("/doc/{doc_id}/fields/{field_path:path}")
+async def doc_field_update(doc_id: str, field_path: str, value: str = Form(...)):
+    """Inline edit of a single extracted field value."""
+    # Normalize (UI may send surrounding whitespace)
+    v = value.strip()
+
+    with db() as con:
+        cur = con.execute(
+            "UPDATE extracted_fields SET field_value=? WHERE document_id=? AND field_path=?",
+            (v, doc_id, field_path),
+        )
+        if cur.rowcount == 0:
+            con.execute(
+                """INSERT INTO extracted_fields(id, document_id, field_path, field_value)
+                   VALUES(?, ?, ?, ?)""",
+                (str(uuid.uuid4()), doc_id, field_path, v),
+            )
+
+    return JSONResponse({"ok": True, "field_path": field_path, "value": v})
+
+
+@app.post("/doc/{doc_id}/mark-reviewed")
+def doc_mark_reviewed(doc_id: str):
+    with db() as con:
+        con.execute("UPDATE documents SET needs_review=0 WHERE id=?", (doc_id,))
+    return RedirectResponse(url=f"/doc/{doc_id}", status_code=303)
+
+
+@app.post("/doc/{doc_id}/flag-review")
+def doc_flag_review(doc_id: str):
+    with db() as con:
+        con.execute("UPDATE documents SET needs_review=1 WHERE id=?", (doc_id,))
+    return RedirectResponse(url=f"/doc/{doc_id}", status_code=303)
 
 
 @app.get("/doc/{doc_id}/download")

@@ -173,6 +173,18 @@
             </div>
 
           </div>
+
+          <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+            {% if doc.needs_review %}
+              <form method="post" action="/doc/{{ doc.id }}/mark-reviewed" style="display:inline;">
+                <button type="submit" style="font-size:12px; padding:5px 10px; opacity:.9;">✓ Mark as reviewed</button>
+              </form>
+            {% else %}
+              <form method="post" action="/doc/{{ doc.id }}/flag-review" style="display:inline;">
+                <button type="submit" style="font-size:12px; padding:5px 10px; opacity:.8;">🚩 Flag for review</button>
+              </form>
+            {% endif %}
+          </div>
         </div>
 
       </div>
@@ -236,12 +248,13 @@
           </tr>
         </thead>
         <tbody>
-          {% for label, val in fields %}
+          {% for key, label, val in fields %}
             {% set is_dollar = val and (val.startswith('$') or val.startswith('-$')) %}
-            <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <tr data-field-path="{{ key }}" data-is-dollar="{{ 1 if is_dollar else 0 }}" style="border-bottom:1px solid rgba(255,255,255,0.04);">
               <td class="muted" style="padding:7px 10px; font-size:13px;">{{ label }}</td>
-              <td style="padding:7px 10px; font-size:13px; text-align:right; {% if is_dollar %}font-variant-numeric:tabular-nums; font-weight:600; color:var(--text);{% endif %}">
-                {{ val if val else '—' }}
+              <td data-role="value-cell" style="padding:7px 10px; font-size:13px; text-align:right; {% if is_dollar %}font-variant-numeric:tabular-nums; font-weight:600; color:var(--text);{% endif %}">
+                <span data-role="value-text">{{ val if val else '—' }}</span>
+                <button type="button" data-role="edit-btn" title="Edit" style="margin-left:8px; font-size:11px; padding:2px 6px; opacity:.65; border:1px solid rgba(255,255,255,0.12); border-radius:6px; background:transparent; color:var(--muted); cursor:pointer;">✎</button>
               </td>
             </tr>
           {% endfor %}
@@ -251,6 +264,147 @@
       <div class="muted">No extracted fields stored.</div>
     {% endif %}
   </div>
+
+  <script>
+    (function() {
+      const root = document.querySelector('[data-doc-id]');
+      if (!root) return;
+      const docId = root.getAttribute('data-doc-id');
+
+      function sanitizeDollarInput(s) {
+        if (s == null) return '';
+        let t = String(s).trim();
+        // Allow user to paste "$1,234.56" or "(1,234.56)" etc.
+        t = t.replace(/[$,\s]/g, '');
+        if (t.startsWith('(') && t.endsWith(')')) {
+          t = '-' + t.slice(1, -1);
+        }
+        return t;
+      }
+
+      function enterEdit(tr) {
+        if (tr.getAttribute('data-editing') === '1') return;
+        tr.setAttribute('data-editing', '1');
+
+        const fieldPath = tr.getAttribute('data-field-path');
+        const isDollar = tr.getAttribute('data-is-dollar') === '1';
+        const td = tr.querySelector('[data-role="value-cell"]');
+        const valueText = td.querySelector('[data-role="value-text"]');
+        const editBtn = td.querySelector('[data-role="edit-btn"]');
+
+        const oldDisplay = (valueText.textContent || '').trim();
+        const oldRaw = (oldDisplay === '—') ? '' : oldDisplay;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = oldRaw;
+        input.style.width = '220px';
+        input.style.maxWidth = '100%';
+        input.style.boxSizing = 'border-box';
+        input.style.marginRight = '6px';
+
+        const save = document.createElement('button');
+        save.type = 'button';
+        save.textContent = 'Save';
+        save.style.fontSize = '12px';
+        save.style.padding = '4px 8px';
+        save.style.marginRight = '6px';
+
+        const cancel = document.createElement('button');
+        cancel.type = 'button';
+        cancel.textContent = 'Cancel';
+        cancel.style.fontSize = '12px';
+        cancel.style.padding = '4px 8px';
+        cancel.style.opacity = '0.85';
+
+        const status = document.createElement('span');
+        status.className = 'muted';
+        status.style.fontSize = '12px';
+        status.style.marginLeft = '8px';
+
+        function exitEdit(restoredText) {
+          valueText.textContent = (restoredText && restoredText.trim()) ? restoredText : '—';
+          valueText.style.display = '';
+          editBtn.style.display = '';
+          input.remove();
+          save.remove();
+          cancel.remove();
+          status.remove();
+          tr.removeAttribute('data-editing');
+        }
+
+        valueText.style.display = 'none';
+        editBtn.style.display = 'none';
+        td.appendChild(input);
+        td.appendChild(save);
+        td.appendChild(cancel);
+        td.appendChild(status);
+        input.focus();
+        input.select();
+
+        cancel.addEventListener('click', function() {
+          exitEdit(oldDisplay);
+        });
+
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            exitEdit(oldDisplay);
+          }
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            save.click();
+          }
+        });
+
+        save.addEventListener('click', async function() {
+          try {
+            save.disabled = true;
+            cancel.disabled = true;
+            status.textContent = 'Saving…';
+
+            let v = input.value;
+            if (isDollar) v = sanitizeDollarInput(v);
+
+            const body = new URLSearchParams();
+            body.set('value', v);
+
+            const resp = await fetch(`/doc/${encodeURIComponent(docId)}/fields/${encodeURIComponent(fieldPath)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: body.toString(),
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            exitEdit(data.value);
+          } catch (err) {
+            status.textContent = 'Error saving';
+            save.disabled = false;
+            cancel.disabled = false;
+          }
+        });
+      }
+
+      document.querySelectorAll('tr[data-field-path]').forEach(function(tr) {
+        const td = tr.querySelector('[data-role="value-cell"]');
+        const valueText = tr.querySelector('[data-role="value-text"]');
+        const editBtn = tr.querySelector('[data-role="edit-btn"]');
+        if (!td || !valueText || !editBtn) return;
+
+        valueText.style.cursor = 'pointer';
+        valueText.title = 'Click to edit';
+
+        valueText.addEventListener('click', function(e) {
+          e.preventDefault();
+          enterEdit(tr);
+        });
+        editBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          enterEdit(tr);
+        });
+      });
+    })();
+  </script>
 
   {% if doc.doc_type in ['1099-DA', '1099-B', 'consolidated-1099'] %}
     <div class="card" style="margin-bottom: 14px; border-color: rgba(96,165,250,0.35); background: rgba(17,24,39,0.92);">
