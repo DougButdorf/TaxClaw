@@ -1,11 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
-  {# Strip doc_type prefix from display_name if AI included it (e.g. "1099-NEC — Acme Corp") #}
+  {# Build a clean human title — strip doc_type from start or end wherever AI inserted it #}
   {% set raw_name = doc.display_name or doc.original_filename %}
-  {% if doc.doc_type and raw_name.startswith(doc.doc_type) %}
-    {% set human_name = raw_name[doc.doc_type|length:].lstrip(' \u2014-').strip() %}
-  {% else %}
-    {% set human_name = raw_name %}
+  {% set human_name = raw_name %}
+  {% if doc.doc_type %}
+    {# Strip from start: "1099-NEC — Gusto" → "Gusto" #}
+    {% if human_name.startswith(doc.doc_type) %}
+      {% set human_name = human_name[doc.doc_type|length:].lstrip(' \u2014-').strip() %}
+    {% endif %}
+    {# Strip from end: "Gusto — 1099-NEC" → "Gusto" #}
+    {% if human_name.endswith(doc.doc_type) %}
+      {% set human_name = human_name[:(human_name|length - doc.doc_type|length)].rstrip(' \u2014-').strip() %}
+    {% endif %}
   {% endif %}
 
   <div style="margin-bottom: 14px;" data-doc-id="{{ doc.id }}">
