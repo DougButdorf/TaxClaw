@@ -3,7 +3,7 @@
 **Last updated:** February 22, 2026  
 **Effective date:** February 22, 2026  
 **Publisher:** Outbranch Network LLC, a New York limited liability company  
-**Contact:** doug@outbranch.net
+**Contact:** lando@outbranch.net
 
 ---
 
@@ -123,7 +123,7 @@ If we make material changes to this Privacy Policy (for example, if a future ver
 For privacy questions or concerns:
 
 **Outbranch Network LLC**  
-Email: doug@outbranch.net  
+Email: lando@outbranch.net  
 GitHub: https://github.com/DougButdorf/TaxClaw
 
 We will respond to privacy inquiries within a reasonable time.

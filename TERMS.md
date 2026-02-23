@@ -3,7 +3,7 @@
 **Last updated:** February 22, 2026  
 **Effective date:** February 22, 2026  
 **Publisher:** Outbranch Network LLC, a New York limited liability company  
-**Contact:** doug@outbranch.net
+**Contact:** lando@outbranch.net
 
 ---
 
@@ -157,7 +157,7 @@ If any provision of these Terms is found unenforceable, the remaining provisions
 Questions about these Terms:
 
 **Outbranch Network LLC**  
-Email: doug@outbranch.net  
+Email: lando@outbranch.net  
 GitHub: https://github.com/DougButdorf/TaxClaw
 
 ---
