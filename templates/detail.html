@@ -16,14 +16,26 @@
         ⚠️ Verify all extracted values against your original document before using for tax filing.
         TaxClaw uses AI extraction — values may contain errors.
       </div>
-      <div class="row">
-      <a href="/doc/{{ doc.id }}/download" class="muted">Download original</a>
-      <a href="/doc/{{ doc.id }}/export.wide.csv" class="btn export-link" data-export="wide">Export wide CSV</a>
-      <a href="/doc/{{ doc.id }}/export.long.csv" class="btn export-link" data-export="long">Export long CSV</a>
-      <a href="/doc/{{ doc.id }}/export.json" class="btn export-link" data-export="json">Export JSON</a>
-      <form method="post" action="/doc/{{ doc.id }}/delete" onsubmit="return confirm('Delete this document? This removes it from the DB and deletes the stored file.');">
-        <button class="danger" type="submit">Delete</button>
-      </form>
+      <div class="row" style="gap: 8px; flex-wrap: wrap; align-items: center;">
+        <a href="/doc/{{ doc.id }}/download" class="btn">⬇ Download original</a>
+        <a href="/doc/{{ doc.id }}/export.wide.csv" class="btn export-link" data-export="wide">📊 Export to Spreadsheet</a>
+        <details style="display:inline-block; position:relative;">
+          <summary class="btn" style="list-style:none; cursor:pointer;">Advanced ▾</summary>
+          <div style="position:absolute; right:0; top:110%; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:6px; z-index:10; min-width:200px;">
+            <a href="/doc/{{ doc.id }}/export.long.csv" class="btn export-link" data-export="long" title="One row per field — useful for pivot tables and database imports" style="white-space:nowrap;">🗃 Data Analysis Export</a>
+            <a href="/doc/{{ doc.id }}/export.json" class="btn export-link" data-export="json" title="Raw structured data including AI extraction metadata" style="white-space:nowrap;">🛠 Developer Export (JSON)</a>
+          </div>
+        </details>
+        <span id="del-wrap">
+          <button type="button" class="danger" onclick="document.getElementById('del-confirm-{{ doc.id }}').style.display='inline-flex'; this.style.display='none';">🗑 Delete</button>
+          <span id="del-confirm-{{ doc.id }}" style="display:none; align-items:center; gap:6px;">
+            <span class="muted" style="font-size:12px;">Delete this document?</span>
+            <form method="post" action="/doc/{{ doc.id }}/delete" style="display:inline;">
+              <button class="danger" type="submit">Yes, delete</button>
+            </form>
+            <button type="button" onclick="document.getElementById('del-confirm-{{ doc.id }}').style.display='none'; document.querySelector('#del-wrap > button').style.display='inline';">Cancel</button>
+          </span>
+        </span>
       </div><!-- /inner row -->
     </div>
   </div>
