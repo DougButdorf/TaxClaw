@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import html as html_module
 import json
+import re
 import uuid
 from pathlib import Path
 from typing import Any
@@ -458,4 +460,133 @@ def export_all_as_json():
         txt,
         media_type="application/json",
         headers={"Content-Disposition": "attachment; filename=taxclaw-all.json"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Legal pages: /terms and /privacy
+# ---------------------------------------------------------------------------
+
+def _md_to_html(md_text: str) -> str:
+    """Very lightweight Markdown → HTML converter (no external deps).
+    Handles: headings, bold, horizontal rules, blockquotes, code, paragraphs.
+    """
+    lines = md_text.splitlines()
+    html_lines: list[str] = []
+
+    def inline(text: str) -> str:
+        # Escape HTML entities first
+        text = html_module.escape(text)
+        # Bold: **text**
+        text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+        # Italic: *text* (single)
+        text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
+        # Inline code: `text`
+        text = re.sub(r"`(.+?)`", r"<code>\1</code>", text)
+        # Links: [text](url)
+        text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', text)
+        return text
+
+    in_list = False
+    in_blockquote = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Horizontal rule
+        if re.match(r"^---+$", stripped):
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            if in_blockquote:
+                html_lines.append("</blockquote>")
+                in_blockquote = False
+            html_lines.append("<hr/>")
+            continue
+
+        # Headings
+        m = re.match(r"^(#{1,6})\s+(.*)", stripped)
+        if m:
+            level = len(m.group(1))
+            text = inline(m.group(2))
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            if in_blockquote:
+                html_lines.append("</blockquote>")
+                in_blockquote = False
+            html_lines.append(f"<h{level}>{text}</h{level}>")
+            continue
+
+        # Blockquote
+        if stripped.startswith("> "):
+            if not in_blockquote:
+                html_lines.append("<blockquote>")
+                in_blockquote = True
+            html_lines.append(f"<p>{inline(stripped[2:])}</p>")
+            continue
+        elif in_blockquote and stripped:
+            html_lines.append("</blockquote>")
+            in_blockquote = False
+
+        # Unordered list items
+        m2 = re.match(r"^[-*]\s+(.*)", stripped)
+        if m2:
+            if not in_list:
+                html_lines.append("<ul>")
+                in_list = True
+            html_lines.append(f"<li>{inline(m2.group(1))}</li>")
+            continue
+
+        # Numbered list items
+        m3 = re.match(r"^\d+\.\s+(.*)", stripped)
+        if m3:
+            if not in_list:
+                html_lines.append("<ol>")
+                in_list = True
+            html_lines.append(f"<li>{inline(m3.group(1))}</li>")
+            continue
+
+        # Close list on blank or non-list line
+        if in_list and not stripped:
+            html_lines.append("</ul>")
+            in_list = False
+
+        # Blank line → paragraph break
+        if not stripped:
+            html_lines.append("")
+            continue
+
+        # Regular paragraph text
+        html_lines.append(f"<p>{inline(stripped)}</p>")
+
+    if in_list:
+        html_lines.append("</ul>")
+    if in_blockquote:
+        html_lines.append("</blockquote>")
+
+    return "\n".join(html_lines)
+
+
+_TERMS_PATH = Path(__file__).parent.parent / "TERMS.md"
+_PRIVACY_PATH = Path(__file__).parent.parent / "PRIVACY.md"
+
+
+@app.get("/terms", response_class=HTMLResponse)
+def terms_page(request: Request):
+    md_text = _TERMS_PATH.read_text(encoding="utf-8") if _TERMS_PATH.exists() else "# Terms of Use\n\nNot found."
+    content_html = _md_to_html(md_text)
+    return templates.TemplateResponse(
+        "terms.html",
+        {"request": request, "title": "Terms of Use — TaxClaw", "content": content_html},
+    )
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+def privacy_page(request: Request):
+    md_text = _PRIVACY_PATH.read_text(encoding="utf-8") if _PRIVACY_PATH.exists() else "# Privacy Policy\n\nNot found."
+    content_html = _md_to_html(md_text)
+    return templates.TemplateResponse(
+        "privacy.html",
+        {"request": request, "title": "Privacy Policy — TaxClaw", "content": content_html},
     )
