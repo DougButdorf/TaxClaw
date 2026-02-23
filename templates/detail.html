@@ -132,13 +132,25 @@
   <div class="card" style="margin-bottom: 14px;">
     <h2 style="margin:0 0 10px 0; font-size: 16px;">Extracted fields</h2>
     {% if fields and fields|length > 0 %}
-      <table>
-        <thead><tr><th>Field</th><th>Value</th></tr></thead>
+      <table style="width:100%; border-collapse:collapse;">
+        <colgroup>
+          <col style="width:55%;">
+          <col style="width:45%;">
+        </colgroup>
+        <thead>
+          <tr>
+            <th style="text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; padding:6px 10px; border-bottom:1px solid var(--border);">Field</th>
+            <th style="text-align:right; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; padding:6px 10px; border-bottom:1px solid var(--border);">Value</th>
+          </tr>
+        </thead>
         <tbody>
-          {% for k,v in fields %}
-            <tr>
-              <td class="muted">{{ k }}</td>
-              <td>{{ v or '' }}</td>
+          {% for label, val in fields %}
+            {% set is_dollar = val and (val.startswith('$') or val.startswith('-$')) %}
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+              <td class="muted" style="padding:7px 10px; font-size:13px;">{{ label }}</td>
+              <td style="padding:7px 10px; font-size:13px; text-align:right; {% if is_dollar %}font-variant-numeric:tabular-nums; font-weight:600; color:var(--text);{% endif %}">
+                {{ val if val else '—' }}
+              </td>
             </tr>
           {% endfor %}
         </tbody>

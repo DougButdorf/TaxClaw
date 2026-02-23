@@ -70,6 +70,96 @@ def _ollama_model_info() -> list[dict]:
         return []
 
 
+# ---------------------------------------------------------------------------
+# Field display helpers
+# ---------------------------------------------------------------------------
+
+# Keys (exact or partial match) that represent dollar / money amounts
+_DOLLAR_KEYWORDS = frozenset([
+    "withheld", "wages", "income", "comp", "proceeds", "basis",
+    "penalty", "payment", "payments", "gain", "loss", "contributions",
+    "dividends", "royalties", "capital", "interest", "earnings",
+    "refund", "amount", "proceeds", "discount", "section_179",
+    "fees", "expense", "revenue", "salary", "bonus",
+])
+
+# Abbreviation overrides applied AFTER title-casing each word
+_LABEL_OVERRIDES: dict[str, str] = {
+    "Ein": "EIN",
+    "Tin": "TIN",
+    "Ssn": "SSN",
+    "Nec": "NEC",
+    "Da": "DA",
+    "Us": "U.S.",
+    "Amt": "AMT",
+    "Irs": "IRS",
+    "Pct": "%",
+    "Payer": "Payer",
+    "Payee": "Payee",
+}
+
+
+def _format_field_label(key: str) -> str:
+    """Convert snake_case field key to a human-readable label.
+
+    Examples:
+        employer_name     → Employer Name
+        federal_withheld  → Federal Withheld
+        nonemployee_comp  → Nonemployee NEC  (comp→NEC handled via override)
+        payer_tin         → Payer TIN
+        profit_sharing_pct → Profit Sharing %
+    """
+    words = key.replace(".", " ").replace("_", " ").split()
+    out = []
+    for w in words:
+        titled = w.title()
+        out.append(_LABEL_OVERRIDES.get(titled, titled))
+    return " ".join(out)
+
+
+def _is_dollar_field(key: str) -> bool:
+    """Return True if the field key represents a monetary amount."""
+    lower = key.lower()
+    return any(kw in lower for kw in _DOLLAR_KEYWORDS)
+
+
+def _format_dollar(raw: str) -> str:
+    """Try to format a string as a USD dollar amount.
+
+    Returns formatted string on success, original on failure.
+    """
+    if raw is None:
+        return ""
+    # Strip common noise
+    cleaned = re.sub(r"[$,\s]", "", str(raw).strip())
+    # Handle parentheses as negatives: (1234.56) → -1234.56
+    if cleaned.startswith("(") and cleaned.endswith(")"):
+        cleaned = "-" + cleaned[1:-1]
+    try:
+        val = float(cleaned)
+        # Format with commas and 2 decimal places, prepend $
+        formatted = f"${val:,.2f}"
+        if val < 0:
+            formatted = f"-${abs(val):,.2f}"
+        return formatted
+    except (ValueError, TypeError):
+        return str(raw)
+
+
+def _format_fields(fields: list[tuple[str, Any]]) -> list[tuple[str, str]]:
+    """Return (human_label, formatted_value) pairs for template rendering."""
+    result = []
+    for key, val in fields:
+        label = _format_field_label(key)
+        if val is None or val == "" or val == "null":
+            continue  # skip nulls entirely — cleaner table
+        str_val = str(val)
+        if _is_dollar_field(key):
+            str_val = _format_dollar(str_val)
+        result.append((label, str_val))
+    return result
+
+
 def _ollama_tags() -> list[str]:
     """Return installed Ollama model names, best-effort (for backward compat)."""
     return [m["name"] for m in _ollama_model_info()]
@@ -415,7 +505,7 @@ def doc_detail(request: Request, doc_id: str):
         {
             "request": request,
             "doc": doc,
-            "fields": fields,
+            "fields": _format_fields(fields),
             "extraction": extraction,
             "extraction_pretty": pretty_json(extraction) if extraction is not None else None,
             "transactions": txns,
