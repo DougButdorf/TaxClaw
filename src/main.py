@@ -254,7 +254,7 @@ async def upload(
     tmp_path = incoming / f"{uuid.uuid4()}_{file.filename}"
     tmp_path.write_bytes(await file.read())
 
-    dest_path, file_hash, original_filename, mime_type = ingest_file(str(tmp_path), cfg)
+    dest_path, file_hash, original_filename, mime_type = ingest_file(str(tmp_path), cfg, original_name=file.filename)
     try:
         tmp_path.unlink(missing_ok=True)
     except Exception:

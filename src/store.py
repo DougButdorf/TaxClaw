@@ -30,8 +30,11 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
-def ingest_file(src_path: str, cfg: Config) -> tuple[str, str, str, str]:
-    """Copy to data_dir/files/{sha256}.{ext} and return (dest_path, file_hash, original_filename, mime_type)."""
+def ingest_file(src_path: str, cfg: Config, original_name: str | None = None) -> tuple[str, str, str, str]:
+    """Copy to data_dir/files/{sha256}.{ext} and return (dest_path, file_hash, original_filename, mime_type).
+
+    Pass original_name to preserve the user's upload filename instead of the temp path name.
+    """
 
     src = Path(src_path)
     if not src.exists():
@@ -42,7 +45,7 @@ def ingest_file(src_path: str, cfg: Config) -> tuple[str, str, str, str]:
         raise ValueError(f"file too large ({size} bytes) — max is {MAX_BYTES}")
 
     file_hash = sha256_file(str(src))
-    original_filename = src.name
+    original_filename = original_name or src.name
 
     ext = src.suffix.lower().lstrip(".")
     if not ext:
