@@ -118,6 +118,48 @@ Rules:
 - For checkbox/radio: use true/false or null if not visible.
 - If this page contains exactly one transaction form, return transactions with 1 item.
 """,
+    "K-1": """You are extracting fields from US IRS Schedule K-1 (Partner's Share of Income, Deductions, Credits, etc.).
+Return JSON only. Do not hallucinate. Use null for missing/blank.
+This form may span multiple pages — extract every labeled field you can see on this page.
+
+Return object with keys:
+{
+  "tax_year": string|null,
+  "partnership_name": string|null,
+  "partnership_ein": string|null,
+  "partner_name": string|null,
+  "partner_ssn": string|null,
+  "partner_type": string|null,
+  "profit_sharing_pct": string|null,
+  "loss_sharing_pct": string|null,
+  "capital_sharing_pct": string|null,
+  "ordinary_income": string|null,
+  "net_rental_income": string|null,
+  "guaranteed_payments": string|null,
+  "interest_income": string|null,
+  "dividends": string|null,
+  "royalties": string|null,
+  "net_short_term_gain": string|null,
+  "net_long_term_gain": string|null,
+  "section_179": string|null,
+  "charitable_contributions": string|null,
+  "self_employment_earnings": string|null,
+  "other_deductions": object|null,
+  "other_credits": object|null,
+  "beginning_capital": string|null,
+  "ending_capital": string|null,
+  "capital_contributed": string|null,
+  "capital_withdrawn": string|null,
+  "foreign_transactions": object|null,
+  "amt_items": object|null,
+  "other_information": object|null
+}
+
+Formatting rules:
+- Dollar amounts: string with digits, commas optional, no $.
+- Percentages: string as seen (e.g. "33.33%").
+- For object fields: map box labels/codes to their values.
+""",
     "generic": """Extract any visible labeled fields as key-value pairs.
 Return JSON only as an object mapping labels to values.
 Do not hallucinate values.
@@ -125,10 +167,21 @@ Do not hallucinate values.
 }
 
 
+def _merge_page_dicts(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
+    """Merge update into base. Only overwrites if the existing value is None or missing."""
+    result = dict(base)
+    for k, v in update.items():
+        if k not in result or result[k] is None:
+            result[k] = v
+    return result
+
+
 def extract_document(file_path: str, doc_type: str, cfg: Config) -> dict[str, Any]:
     """LLM extraction.
 
-    For 1099-DA, attempts per-page extraction for multi-page PDFs and returns aggregated transactions.
+    For 1099-DA: per-page extraction, transactions aggregated across all pages.
+    For all other types (incl. multi-page K-1, W-2, etc.): iterate all pages and
+    merge results — later pages fill in fields that were null/missing on earlier pages.
     """
 
     prompt = PROMPTS.get(doc_type, PROMPTS["generic"])
@@ -154,10 +207,18 @@ def extract_document(file_path: str, doc_type: str, cfg: Config) -> dict[str, An
                 "is_multi_transaction": len(txns) > 1,
             }
 
-        # Default: single first page
-        img = _render_page_png(doc, 0)
-        out = chat_json_from_image(cfg=cfg, prompt=prompt, image_bytes=img)
-        return out
+        # All other form types: iterate all pages, merge fields
+        # (handles multi-page K-1, W-2 copies, etc.)
+        merged: dict[str, Any] = {}
+        for i in range(doc.page_count):
+            img = _render_page_png(doc, i)
+            out = chat_json_from_image(cfg=cfg, prompt=prompt, image_bytes=img)
+            if isinstance(out, dict):
+                merged = _merge_page_dicts(merged, out)
+            elif i == 0:
+                # First page returned a non-dict (unlikely but safe fallback)
+                return out  # type: ignore[return-value]
+        return merged
     finally:
         doc.close()
 
