@@ -94,6 +94,18 @@
     </div>
   </div>
 
+  {% if stats.crypto_docs and stats.crypto_docs > 0 %}
+    <div class="card" style="margin-bottom: 14px; border-color: rgba(96,165,250,0.35); background: rgba(17,24,39,0.92);">
+      <div class="row" style="justify-content: space-between; gap: 10px;">
+        <div>
+          <div style="font-weight: 800;">🪙 You have {{ stats.crypto_docs }} crypto tax document(s).</div>
+          <div class="muted" style="margin-top: 6px;">Cost basis reconciliation may be needed.</div>
+        </div>
+        <div><a href="/affiliate-info" class="btn">Learn about your options →</a></div>
+      </div>
+    </div>
+  {% endif %}
+
   <div class="card">
     <div class="row" style="justify-content: space-between;">
       <h2 style="margin:0; font-size: 16px;">Recent documents</h2>

@@ -5,11 +5,16 @@
       <h1 style="margin:0; font-size: 20px;">Document {{ doc.id[:8] }}</h1>
       <div class="muted">{{ doc.original_filename }} • {{ doc.doc_type }} • {{ doc.page_count }} pages</div>
     </div>
-    <div class="row">
+    <div class="row" style="flex-direction: column; align-items: flex-end; gap: 8px;">
+      <div style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.35); border-radius: 10px; padding: 8px 14px; font-size: 12px; color: var(--warn); max-width: 460px; text-align: right;">
+        ⚠️ Verify all extracted values against your original document before using for tax filing.
+        TaxClaw uses AI extraction — values may contain errors.
+      </div>
+      <div class="row">
       <a href="/doc/{{ doc.id }}/download" class="muted">Download original</a>
-      <a href="/doc/{{ doc.id }}/export.wide.csv"><button>Export wide CSV</button></a>
-      <a href="/doc/{{ doc.id }}/export.long.csv"><button>Export long CSV</button></a>
-      <a href="/doc/{{ doc.id }}/export.json"><button>Export JSON</button></a>
+      <a href="/doc/{{ doc.id }}/export.wide.csv" class="btn export-link" data-export="wide">Export wide CSV</a>
+      <a href="/doc/{{ doc.id }}/export.long.csv" class="btn export-link" data-export="long">Export long CSV</a>
+      <a href="/doc/{{ doc.id }}/export.json" class="btn export-link" data-export="json">Export JSON</a>
       <form method="post" action="/doc/{{ doc.id }}/delete" onsubmit="return confirm('Delete this document? This removes it from the DB and deletes the stored file.');">
         <button class="danger" type="submit">Delete</button>
       </form>
@@ -110,6 +115,60 @@
       <div class="muted">No extracted fields stored.</div>
     {% endif %}
   </div>
+
+  {% if doc.doc_type in ['1099-DA', '1099-B', 'consolidated-1099'] %}
+    <div class="card" style="margin-bottom: 14px; border-color: rgba(96,165,250,0.35); background: rgba(17,24,39,0.92);">
+      <div style="font-size: 16px; font-weight: 900; margin-bottom: 6px;">🪙 Got a {{ doc.doc_type }}? Your next step is cost basis reconciliation.</div>
+      <div class="muted" style="line-height: 1.6;">
+        TaxClaw extracted your proceeds — but cost basis often isn't on the form. To complete your crypto tax picture, you'll need a reconciliation tool:
+      </div>
+      <div class="row" style="margin-top: 12px; gap: 10px;">
+        <a class="btn" href="https://koinly.io/?ref=taxclaw" target="_blank" rel="noopener">→ Try Koinly</a>
+        <a class="btn" href="https://cointracker.io/?ref=taxclaw" target="_blank" rel="noopener">→ Try CoinTracker</a>
+        <a class="btn" href="https://zenledger.io/?ref=taxclaw" target="_blank" rel="noopener">→ Try ZenLedger</a>
+      </div>
+      <div class="muted" style="margin-top: 10px; font-size: 12px;">
+        ⚠️ Affiliate disclosure: TaxClaw may earn a commission if you purchase via these links. These are tools we recommend — they don't affect your extracted data.
+      </div>
+    </div>
+  {% endif %}
+
+  <div id="post-export-msg" class="muted" style="display:none; margin: 6px 0 14px 0; font-size: 13px;">
+    ✅ Export ready. If you need to reconcile cost basis, consider:
+    <a href="https://koinly.io/?ref=taxclaw" target="_blank" rel="noopener">Koinly</a> ·
+    <a href="https://cointracker.io/?ref=taxclaw" target="_blank" rel="noopener">CoinTracker</a> ·
+    <a href="https://zenledger.io/?ref=taxclaw" target="_blank" rel="noopener">ZenLedger</a>
+  </div>
+
+  <script>
+    (function () {
+      const isCrypto = {{ 'true' if doc.doc_type in ['1099-DA', '1099-B', 'consolidated-1099'] else 'false' }};
+      if (!isCrypto) return;
+
+      const msg = document.getElementById('post-export-msg');
+      const links = document.querySelectorAll('a.export-link');
+      if (!msg || !links || links.length === 0) return;
+
+      function downloadInIframe(url) {
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = url;
+        document.body.appendChild(iframe);
+        // cleanup best-effort
+        setTimeout(() => { try { iframe.remove(); } catch(e) {} }, 60000);
+      }
+
+      links.forEach((a) => {
+        a.addEventListener('click', (ev) => {
+          const kind = a.getAttribute('data-export');
+          if (kind !== 'wide' && kind !== 'long') return; // only nudge after CSV exports
+          ev.preventDefault();
+          downloadInIframe(a.href);
+          msg.style.display = 'block';
+        });
+      });
+    })();
+  </script>
 
   <div class="card">
     <h2 style="margin:0 0 10px 0; font-size: 16px;">Raw extraction JSON</h2>

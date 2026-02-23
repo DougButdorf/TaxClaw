@@ -75,11 +75,18 @@ def _get_stats() -> dict[str, int]:
                 "SELECT COUNT(*) FROM documents WHERE status='processed' AND COALESCE(needs_review, 0)=0"
             ).fetchone()[0]
         )
+        crypto_docs = int(
+            con.execute(
+                """SELECT COUNT(*) FROM documents
+                   WHERE doc_type IN ('1099-DA', '1099-B', 'consolidated-1099')"""
+            ).fetchone()[0]
+        )
     return {
         "total": total,
         "needs_review": needs_review,
         "processed": processed,
         "ready_to_export": ready_to_export,
+        "crypto_docs": crypto_docs,
     }
 
 
@@ -112,6 +119,17 @@ def dashboard(request: Request):
             "status_label": status_label,
             "status_pill_class": status_pill_class,
             "recent_docs": recent_docs,
+        },
+    )
+
+
+@app.get("/affiliate-info", response_class=HTMLResponse)
+def affiliate_info(request: Request):
+    return templates.TemplateResponse(
+        "affiliate.html",
+        {
+            "request": request,
+            "title": "Crypto tools • TaxClaw",
         },
     )
 
