@@ -55,11 +55,22 @@ def chat_json_from_image(*, cfg: Config, prompt: str, image_bytes: bytes) -> dic
         )
         text = resp["message"]["content"]
 
-    text = text.strip()
-    # Best-effort strip of code fences
+    text = text.strip().lstrip("\ufeff")
+
+    # Best-effort strip of code fences (hardened)
     if text.startswith("```"):
-        text = text.split("\n", 1)[-1]
-        if text.endswith("```"):
-            text = text.rsplit("```", 1)[0]
-        text = text.strip()
+        text = text.split("\n", 1)[-1] if "\n" in text else text[3:]
+    if "```" in text:
+        text = text[: text.rfind("```")]
+
+    text = text.strip()
+
+    # If the model prefixed/suffixed commentary, extract the first JSON object/array.
+    if not text.startswith(("{", "[")):
+        import re as _re
+
+        m = _re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", text)
+        if m:
+            text = m.group(1)
+
     return json.loads(text)
