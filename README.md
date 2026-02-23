@@ -8,6 +8,14 @@ TaxClaw turns messy tax PDFs into clean, reviewable structured data — **locall
 - 🧾 **Tax-form aware**: W-2, 1099s (incl. **1099-DA**), K-1, consolidated brokerage statements
 - 📤 **Export-ready**: wide/long CSV and JSON
 
+## 💛 Sponsor TaxClaw
+
+TaxClaw is free and open source. If it saves you time at tax season, consider sponsoring:
+
+[![Sponsor on GitHub](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github)](https://github.com/sponsors/DougButdorf)
+
+Your support helps keep TaxClaw free, local-first, and actively maintained.
+
 ## 🚀 Quick Start
 
 ### Install (OpenClaw)
