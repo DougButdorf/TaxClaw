@@ -65,8 +65,59 @@ def _cloud_models() -> list[str]:
     ]
 
 
+def _get_stats() -> dict[str, int]:
+    with db() as con:
+        total = int(con.execute("SELECT COUNT(*) FROM documents").fetchone()[0])
+        needs_review = int(con.execute("SELECT COUNT(*) FROM documents WHERE needs_review=1").fetchone()[0])
+        processed = int(con.execute("SELECT COUNT(*) FROM documents WHERE status='processed'").fetchone()[0])
+        ready_to_export = int(
+            con.execute(
+                "SELECT COUNT(*) FROM documents WHERE status='processed' AND COALESCE(needs_review, 0)=0"
+            ).fetchone()[0]
+        )
+    return {
+        "total": total,
+        "needs_review": needs_review,
+        "processed": processed,
+        "ready_to_export": ready_to_export,
+    }
+
+
+@app.get("/api/stats")
+def api_stats() -> dict[str, int]:
+    return _get_stats()
+
+
 @app.get("/", response_class=HTMLResponse)
-def home(
+def dashboard(request: Request):
+    stats = _get_stats()
+
+    cfg_now = load_config()
+    if cfg_now.model_backend == "local":
+        status_label = "🟢 FULLY LOCAL"
+        status_pill_class = "ok"
+    else:
+        status_label = "🟡 PARTIALLY LOCAL"
+        status_pill_class = "warn"
+
+    with db() as con:
+        rows = con.execute("SELECT * FROM documents ORDER BY created_at DESC LIMIT 5").fetchall()
+        recent_docs = [{k: r[k] for k in r.keys()} for r in rows]
+
+    return templates.TemplateResponse(
+        "dashboard.html",
+        {
+            "request": request,
+            "stats": stats,
+            "status_label": status_label,
+            "status_pill_class": status_pill_class,
+            "recent_docs": recent_docs,
+        },
+    )
+
+
+@app.get("/documents", response_class=HTMLResponse)
+def documents_list(
     request: Request,
     filer: str | None = None,
     year: int | None = None,
@@ -301,7 +352,7 @@ async def doc_update(
 @app.post("/doc/{doc_id}/delete")
 def doc_delete(doc_id: str):
     delete_document(doc_id)
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url="/documents", status_code=303)
 
 
 @app.get("/doc/{doc_id}/download")

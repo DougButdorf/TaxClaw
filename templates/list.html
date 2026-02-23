@@ -9,7 +9,7 @@
   </div>
 
   <div class="card" style="margin-bottom: 14px;">
-    <form method="get" action="/" class="row" style="align-items: flex-end;">
+    <form method="get" action="/documents" class="row" style="align-items: flex-end;">
       <div style="display:flex; flex-direction:column; gap:6px;">
         <label class="muted" for="filer" style="font-size:12px;">Filer</label>
         <input id="filer" name="filer" placeholder="e.g. Doug" value="{{ filters.filer }}" />
@@ -32,7 +32,7 @@
       </div>
 
       <button type="submit">Filter</button>
-      <a href="/" class="muted">Reset</a>
+      <a href="/documents" class="muted">Reset</a>
 
       <span style="flex:1"></span>
       <a href="/export.wide.csv" class="muted">Export wide CSV</a>
