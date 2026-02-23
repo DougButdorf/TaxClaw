@@ -57,32 +57,105 @@
         <div class="muted" style="margin-bottom: 6px;">Preview</div>
         <img src="/doc/{{ doc.id }}/preview.png" style="max-width: 100%; border-radius: 8px; border: 1px solid #222;" />
       </div>
-      <div style="width: 360px;">
-        <div class="muted" style="margin-bottom: 6px;">Metadata</div>
-        <form method="post" action="/doc/{{ doc.id }}/update">
-          <label class="muted">Name</label>
-          <input name="display_name" value="{{ doc.display_name or '' }}" placeholder="e.g. Brex Treasury LLC — 1099-DIV — 2023" />
-          <label class="muted">Doc type</label>
-          <input name="doc_type" value="{{ doc.doc_type or '' }}" />
-          <label class="muted">Tax year</label>
-          <input name="year" value="{{ doc.tax_year or '' }}" />
-          <label class="muted">Filer</label>
-          <input name="filer" value="{{ doc.filer or '' }}" />
-          <label class="muted">Notes</label>
-          <textarea name="notes" rows="4">{{ doc.notes or '' }}</textarea>
-          <div style="height: 8px;"></div>
-          <button type="submit">Save</button>
-        </form>
-        <div style="height: 12px;"></div>
-        <div class="row" style="gap: 18px;">
-          <div><div class="muted">Status</div><div>{{ doc.status }}</div></div>
-          <div><div class="muted">Needs review</div><div>{{ doc.needs_review }}</div></div>
+      <div style="width: 360px; display:flex; flex-direction:column; gap:16px;">
+
+        {# ── Editable fields ─────────────────────────────────────── #}
+        <div>
+          <div class="muted" style="font-size:11px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Document info</div>
+          <form method="post" action="/doc/{{ doc.id }}/update">
+            <div style="display:flex; flex-direction:column; gap:10px;">
+
+              <div>
+                <label class="muted" style="display:block; font-size:11px; margin-bottom:3px;">Name</label>
+                <input name="display_name" value="{{ doc.display_name or '' }}" placeholder="e.g. Brex Treasury — 1099-DIV — 2023" style="width:100%; box-sizing:border-box;" />
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div>
+                  <label class="muted" style="display:block; font-size:11px; margin-bottom:3px;">Doc type</label>
+                  <input name="doc_type" value="{{ doc.doc_type or '' }}" style="width:100%; box-sizing:border-box;" />
+                </div>
+                <div>
+                  <label class="muted" style="display:block; font-size:11px; margin-bottom:3px;">Tax year</label>
+                  <input name="year" value="{{ doc.tax_year or '' }}" style="width:100%; box-sizing:border-box;" />
+                </div>
+              </div>
+
+              <div>
+                <label class="muted" style="display:block; font-size:11px; margin-bottom:3px;">Filer</label>
+                <input name="filer" value="{{ doc.filer or '' }}" style="width:100%; box-sizing:border-box;" />
+              </div>
+
+              <div>
+                <label class="muted" style="display:block; font-size:11px; margin-bottom:3px;">Notes</label>
+                <textarea name="notes" rows="3" style="width:100%; box-sizing:border-box;">{{ doc.notes or '' }}</textarea>
+              </div>
+
+              <button type="submit" style="align-self:flex-start;">Save changes</button>
+            </div>
+          </form>
         </div>
-        <div style="height: 8px;"></div>
-        <div class="row" style="gap: 18px;">
-          <div><div class="muted">Classify conf</div><div>{{ '%.2f'|format(doc.classification_confidence or 0) }}</div></div>
-          <div><div class="muted">Overall conf</div><div>{{ '%.2f'|format(doc.overall_confidence or 0) }}</div></div>
+
+        {# ── Status chips ────────────────────────────────────────── #}
+        <div>
+          <div class="muted" style="font-size:11px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Status</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+
+            {# Processing status #}
+            {% if doc.status == 'processed' %}
+              {% set st_icon = '✅' %}{% set st_label = 'Processed' %}{% set st_color = 'rgba(34,197,94,0.12)' %}{% set st_border = 'rgba(34,197,94,0.35)' %}{% set st_text = '#4ade80' %}
+            {% elif doc.status == 'pending' %}
+              {% set st_icon = '⏳' %}{% set st_label = 'Pending' %}{% set st_color = 'rgba(245,158,11,0.12)' %}{% set st_border = 'rgba(245,158,11,0.35)' %}{% set st_text = 'var(--warn)' %}
+            {% else %}
+              {% set st_icon = '❌' %}{% set st_label = (doc.status or 'Unknown')|title %}{% set st_color = 'rgba(239,68,68,0.12)' %}{% set st_border = 'rgba(239,68,68,0.35)' %}{% set st_text = '#f87171' %}
+            {% endif %}
+            <div style="background:{{ st_color }}; border:1px solid {{ st_border }}; border-radius:8px; padding:10px 12px;">
+              <div class="muted" style="font-size:10px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Processing</div>
+              <div style="font-size:13px; font-weight:600; color:{{ st_text }};">{{ st_icon }} {{ st_label }}</div>
+            </div>
+
+            {# Needs review #}
+            {% if doc.needs_review %}
+              {% set nr_icon = '⚠️' %}{% set nr_label = 'Needs review' %}{% set nr_color = 'rgba(245,158,11,0.12)' %}{% set nr_border = 'rgba(245,158,11,0.35)' %}{% set nr_text = 'var(--warn)' %}
+            {% else %}
+              {% set nr_icon = '✅' %}{% set nr_label = 'Looks good' %}{% set nr_color = 'rgba(34,197,94,0.12)' %}{% set nr_border = 'rgba(34,197,94,0.35)' %}{% set nr_text = '#4ade80' %}
+            {% endif %}
+            <div style="background:{{ nr_color }}; border:1px solid {{ nr_border }}; border-radius:8px; padding:10px 12px;">
+              <div class="muted" style="font-size:10px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Review flag</div>
+              <div style="font-size:13px; font-weight:600; color:{{ nr_text }};">{{ nr_icon }} {{ nr_label }}</div>
+            </div>
+
+            {# Classification confidence #}
+            {% set cls_pct = ((doc.classification_confidence or 0) * 100)|round|int %}
+            {% if cls_pct >= 80 %}
+              {% set cls_color = 'rgba(34,197,94,0.12)' %}{% set cls_border = 'rgba(34,197,94,0.35)' %}{% set cls_text = '#4ade80' %}{% set cls_dot = '🟢' %}
+            {% elif cls_pct >= 50 %}
+              {% set cls_color = 'rgba(245,158,11,0.12)' %}{% set cls_border = 'rgba(245,158,11,0.35)' %}{% set cls_text = 'var(--warn)' %}{% set cls_dot = '🟡' %}
+            {% else %}
+              {% set cls_color = 'rgba(239,68,68,0.12)' %}{% set cls_border = 'rgba(239,68,68,0.35)' %}{% set cls_text = '#f87171' %}{% set cls_dot = '🔴' %}
+            {% endif %}
+            <div style="background:{{ cls_color }}; border:1px solid {{ cls_border }}; border-radius:8px; padding:10px 12px;">
+              <div class="muted" style="font-size:10px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Doc type confidence</div>
+              <div style="font-size:13px; font-weight:600; color:{{ cls_text }};">{{ cls_dot }} {{ cls_pct }}%</div>
+            </div>
+
+            {# Overall extraction confidence #}
+            {% set ovr_pct = ((doc.overall_confidence or 0) * 100)|round|int %}
+            {% if ovr_pct >= 80 %}
+              {% set ovr_color = 'rgba(34,197,94,0.12)' %}{% set ovr_border = 'rgba(34,197,94,0.35)' %}{% set ovr_text = '#4ade80' %}{% set ovr_dot = '🟢' %}
+            {% elif ovr_pct >= 50 %}
+              {% set ovr_color = 'rgba(245,158,11,0.12)' %}{% set ovr_border = 'rgba(245,158,11,0.35)' %}{% set ovr_text = 'var(--warn)' %}{% set ovr_dot = '🟡' %}
+            {% else %}
+              {% set ovr_color = 'rgba(239,68,68,0.12)' %}{% set ovr_border = 'rgba(239,68,68,0.35)' %}{% set ovr_text = '#f87171' %}{% set ovr_dot = '🔴' %}
+            {% endif %}
+            <div style="background:{{ ovr_color }}; border:1px solid {{ ovr_border }}; border-radius:8px; padding:10px 12px;">
+              <div class="muted" style="font-size:10px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Extraction quality</div>
+              <div style="font-size:13px; font-weight:600; color:{{ ovr_text }};">{{ ovr_dot }} {{ ovr_pct }}%</div>
+            </div>
+
+          </div>
         </div>
+
       </div>
     </div>
   </div>
