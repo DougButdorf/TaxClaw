@@ -32,7 +32,7 @@
       <a href="/doc/{{ doc.id }}/download" class="btn">⬇ Download original</a>
       <a href="/doc/{{ doc.id }}/export.wide.csv" class="btn export-link" data-export="wide">📊 Export to Spreadsheet</a>
       <details style="display:inline-block; position:relative;">
-        <summary class="btn" style="list-style:none; cursor:pointer;">Advanced ▾</summary>
+        <summary class="btn" style="list-style:none; cursor:pointer;">Advanced export ▾</summary>
         <div style="position:absolute; left:0; top:110%; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:6px; z-index:10; min-width:200px;">
           <a href="/doc/{{ doc.id }}/export.long.csv" class="btn export-link" data-export="long" title="One row per field — useful for pivot tables and database imports" style="white-space:nowrap;">🗃 Data Analysis Export</a>
           <a href="/doc/{{ doc.id }}/export.json" class="btn export-link" data-export="json" title="Raw structured data including AI extraction metadata" style="white-space:nowrap;">🛠 Developer Export (JSON)</a>
