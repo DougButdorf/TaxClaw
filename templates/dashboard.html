@@ -53,11 +53,17 @@
 
       <div class="card" style="padding: 14px;">
         <div style="font-weight: 800; margin-bottom: 6px;">④ Export</div>
-        <div class="muted" style="font-size: 13px; margin-bottom: 10px;">CSV / JSON for your spreadsheet or CPA.</div>
-        <div class="row" style="gap: 8px;">
-          <a href="/export.wide.csv" class="muted">Wide CSV</a>
-          <a href="/export.long.csv" class="muted">Long CSV</a>
-          <a href="/export.json" class="muted">JSON</a>
+        <div class="muted" style="font-size: 13px; margin-bottom: 10px;">Export extracted data or all original files.</div>
+        <div class="row" style="gap: 8px; flex-wrap: wrap;">
+          <a href="/export.wide.csv" class="muted">📊 Spreadsheet</a>
+          <a href="/export.originals.zip" class="muted">📦 All originals (.zip)</a>
+          <details style="display:inline-block;">
+            <summary class="muted" style="list-style:none; cursor:pointer;">Advanced ▾</summary>
+            <div style="margin-top:6px; display:flex; flex-direction:column; gap:4px; font-size:13px;">
+              <a href="/export.long.csv" class="muted">🗃 Data Analysis CSV</a>
+              <a href="/export.json" class="muted">🛠 JSON</a>
+            </div>
+          </details>
         </div>
       </div>
     </div>

@@ -1,15 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
   <div class="row" style="justify-content: space-between; margin-bottom: 14px;">
-    <div>
-      {% if doc.display_name %}
-        <h1 style="margin:0; font-size: 20px;">{{ doc.display_name }}</h1>
-        <div class="muted" style="font-size: 12px; margin-top: 2px;">{{ doc.id }}</div>
-      {% else %}
-        <h1 style="margin:0; font-size: 20px;">Document {{ doc.id[:8] }}</h1>
-        <div class="muted" style="font-size: 12px; margin-top: 2px;">{{ doc.id }}</div>
-      {% endif %}
-      <div class="muted">{{ doc.original_filename }} • {{ doc.doc_type }} • {{ doc.page_count }} pages</div>
+    <div data-doc-id="{{ doc.id }}">
+      <h1 style="margin:0; font-size: 20px;">{{ doc.display_name or doc.original_filename }}</h1>
+      <div class="muted" style="font-size: 13px; margin-top: 3px;">{{ doc.doc_type }} • {{ doc.page_count }} pages • {{ doc.original_filename }}</div>
     </div>
     <div class="row" style="flex-direction: column; align-items: flex-end; gap: 8px;">
       <div style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.35); border-radius: 10px; padding: 8px 14px; font-size: 12px; color: var(--warn); max-width: 460px; text-align: right;">
