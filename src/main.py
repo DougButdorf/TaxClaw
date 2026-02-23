@@ -547,6 +547,13 @@ def doc_download(doc_id: str):
 
 @app.get("/doc/{doc_id}/preview.png")
 def doc_preview_png(doc_id: str):
+    """First-page preview (kept for backward compat)."""
+    return doc_preview_page_png(doc_id, 0)
+
+
+@app.get("/doc/{doc_id}/preview/{page}.png")
+def doc_preview_page_png(doc_id: str, page: int = 0):
+    """Render a single page (0-indexed) of a document as PNG."""
     doc = get_document(doc_id)
     if not doc:
         return Response("Not found", status_code=404)
@@ -555,13 +562,17 @@ def doc_preview_png(doc_id: str):
     if path.lower().endswith(".pdf"):
         pdf = fitz.open(path)
         try:
-            page = pdf[0]
-            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+            page_count = pdf.page_count
+            if page < 0 or page >= page_count:
+                return Response("Page out of range", status_code=404)
+            pix = pdf[page].get_pixmap(matrix=fitz.Matrix(2, 2))
             return Response(pix.tobytes("png"), media_type="image/png")
         finally:
             pdf.close()
 
-    # image file
+    # Non-PDF: only page 0 makes sense
+    if page != 0:
+        return Response("Page out of range", status_code=404)
     return FileResponse(path)
 
 

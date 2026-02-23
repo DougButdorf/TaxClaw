@@ -53,9 +53,28 @@
 
   <div class="card" style="margin-bottom: 14px;">
     <div class="row" style="gap: 18px; align-items: flex-start;">
-      <div style="flex: 1;">
-        <div class="muted" style="margin-bottom: 6px;">Preview</div>
-        <img src="/doc/{{ doc.id }}/preview.png" style="max-width: 100%; border-radius: 8px; border: 1px solid #222;" />
+      <div style="flex: 1; min-width: 0;">
+        <div class="muted" style="margin-bottom: 6px;">
+          Preview
+          {% if doc.page_count and doc.page_count > 1 %}
+            <span style="margin-left:6px; font-size:11px; opacity:.6;">{{ doc.page_count }} pages</span>
+          {% endif %}
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          {% set pages = range(doc.page_count or 1) %}
+          {% for p in pages %}
+            <div style="position:relative;">
+              {% if (doc.page_count or 1) > 1 %}
+                <div style="position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.6); color:#fff; font-size:10px; padding:2px 7px; border-radius:4px; pointer-events:none;">
+                  {{ p + 1 }} / {{ doc.page_count }}
+                </div>
+              {% endif %}
+              <img src="/doc/{{ doc.id }}/preview/{{ p }}.png"
+                   loading="lazy"
+                   style="display:block; width:100%; border-radius:8px; border:1px solid #222;" />
+            </div>
+          {% endfor %}
+        </div>
       </div>
       <div style="width: 360px; display:flex; flex-direction:column; gap:16px;">
 
