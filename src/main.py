@@ -48,7 +48,7 @@ init_db()
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
-app = FastAPI(title="TaxClaw", version="0.1.0-beta")
+app = FastAPI(title="TaxClaw", version="0.1.1")
 
 
 # ---------------------------------------------------------------------------

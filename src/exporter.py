@@ -9,7 +9,7 @@ from typing import Any
 from .db import db
 
 
-TAXCLAW_VERSION = "0.1.0-beta"
+TAXCLAW_VERSION = "0.1.1"
 
 
 def _notice_generated_iso() -> str:

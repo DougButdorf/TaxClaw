@@ -8,4 +8,5 @@ source "$SKILL_DIR/venv/bin/activate"
 # Use config port if set
 PORT="${TAXCLAW_PORT:-8421}"
 
+cd "$SKILL_DIR"
 exec uvicorn src.main:app --host 127.0.0.1 --port "$PORT" --reload
