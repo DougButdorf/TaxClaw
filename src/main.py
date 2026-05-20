@@ -10,6 +10,7 @@ import uuid
 import zipfile
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 from urllib.request import urlopen
 
 import fitz
@@ -48,16 +49,12 @@ init_db()
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
-app = FastAPI(title="TaxClaw", version="0.1.1")
+app = FastAPI(title="TaxClaw", version="0.1.2")
 
 
 # ---------------------------------------------------------------------------
 # Security middleware (headers + loopback host/origin enforcement)
 # ---------------------------------------------------------------------------
-
-ALLOWED_HOSTS = {"127.0.0.1:8421", "localhost:8421"}
-ALLOWED_ORIGINS = {"http://127.0.0.1:8421", "http://localhost:8421"}
-
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -72,11 +69,12 @@ class LoopbackHostOriginMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if request.method in {"POST", "DELETE"}:
             host = (request.headers.get("host") or "").lower()
-            if host not in ALLOWED_HOSTS:
+            hostname = host.rsplit("@", 1)[-1].split(":", 1)[0]
+            if not _is_loopback_host(hostname):
                 return Response("Forbidden", status_code=403)
 
             origin = request.headers.get("origin")
-            if origin is not None and origin not in ALLOWED_ORIGINS:
+            if origin is not None and not _is_loopback_host(urlparse(origin).hostname):
                 return Response("Forbidden", status_code=403)
 
         return await call_next(request)
@@ -120,8 +118,7 @@ def _assert_same_origin(request: Request) -> None:
 
     origin = request.headers.get("origin")
     if origin:
-        # Allow only localhost/127.0.0.1 origins (any port)
-        if not (origin.startswith("http://127.0.0.1") or origin.startswith("http://localhost")):
+        if not _is_loopback_host(urlparse(origin).hostname):
             raise ValueError("invalid Origin")
 
 
@@ -519,8 +516,8 @@ async def upload(
     incoming = cfg.data_path / "incoming"
     incoming.mkdir(parents=True, exist_ok=True)
 
-    MAX_UPLOAD_MB = 50
-    MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
+    max_upload_bytes = int(cfg.max_upload_bytes)
+    max_upload_mb = max_upload_bytes / (1024 * 1024)
 
     raw_name = file.filename or "upload"
 
@@ -534,6 +531,9 @@ async def upload(
         ".png": "image/png",
         ".jpg": "image/jpeg",
         ".jpeg": "image/jpeg",
+        ".tif": "image/tiff",
+        ".tiff": "image/tiff",
+        ".webp": "image/webp",
     }
 
     claimed_ext = Path(safe_name).suffix.lower()
@@ -551,9 +551,9 @@ async def upload(
         )
 
     try:
-        data = await file.read(MAX_UPLOAD_BYTES + 1)
-        if len(data) > MAX_UPLOAD_BYTES:
-            raise HTTPException(status_code=413, detail=f"File too large. Max {MAX_UPLOAD_MB}MB.")
+        data = await file.read(max_upload_bytes + 1)
+        if len(data) > max_upload_bytes:
+            raise HTTPException(status_code=413, detail=f"File too large. Max {max_upload_mb:.0f}MB.")
 
         def _detect_mime(buf: bytes) -> str:
             if buf.startswith(b"%PDF"):
@@ -562,6 +562,10 @@ async def upload(
                 return "image/png"
             if buf.startswith(b"\xff\xd8\xff"):
                 return "image/jpeg"
+            if buf.startswith(b"II*\x00") or buf.startswith(b"MM\x00*"):
+                return "image/tiff"
+            if len(buf) >= 12 and buf[0:4] == b"RIFF" and buf[8:12] == b"WEBP":
+                return "image/webp"
             return "application/octet-stream"
 
         detected = _detect_mime(data[:2048])

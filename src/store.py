@@ -93,6 +93,8 @@ def ingest_file(src_path: str, cfg: Config, original_name: str | None = None) ->
     ext = Path(safe_original_name).suffix.lower().lstrip(".") or src.suffix.lower().lstrip(".")
     if ext == "jpg":
         ext = "jpeg"
+    if ext == "tif":
+        ext = "tiff"
 
     if ext not in ALLOWED_UPLOAD_EXTS:
         raise ValueError(f"unsupported file type: .{ext}")
