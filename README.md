@@ -39,6 +39,10 @@ cd ~/.openclaw/workspace/skills/taxclaw
 # then open: http://localhost:8421
 ```
 
+Requirements: Python 3.10+ and pip. If your system `python3` is older,
+`setup.sh` will look for `python3.10` through `python3.14`; you can also
+set `TAXCLAW_PYTHON=/path/to/python3.10+`.
+
 ## 📋 What It Does
 
 1) 📥 **Upload** a PDF (or image)
@@ -57,7 +61,7 @@ Tax documents are extremely sensitive.
 You can configure the backend + model via the settings UI:
 - `http://localhost:8421/settings`
 
-## 🤖 Supported Forms (v0.1)
+## 🤖 Supported Forms (v0.1.2)
 
 | Form | Supported | Notes |
 |---|---:|---|

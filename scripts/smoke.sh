@@ -2,6 +2,10 @@
 set -euo pipefail
 
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TMP_HOME="$(mktemp -d)"
+trap 'rm -rf "$TMP_HOME"' EXIT
+
+export HOME="$TMP_HOME"
 
 echo "[smoke] python version: $(python3 -V)"
 

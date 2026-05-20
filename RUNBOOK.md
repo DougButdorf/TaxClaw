@@ -1,4 +1,4 @@
-# TaxClaw v0.1 Runbook
+# TaxClaw v0.1.2 Runbook
 
 ## Setup
 
@@ -9,6 +9,10 @@ bash setup.sh
 # Config is created (if missing) at:
 #   ~/.config/taxclaw/config.yaml
 ```
+
+TaxClaw requires Python 3.10+. If `python3` points to an older interpreter,
+`setup.sh` will try `python3.10` through `python3.14`. Override with
+`TAXCLAW_PYTHON=/path/to/python3.10+ bash setup.sh` when needed.
 
 ## Start the web UI
 

@@ -1,6 +1,6 @@
 ---
 name: taxclaw
-version: "0.1.1"
+version: "0.1.2"
 description: "Extract, store, and export tax documents (W-2, 1099-DA, all 1099 variants, K-1) using AI. Local-first — your documents never leave your machine. Web UI at localhost:8421."
 argument-hint: "open TaxClaw, extract my 1099, parse this tax form, process my W-2"
 allowed-tools: Bash, Read, Write
@@ -31,7 +31,7 @@ TaxClaw declares the following permissions transparently. Review before installi
 - Phone home, send telemetry, or contact external servers (default mode)
 - Store or transmit SSN, EIN, or account numbers to any third party
 
-**If you enable cloud mode (Claude):** A mandatory privacy warning is displayed. You must explicitly set `cloud_acknowledged: true` in config before processing begins.
+**If you enable cloud mode (Claude):** A mandatory privacy warning is displayed. You must explicitly set `privacy_acknowledged: true` in config before processing begins.
 
 **Audit this skill:** Source code is fully open at [github.com/DougButdorf/TaxClaw](https://github.com/DougButdorf/TaxClaw) (MIT License). Read it before you install it.
 
