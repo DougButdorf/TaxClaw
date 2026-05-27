@@ -68,8 +68,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 class LoopbackHostOriginMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if request.method in {"POST", "DELETE"}:
-            host = (request.headers.get("host") or "").lower()
-            hostname = host.rsplit("@", 1)[-1].split(":", 1)[0]
+            hostname = _host_header_hostname(request)
             if not _is_loopback_host(hostname):
                 return Response("Forbidden", status_code=403)
 
@@ -98,6 +97,11 @@ def _is_loopback_host(hostname: str | None) -> bool:
     return h in {"127.0.0.1", "localhost"} or h.endswith(".localhost")
 
 
+def _host_header_hostname(request: Request) -> str | None:
+    host = (request.headers.get("host") or "").lower()
+    return host.rsplit("@", 1)[-1].split(":", 1)[0]
+
+
 def _get_or_create_csrf_token(request: Request) -> str:
     tok = request.cookies.get(CSRF_COOKIE)
     if isinstance(tok, str) and tok.strip():
@@ -112,7 +116,7 @@ def _assert_same_origin(request: Request) -> None:
     localhost, this (plus CSRF tokens) reduces risk of drive-by POSTs.
     """
 
-    host = request.url.hostname
+    host = _host_header_hostname(request)
     if not _is_loopback_host(host):
         raise ValueError("TaxClaw only allows loopback (localhost) requests")
 
