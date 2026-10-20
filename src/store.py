@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
-import fitz
+import pymupdf
 
 from .config import Config
 from .db import db, json_dumps, row_to_dict
@@ -451,7 +451,7 @@ def delete_document(doc_id: str) -> None:
 
 
 def page_count_for_pdf(path: str) -> int:
-    doc = fitz.open(path)
+    doc = pymupdf.open(path)
     try:
         return doc.page_count
     finally:

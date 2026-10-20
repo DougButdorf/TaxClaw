@@ -39,9 +39,9 @@ cd ~/.openclaw/workspace/skills/taxclaw
 # then open: http://localhost:8421
 ```
 
-Requirements: Python 3.10+ and pip. If your system `python3` is older,
-`setup.sh` will look for `python3.10` through `python3.14`; you can also
-set `TAXCLAW_PYTHON=/path/to/python3.10+`.
+Requirements: Python 3.11+ and pip. If your system `python3` is older,
+`setup.sh` will look for `python3.11` through `python3.14`; you can also
+set `TAXCLAW_PYTHON=/path/to/python3.11+`.
 
 ## 📋 What It Does
 

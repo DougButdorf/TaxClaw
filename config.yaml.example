@@ -1,6 +1,6 @@
 model_backend: local  # local or cloud
 local_model: llama3.2  # ollama model name
-cloud_model: claude-haiku-4-5
+cloud_model: claude-haiku-5-5
 cloud_api_key: ""  # or use ANTHROPIC_API_KEY env var
 privacy_acknowledged: false
 port: 8421
