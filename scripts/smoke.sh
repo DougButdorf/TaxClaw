@@ -73,8 +73,10 @@ assert ing["ok"] is False and ing["stage"] == "backend" and "Ollama is not reach
 m = json.loads((w / "models.json").read_text())
 t1, t2, t3 = m["tiers"]
 assert (t1["tier"], t2["tier"], t3["tier"]) == (1, 2, 3)
-assert t1["ollama_reachable"] is False and t1["recommended"][0]["model"] == "gemma3:4b", t1
-assert t1["recommended"][0]["pull_command"] == "ollama pull gemma3:4b"
+# The recommendation depends on host RAM (gemma3:4b up to 16 GB, gemma3:12b on 32 GB+ hosts).
+rec = t1["recommended"][0]
+assert t1["ollama_reachable"] is False and rec["model"] in ("gemma3:4b", "gemma3:12b"), t1
+assert rec["pull_command"] == f"ollama pull {rec['model']}", rec
 assert t2["presence_only"] is True
 for p in t2["providers"]:
     assert all(isinstance(v, bool) for v in p["env_presence"].values()), p

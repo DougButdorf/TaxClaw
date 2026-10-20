@@ -25,7 +25,7 @@ from typing import Any
 
 import httpx
 
-from .ai import parse_json_text
+from .ai import parse_json_text, privacy_error
 from .config import Config, normalize_backend
 
 HTTP_TIMEOUT = httpx.Timeout(180.0, connect=15.0)
@@ -86,6 +86,12 @@ class Backend:
 
     def ensure_ready(self) -> None:  # pragma: no cover - overridden
         raise NotImplementedError
+
+    def _require_privacy_ack(self) -> None:
+        # Defense in depth: every cloud backend refuses to run until the user has
+        # acknowledged the privacy warning, even when called directly (not via src.ai).
+        if self.is_cloud and not self.cfg.privacy_acknowledged:
+            raise RuntimeError(privacy_error(self.cfg))
 
     def chat_json(self, *, prompt: str, image_bytes: bytes, schema: dict[str, Any] | None = None) -> Any:
         raise NotImplementedError  # pragma: no cover
@@ -161,6 +167,7 @@ class AnthropicBackend(Backend):
     name = "anthropic"
 
     def ensure_ready(self) -> None:
+        self._require_privacy_ack()
         if not self.cfg.cloud_api_key:
             raise RuntimeError("Anthropic backend selected but no key found: set the ANTHROPIC_API_KEY environment variable")
         if not self.cfg.cloud_model:
@@ -216,6 +223,7 @@ class OpenAICompatBackend(Backend):
         return self.cfg.openai_compat_resolved_base_url()
 
     def ensure_ready(self) -> None:
+        self._require_privacy_ack()
         envs = self.cfg.openai_compat_key_envs()
         if not self.base_url:
             raise RuntimeError("openai_compat backend needs openai_compat_base_url (or a provider preset: openai, openrouter, gemini)")
@@ -309,6 +317,7 @@ class ClairicBackend(Backend):
         self._transport = transport
 
     def ensure_ready(self) -> None:
+        self._require_privacy_ack()
         missing = []
         if not self.cfg.cloudflare_resolved_account_id():
             missing.append("CLOUDFLARE_ACCOUNT_ID (env) or cloudflare_account_id (config)")

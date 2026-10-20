@@ -55,6 +55,15 @@ class ConfigTest(CleanEnv):
                 ensure_backend_ready(Config(model_backend=b, privacy_acknowledged=False))
             self.assertIn("privacy", str(cm.exception).lower())
 
+    def test_privacy_required_when_backend_called_directly(self):
+        # extract/classify call get_backend(cfg) directly, bypassing src.ai; the
+        # backend itself must refuse before any key/model checks or network use.
+        for b in ("anthropic", "openai_compat", "cloudflare_clairic", "cloud"):
+            backend = get_backend(Config(model_backend=b, privacy_acknowledged=False))
+            with self.assertRaises(RuntimeError) as cm:
+                backend.ensure_ready()
+            self.assertIn("privacy", str(cm.exception).lower(), b)
+
     def test_openai_compat_presets(self):
         c = Config(openai_compat_provider="gemini")
         self.assertEqual(c.openai_compat_resolved_base_url(), "https://generativelanguage.googleapis.com/v1beta/openai")
