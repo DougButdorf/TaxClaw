@@ -253,6 +253,8 @@ def summarize(output: Path) -> dict:
         receipt = json.loads((output / "scoring.json").read_text())
         if receipt["raw_results_sha256"] != digest(output / "results.jsonl"):
             raise SystemExit("Raw results changed since regrading; regrade again")
+        if receipt["grader_sha256"] != digest(Path(__file__).with_name("grader.py")):
+            raise SystemExit("Grader changed since regrading; regrade again")
     models = {}
     for name in dict.fromkeys(r["model"] for r in records):
         subset = [r for r in records if r["model"] == name]
