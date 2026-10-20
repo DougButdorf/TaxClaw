@@ -22,6 +22,66 @@
     </div>
   {% endif %}
 
+  <!-- First-run doctor: the same three paths as `taxclaw doctor` -->
+  <div class="card" style="margin-bottom: 14px;" id="doctor">
+    <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">Where do your documents go? Three paths</div>
+    <div class="muted" style="font-size: 13px; margin-bottom: 10px;">
+      Same checks as <code>taxclaw doctor</code> (read-only). Nothing is installed, downloaded or sent until you choose.
+      TaxClaw never switches from local to cloud on its own.
+    </div>
+
+    <div style="margin-bottom: 12px;" id="path-local">
+      <div style="font-weight:700;">Path 1 · Local, on this machine <span class="muted" style="font-weight:400;">(private: documents never leave it)</span></div>
+      <div style="font-size: 13px; margin-top: 4px;">
+        <strong>{{ doctor.local.state_label }}</strong>{% if doctor.local.model %} — model <code>{{ doctor.local.model }}</code> via Ollama at <code>{{ doctor.local.ollama_host }}</code>{% endif %}
+      </div>
+      <div class="muted" style="font-size: 13px;">
+        This machine: {% if doctor.local.this_machine.ram_gb %}{{ doctor.local.this_machine.ram_gb }} GB RAM{% else %}RAM unknown{% endif %}{% if doctor.local.this_machine.free_disk_gb is not none %}, {{ doctor.local.this_machine.free_disk_gb }} GB free disk{% endif %}.
+        {% if not doctor.local.ready %}Recommended: <code>{{ doctor.local.recommended.model }}</code>{% if doctor.local.recommended.approx_download %} ({{ doctor.local.recommended.approx_download }} download){% endif %}.{% endif %}
+      </div>
+      {% for w in doctor.local.warnings %}
+        <div style="margin-top:6px; padding:8px 10px; border-radius:8px; border:1px solid rgba(245,158,11,0.5); background:rgba(245,158,11,0.08); font-size:13px; color:#f59e0b;">⚠️ {{ w }}</div>
+      {% endfor %}
+      <div style="font-size: 13px; margin-top: 4px;"><strong>Next step:</strong> {{ doctor.local.next_step }}</div>
+    </div>
+
+    <div style="margin-bottom: 12px;" id="path-cloud">
+      <div style="font-weight:700;">Path 2 · Cloud with your own API keys <span class="muted" style="font-weight:400;">(documents leave this machine)</span></div>
+      {% if doctor.current.is_cloud %}
+        <div style="font-size: 13px; margin-top: 4px;">
+          Currently using <strong>{{ doctor.current.provider }}</strong> ({{ doctor.current.model or "no model set" }}).
+          {% if doctor.current.privacy_acknowledged_at %}
+            Consent recorded <strong>{{ doctor.current.privacy_acknowledged_at }}</strong> for {{ doctor.current.consent_provider or doctor.current.provider }}.
+          {% elif doctor.current.privacy_acknowledged %}
+            Consent given, but no timestamp is recorded (older config). Save this page again to record one.
+          {% else %}
+            <strong>No consent recorded</strong>, so extraction is blocked until you confirm below.
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="muted" style="font-size: 13px; margin-top: 4px;">No cloud consent recorded. Documents stay on this machine.</div>
+      {% endif %}
+      {% if doctor.cloud.usable %}
+        <ol style="font-size: 13px; margin: 6px 0 0 18px;">
+          {% for p in doctor.cloud.usable %}
+            <li><strong>{{ p.label }}</strong>{% if p.model %} — <code>{{ p.model }}</code>{% endif %} — {{ p.evidence }}</li>
+          {% endfor %}
+        </ol>
+        <div class="muted" style="font-size: 12px;">Providers whose key is present (presence only), best to worst.</div>
+      {% else %}
+        <div class="muted" style="font-size: 13px; margin-top: 4px;">No cloud API keys found in TaxClaw's environment (checked by presence only).</div>
+      {% endif %}
+      <div class="muted" style="font-size: 13px; margin-top: 4px;">What would be sent: {{ doctor.cloud.what_is_sent }}</div>
+      <div class="muted" style="font-size: 13px; margin-top: 4px;">To switch, choose a provider in Tier 2 or 3 below and tick the privacy confirmation; saving records your consent with the time and provider.</div>
+    </div>
+
+    <div id="path-hosted">
+      <div style="font-weight:700;">Path 3 · TaxClaw Cloud (hosted)</div>
+      <div style="font-size: 13px; margin-top: 4px;">{{ doctor.hosted.message }}</div>
+      {% if doctor.hosted.consent %}<div class="muted" style="font-size: 13px;">{{ doctor.hosted.consent }}</div>{% endif %}
+    </div>
+  </div>
+
   <form method="post" action="/settings" id="settings-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
 
@@ -168,6 +228,9 @@
           </div>
         </span>
       </label>
+      {% if cfg.privacy_acknowledged and cfg.privacy_acknowledged_at %}
+        <div class="muted" style="font-size: 13px; margin: 8px 0 0 26px;" id="consent-recorded">Consent recorded: <strong>{{ cfg.privacy_acknowledged_at }}</strong>{% if cfg.cloud_provider %} for {{ cfg.cloud_provider }}{% endif %}. Choosing Tier 1 and saving withdraws it.</div>
+      {% endif %}
     </div>
 
     <div class="muted" style="font-size: 12px; margin-bottom: 10px;">

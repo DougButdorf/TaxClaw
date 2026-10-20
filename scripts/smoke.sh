@@ -99,6 +99,56 @@ PYTHONPATH="$SKILL_DIR" "$PY" -P -m unittest discover -s "$SKILL_DIR/tests" -t "
   || { cat "$OTHER_CWD/unittest.err" >&2; fail "unit tests"; }
 echo "[smoke] unit tests ok ($(grep -Eo 'Ran [0-9]+ tests' "$OTHER_CWD/unittest.err"))"
 
+# 3e) First-run doctor with no model: read-only, three paths, never switches to cloud.
+CONFIG_BEFORE="$(cat "$HOME/.config/taxclaw/config.yaml")"
+"$SKILL_DIR/bin/taxclaw" doctor > "$OTHER_CWD/doctor.txt" 2> "$OTHER_CWD/doctor.err" || { cat "$OTHER_CWD/doctor.err" >&2; fail "taxclaw doctor"; }
+"$SKILL_DIR/bin/taxclaw" doctor --json > "$OTHER_CWD/doctor.json" || fail "taxclaw doctor --json"
+"$SKILL_DIR/bin/taxclaw" setup --json > "$OTHER_CWD/setup.json" || fail "taxclaw setup --json (alias)"
+for marker in "PATH 1 - Local" "PATH 2 - Cloud with your own API keys" "PATH 3 - TaxClaw Cloud" "coming soon" "Next step:"; do
+  grep -q "$marker" "$OTHER_CWD/doctor.txt" || { cat "$OTHER_CWD/doctor.txt" >&2; fail "doctor text is missing: $marker"; }
+done
+if grep -Eq '\$0\.10|x402|free pages' "$OTHER_CWD/doctor.txt"; then fail "doctor advertises hosted pricing while hosted is disabled"; fi
+# Same check with ollama off PATH (and no server): the install path, with the link.
+EMPTY_BIN="$(mktemp -d)"
+NO_OLLAMA_PATH="$EMPTY_BIN:/usr/bin:/bin"
+if PATH="$NO_OLLAMA_PATH" command -v ollama >/dev/null 2>&1; then
+  echo "[smoke] note: ollama is on the minimal PATH here; skipping the ollama_missing assertion"
+  NO_OLLAMA_STATE="skip"
+else
+  PATH="$NO_OLLAMA_PATH" "$SKILL_DIR/bin/taxclaw" doctor --json > "$OTHER_CWD/doctor-no-ollama.json" || fail "doctor --json without ollama on PATH"
+  NO_OLLAMA_STATE="check"
+fi
+rmdir "$EMPTY_BIN"
+"$PY" -I - "$OTHER_CWD" "$NO_OLLAMA_STATE" <<'PY' || fail "doctor --json"
+import json, sys
+from pathlib import Path
+w = Path(sys.argv[1])
+d = json.loads((w / "doctor.json").read_text())
+assert json.loads((w / "setup.json").read_text())["local"]["state"] == d["local"]["state"]
+assert d["read_only"] is True and d["ready"] is False, d["ready"]
+assert d["local"]["state"] in ("ollama_missing", "server_unreachable"), d["local"]["state"]
+assert d["local"]["next_step"] and d["next_step"] == d["local"]["next_step"]
+assert d["current"]["backend"] == "local" and d["current"]["documents_left_machine"] is False
+assert d["current"]["privacy_acknowledged"] is False and d["current"]["privacy_acknowledged_at"] is None
+assert d["cloud"]["usable"] == [], d["cloud"]["usable"]
+assert d["hosted"]["status"] == "coming_soon" and d["hosted"]["enabled"] is False and "pricing" not in d["hosted"]
+assert any("Never choose cloud" in r for r in d["agent_rules"])
+if sys.argv[2] == "check":
+    n = json.loads((w / "doctor-no-ollama.json").read_text())["local"]
+    assert n["state"] == "ollama_missing", n["state"]
+    assert "https://ollama.com/download" in n["next_step"] and "new terminal" in n["next_step"], n["next_step"]
+PY
+[ "$(cat "$HOME/.config/taxclaw/config.yaml")" = "$CONFIG_BEFORE" ] || fail "doctor changed the config"
+# use-cloud refuses without --accept-privacy: prints the privacy text, exits 2, leaves config alone.
+set +e
+"$SKILL_DIR/bin/taxclaw" use-cloud anthropic > "$OTHER_CWD/usecloud.out" 2> "$OTHER_CWD/usecloud.err"
+rc=$?
+set -e
+[ "$rc" -eq 2 ] || fail "use-cloud without --accept-privacy should exit 2 (got $rc)"
+grep -q "PRIVACY NOTICE" "$OTHER_CWD/usecloud.out" || fail "use-cloud privacy text"
+[ "$(cat "$HOME/.config/taxclaw/config.yaml")" = "$CONFIG_BEFORE" ] || fail "refused use-cloud changed the config"
+echo "[smoke] doctor / setup (text + --json, no model), ollama-missing path, use-cloud refusal ok"
+
 # 3d) MCP server over stdio with a real client: initialize, list tools, list_models, list_documents.
 "$PY" -P "$SKILL_DIR/tests/mcp_stdio_client.py" --server "$SKILL_DIR/bin/taxclaw" > "$OTHER_CWD/mcp.out" 2> "$OTHER_CWD/mcp.err" \
   || { cat "$OTHER_CWD/mcp.out" "$OTHER_CWD/mcp.err" >&2; fail "MCP stdio client"; }
@@ -194,7 +244,10 @@ assert len(docs) == 1 and docs[0]["id"] == doc_id, docs
 fields = {f["field_path"]: f["field_value"] for f in docs[0]["extracted_fields"]}
 assert fields.get("wages") == "54321.00", fields
 assert docs[0]["extraction"] == extraction
-print("[smoke] export_all_json includes extracted fields ok")
+pb = data["_taxclaw_notice"]["processed_by"]
+assert (pb["backend"], pb["documents_left_machine"]) == ("local", False), pb
+assert docs[0]["processed_by"]["model"] == "gemma3:4b" and docs[0]["processed_by"]["documents_left_machine"] is False, docs[0]["processed_by"]
+print("[smoke] export_all_json includes extracted fields and processed_by ok")
 
 # Accountant exports from stored 1099-B lots and 1099-DA transactions (no model).
 from src.accountant_exports import build_8949, export_txf
@@ -231,6 +284,7 @@ mark_processed(doc_id=da_id, overall_confidence=0.9, needs_review=False)
 
 e = build_8949(None)
 assert (e.rows, e.needs_review) == (4, 2), (e.rows, e.needs_review)
+assert "# Processed by: local / gemma3:4b (ollama). Documents left this machine: no." in e.content, e.content[:600]
 assert "\nA,I,short,40 SH INITECH,08/01/2025,09/15/2025,800.00,1000.00,W,150.00,-50.00," in e.content, e.content
 assert "\nK,II,long,0.01 BTC,01/01/2023,02/02/2025,950.00,,,,," in e.content, e.content
 t = export_txf(None)
@@ -254,8 +308,10 @@ assert client.get("/api/stats").status_code == 200
 assert client.get("/affiliate-info", follow_redirects=False).status_code == 301
 settings_html = client.get("/settings").text
 assert "not reachable" in settings_html and "127.0.0.1:9" in settings_html
-for marker in ("Tier 1", "Tier 2", "Tier 3", 'value="anthropic"', 'value="openai_compat"', 'value="cloudflare_clairic"', "privacy-ack"):
+for marker in ("Tier 1", "Tier 2", "Tier 3", 'value="anthropic"', 'value="openai_compat"', 'value="cloudflare_clairic"', "privacy-ack",
+               "Path 1 · Local", "Path 2 · Cloud with your own API keys", "Path 3 · TaxClaw Cloud", "coming soon", "No cloud consent recorded"):
     assert marker in settings_html, marker
+assert "$0.10 per page" not in settings_html and "x402" not in settings_html and "10 free pages" not in settings_html
 assert "sponsors" not in client.get("/").text.lower()
 print(f"[smoke] {len(routes)} HTML routes returned 200 (Settings shows tiers 1-3)")
 
@@ -273,6 +329,7 @@ for path in ("/export.8949.csv", "/export.txf", f"/doc/{cons_id}/export.8949.csv
     resp = client.get(f"{path}?csrf={tok0}")
     assert resp.status_code == 200, (path, resp.status_code)
     assert "Not tax advice" in resp.headers.get("x-taxclaw-notice", ""), path
+    assert "Documents left this machine: no" in resp.headers.get("x-taxclaw-processed-by", ""), path
     assert "attachment" in resp.headers.get("content-disposition", ""), path
 assert client.get(f"/doc/no-such-doc/export.txf?csrf={tok0}").status_code == 404
 r = client.get(f"/export.txf?csrf={tok0}")
@@ -299,9 +356,13 @@ r = client.post("/settings", data={"csrf_token": tok, "model_backend": "openai_c
 assert r.status_code == 303, r.status_code
 c = _load()
 assert (c.backend, c.openai_compat_provider, c.privacy_acknowledged) == ("openai_compat", "openrouter", True), c
-assert client.get("/settings").status_code == 200
+assert c.cloud_provider == "openrouter" and c.privacy_acknowledged_at.endswith("+00:00"), (c.cloud_provider, c.privacy_acknowledged_at)
+consent_at = c.privacy_acknowledged_at
+page = client.get("/settings").text
+assert page.count(consent_at) >= 2 and "Consent recorded" in page, "settings shows the consent timestamp"
 r = client.post("/settings", data={"csrf_token": tok, "model_backend": "local", "local_model": "gemma3:4b"}, follow_redirects=False)
 assert r.status_code == 303 and _load().backend == "local" and _load().privacy_acknowledged is False
+assert _load().privacy_acknowledged_at == "" and _load().cloud_provider == "", "switching to local withdraws the consent record"
 print("[smoke] settings: cloud choices require privacy ack; save/restore ok")
 PY
 

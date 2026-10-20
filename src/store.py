@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import shutil
 import uuid
@@ -12,6 +13,7 @@ import pymupdf
 
 from .config import Config
 from .db import db, json_dumps, row_to_dict
+from .provenance import processed_by_for
 
 
 ALLOWED_UPLOAD_EXTS = {"pdf", "png", "jpg", "jpeg", "tiff", "webp"}
@@ -190,8 +192,8 @@ def create_document_record(
             """INSERT INTO documents (
                 id, file_path, file_hash, original_filename, mime_type,
                 tax_year, doc_type, filer,
-                page_count, status, classification_confidence
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'processing', ?)""",
+                page_count, status, classification_confidence, processed_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'processing', ?, ?)""",
             (
                 doc_id,
                 file_path,
@@ -203,6 +205,7 @@ def create_document_record(
                 filer,
                 page_count,
                 classification_confidence,
+                json.dumps(processed_by_for(cfg), separators=(",", ":")),
             ),
         )
     return doc_id

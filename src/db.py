@@ -37,7 +37,10 @@ CREATE TABLE IF NOT EXISTS documents (
 
   needs_review INTEGER NOT NULL DEFAULT 0,
   status TEXT DEFAULT 'received',
-  notes TEXT
+  notes TEXT,
+
+  -- JSON {backend, model, provider, documents_left_machine}: where this document was read
+  processed_by TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_documents_tax_year ON documents(tax_year);
@@ -197,6 +200,8 @@ def init_db() -> None:
         cols = [r[1] for r in con.execute("PRAGMA table_info(documents)").fetchall()]
         if "display_name" not in cols:
             con.execute("ALTER TABLE documents ADD COLUMN display_name TEXT;")
+        if "processed_by" not in cols:
+            con.execute("ALTER TABLE documents ADD COLUMN processed_by TEXT;")
 
         # Best-effort backfill for existing rows.
         con.execute(

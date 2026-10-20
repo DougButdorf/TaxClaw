@@ -31,17 +31,20 @@ Extracts the printed fields from tax documents into a local SQLite database and 
 
 ## Procedure
 
-1. **Check setup.** If `{baseDir}/venv/bin/python` is missing, run `bash {baseDir}/setup.sh` (creates the venv and `~/.config/taxclaw/config.yaml`; touches nothing else). Then run `{baseDir}/bin/taxclaw models --json --offline` and read `current` (backend in use) and `tiers[0]` (Ollama reachable? vision models installed?).
+1. **Run the doctor.** If `{baseDir}/venv/bin/python` is missing, run `bash {baseDir}/setup.sh` first (creates the venv and `~/.config/taxclaw/config.yaml`; it ends by running the doctor). Then run `{baseDir}/bin/taxclaw doctor --json`. It is read-only and exits 0. Read `ready`, `next_step`, `local.state`, `current`, `cloud.usable` and `hosted`.
+   - If `ready` is true, go to step 3.
+   - If it is false, stop and present the three paths to the user in plain words, then ask which they want:
+     1. **Local, on this machine (private).** Say what `local.state` means and give `local.next_step`: `ollama_missing` (install Ollama; a new terminal or an agent restart may be needed so PATH finds it), `server_unreachable` (open the Ollama app or run `ollama serve`), `no_vision_model` (the recommended model with its approx. download size and `ollama pull <model>`), `model_not_selected` (`taxclaw use-local --model <name>`). Pass on any `local.warnings` about RAM or disk.
+     2. **Cloud with their own API keys.** List `cloud.usable` best to worst. Say plainly that full page images of their tax documents (SSNs, income, account numbers) would leave this machine, that the provider's terms apply, and that they switch with `taxclaw use-cloud <backend> --accept-privacy`, which prints the privacy text first and records their consent.
+     3. **TaxClaw Cloud (hosted).** Say it is coming soon. Quote pricing only if `hosted.enabled` is true.
+   - **Never choose cloud on the user's behalf.** Do not run `use-cloud`, and do not set `privacy_acknowledged` or edit config for them; that consent is theirs. The MCP server has no tool that does it.
+   - **Never run install or pull commands** (`brew install`, the Ollama install script, `ollama pull`) without the user's OK. After they approve and the command finishes, run the doctor again.
+   - Run `{baseDir}/bin/taxclaw use-local [--model NAME]` only to switch back to local (no consent needed), when the user asks.
 
-2. **Choose a model.** Run `{baseDir}/bin/taxclaw models` (add `--json` to parse). Three tiers:
-   - **Tier 1, local (default):** installed Ollama vision models plus a recommendation for this machine's RAM, with the `ollama pull` command if it is missing. Text-only models cannot read documents.
-   - **Tier 2, cloud already configured:** providers whose API keys are present (presence only; values are never shown), with their vision models and a recommended balance/strongest pick.
-   - **Tier 3, strongest with setup:** Cloudflare Clairic (per-field confidence), with setup steps.
-
-   Keep the local backend unless the user asks for cloud. A cloud backend sends document content (SSNs, income) to that provider, so only the user may switch to it and set `privacy_acknowledged: true` (Settings page at `http://localhost:8421/settings`, or `~/.config/taxclaw/config.yaml`). Never set it on the user's behalf.
+2. **Choose a model (optional).** `{baseDir}/bin/taxclaw models` (add `--json`) lists installed local vision models, cloud models for keys that are present, and Cloudflare Clairic with its setup steps. Keep the local backend unless the user chose cloud in step 1.
 
 3. **Ingest.** `{baseDir}/bin/taxclaw ingest /abs/path/to/doc.pdf --filer NAME --year 2025 --json`
-   Exit codes: `0` ok (JSON has `document_id`, `doc_type`, `needs_review`, `overall_confidence`); `1` extraction failed, document kept and flagged; `2` invalid file (missing, wrong type, too large); `3` backend not ready (message says why, e.g. Ollama not running). A local model takes about 15-100 s per page.
+   Exit codes: `0` ok (JSON has `document_id`, `doc_type`, `needs_review`, `overall_confidence` and `processed_by`: backend, model, `documents_left_machine`); `1` extraction failed, document kept and flagged; `2` invalid file (missing, wrong type, too large); `3` backend not ready (the message says why and `next_step` says what to do; take it to the user, step 1). A local model takes about 15-100 s per page.
 
 4. **Review low-confidence items.** `{baseDir}/bin/taxclaw list --needs-review 1 --json`, then `{baseDir}/bin/taxclaw export --id ID --format json` to show the fields. Ask the user to check flagged values against the original document; corrections are made in the web UI (`bash {baseDir}/start.sh`, then `http://localhost:8421/doc/ID`).
 
@@ -53,7 +56,7 @@ Extracts the printed fields from tax documents into a local SQLite database and 
    - Tell the user that rows with `needs_review=true` have a blank gain/loss or category on purpose.
    - Never fill in missing basis or holding periods yourself.
 
-**MCP.** `{baseDir}/bin/taxclaw mcp` runs a local stdio MCP server with `ingest_document`, `list_documents`, `get_document`, `export_documents` and `list_models`; see README for client configs.
+**MCP.** `{baseDir}/bin/taxclaw mcp` runs a local stdio MCP server with `setup_status` (the doctor), `ingest_document`, `list_documents`, `get_document`, `export_documents` and `list_models`; see README for client configs.
 
 Supported forms: W-2, 1099-NEC, 1099-INT, 1099-DIV, 1099-B, 1099-MISC, 1099-OID, 1099-R, 1099-G, 1099-K, 1099-DA, K-1 (Form 1065), consolidated 1099; Form 1040 is best-effort.
 
@@ -62,10 +65,10 @@ Supported forms: W-2, 1099-NEC, 1099-INT, 1099-DIV, 1099-B, 1099-MISC, 1099-OID,
 | Permission | Scope | Default |
 |---|---|---|
 | Read files | Only the paths you pass to `ingest` | Required |
-| Write files | `~/.local/share/taxclaw/` (database, stored copies) and `~/.config/taxclaw/` | Required |
+| Write files | `~/.local/share/taxclaw/` (database, stored copies) and `~/.config/taxclaw/` (`doctor` writes nothing) | Required |
 | Network, local | Web UI on `127.0.0.1:8421`; Ollama at `OLLAMA_HOST` (default `127.0.0.1:11434`) | Required |
-| Network, cloud AI | Only after the user selects a cloud backend and acknowledges the privacy warning | Opt-in |
-| Network, model lists | `taxclaw models` asks a provider for its model list only when that provider's key is already set | Opt-in |
+| Network, cloud AI | Only after the user selects a cloud backend and gives recorded consent (`use-cloud --accept-privacy` or Settings) | Opt-in |
+| Network, model lists | `taxclaw models` (not `doctor`) asks a provider for its model list only when that provider's key is already set | Opt-in |
 | Credentials | Read from env vars at call time; presence checks only; never printed or stored by TaxClaw | Opt-in |
 
 TaxClaw does not send telemetry, read files you did not pass to it, or send documents anywhere in local mode. The optional in-app contact form sends only what the user types to Formspree. Source: https://github.com/DougButdorf/TaxClaw (MIT).

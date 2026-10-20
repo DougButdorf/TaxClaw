@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, fields
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -67,6 +68,11 @@ class Config:
     cloud_model: str = "claude-haiku-5-5"  # Anthropic model id
     cloud_api_key: str = ""  # Anthropic key; prefer the ANTHROPIC_API_KEY env var
     privacy_acknowledged: bool = False
+    # Consent record, written together with privacy_acknowledged by `taxclaw use-cloud`
+    # and the Settings page: when (UTC, ISO 8601) and for which provider the user agreed
+    # to send documents off this machine. Both are empty while the backend is local.
+    privacy_acknowledged_at: str = ""
+    cloud_provider: str = ""
     port: int = 8421
     data_dir: str = "~/.local/share/taxclaw/"
 
@@ -135,6 +141,36 @@ class Config:
     def cloudflare_api_token(self) -> str:
         return os.environ.get(self.cloudflare_api_token_env or "CLOUDFLARE_API_TOKEN", "")
 
+    def provider_name(self) -> str:
+        """Who receives the documents: ``ollama`` (this machine) or the cloud provider's name."""
+
+        b = self.backend
+        if b == "local":
+            return "ollama"
+        if b == "anthropic":
+            return "anthropic"
+        if b == "openai_compat":
+            base = self.openai_compat_base_url.strip()
+            if self.openai_compat_provider == "custom" or base:
+                from urllib.parse import urlsplit
+
+                host = urlsplit(self.openai_compat_resolved_base_url()).hostname or "unknown-host"
+                return f"custom:{host}" if self.openai_compat_provider == "custom" else f"{self.openai_compat_provider} (custom URL {host})"
+            return self.openai_compat_provider
+        return "cloudflare"
+
+    def model_name(self) -> str:
+        """The model id alone (no provider prefix); empty when none is set."""
+
+        b = self.backend
+        if b == "local":
+            return self.local_model
+        if b == "anthropic":
+            return self.cloud_model
+        if b == "openai_compat":
+            return self.openai_compat_model
+        return "@cf/cloudflare/clairic"
+
     def selected_model_label(self) -> str:
         """Human-readable "backend / model" for status lines (never includes secrets)."""
 
@@ -151,7 +187,9 @@ class Config:
 CONFIG_PATH = Path(os.path.expanduser("~/.config/taxclaw/config.yaml"))
 
 
-def load_config() -> Config:
+def load_config(*, create_dirs: bool = True) -> Config:
+    """Read config.yaml. ``create_dirs=False`` keeps the call free of side effects (used by ``taxclaw doctor``)."""
+
     cfg_path = CONFIG_PATH
     if cfg_path.exists():
         raw: dict[str, Any] = yaml.safe_load(cfg_path.read_text()) or {}
@@ -161,6 +199,8 @@ def load_config() -> Config:
     known = {f.name for f in fields(Config)}
     cfg = Config(**{k: v for k, v in raw.items() if k in known})
     cfg.model_backend = normalize_backend(cfg.model_backend)
+    cfg.privacy_acknowledged_at = str(cfg.privacy_acknowledged_at or "")
+    cfg.cloud_provider = str(cfg.cloud_provider or "")
 
     # allow env var override
     if not cfg.cloud_api_key:
@@ -169,8 +209,9 @@ def load_config() -> Config:
     # NOTE: Do not hard-exit here; the web UI needs to load even if the user
     # hasn't acknowledged cloud privacy yet. Enforce acknowledgement at call sites.
 
-    cfg.data_path.mkdir(parents=True, exist_ok=True)
-    cfg.uploads_dir.mkdir(parents=True, exist_ok=True)
+    if create_dirs:
+        cfg.data_path.mkdir(parents=True, exist_ok=True)
+        cfg.uploads_dir.mkdir(parents=True, exist_ok=True)
     return cfg
 
 
@@ -214,6 +255,8 @@ def save_config(*, cfg: Config) -> None:
             "clairic_fallback_backend": cfg.clairic_fallback_backend,
             "review_confidence_threshold": float(cfg.review_confidence_threshold),
             "privacy_acknowledged": bool(cfg.privacy_acknowledged),
+            "privacy_acknowledged_at": cfg.privacy_acknowledged_at or "",
+            "cloud_provider": cfg.cloud_provider or "",
             "port": int(cfg.port),
             "data_dir": cfg.data_dir,
             "max_upload_bytes": int(cfg.max_upload_bytes),
@@ -222,3 +265,34 @@ def save_config(*, cfg: Config) -> None:
     )
 
     cfg_path.write_text(yaml.safe_dump(existing, sort_keys=False))
+
+
+# ---------------------------------------------------------------------------
+# Consent record (the only place cloud consent is written)
+# ---------------------------------------------------------------------------
+
+
+def utc_now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def record_cloud_consent(cfg: Config, *, keep_existing: bool = False) -> None:
+    """Stamp consent on ``cfg`` for its current (cloud) backend: flag, UTC time, provider name.
+
+    ``keep_existing`` leaves the original timestamp alone when the user already consented to
+    this same provider (used when Settings is saved again without changing the cloud choice).
+    """
+
+    provider = cfg.provider_name()
+    if not (keep_existing and cfg.privacy_acknowledged and cfg.privacy_acknowledged_at and cfg.cloud_provider == provider):
+        cfg.privacy_acknowledged_at = utc_now_iso()
+    cfg.privacy_acknowledged = True
+    cfg.cloud_provider = provider
+
+
+def clear_cloud_consent(cfg: Config) -> None:
+    """Withdraw consent: any switch back to local clears the flag, timestamp and provider."""
+
+    cfg.privacy_acknowledged = False
+    cfg.privacy_acknowledged_at = ""
+    cfg.cloud_provider = ""
