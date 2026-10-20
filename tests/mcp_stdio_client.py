@@ -65,6 +65,21 @@ async def run(server: str, ingest: str | None, expect: dict[str, str]) -> int:
             docs = _payload(r)
             log(f"list_documents ok: count={docs['count']}")
 
+            # Accountant formats are advertised and work without a model (empty DB is fine).
+            export_tool = next(t for t in tools.tools if t.name == "export_documents")
+            fmt_enum = export_tool.input_schema["properties"]["format"].get("enum") or []
+            assert {"8949_csv", "txf"} <= set(fmt_enum), fmt_enum
+            r = await session.call_tool("export_documents", {"all": True, "format": "8949_csv"})
+            assert not r.is_error, r
+            e8949 = _payload(r)
+            assert e8949["content"].startswith("# TaxClaw Data Export") and "a_description" in e8949["content"], e8949
+            assert "Not tax advice" in e8949["notice"], e8949
+            r = await session.call_tool("export_documents", {"all": True, "format": "txf"})
+            assert not r.is_error, r
+            etxf = _payload(r)
+            assert etxf["content"].startswith("V042\r\nATaxClaw") and etxf["records"] == 0, etxf
+            log(f"export_documents 8949_csv/txf ok: rows={e8949['rows']} txf_records={etxf['records']}")
+
             # Safety: relative path and missing file are clean tool errors.
             r = await session.call_tool("ingest_document", {"path": "relative.pdf"})
             assert r.is_error, "relative path should be rejected"

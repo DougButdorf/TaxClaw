@@ -39,6 +39,14 @@ PY
 "$SKILL_DIR/bin/taxclaw" export --all --format wide >/dev/null || fail "export --all --format wide"
 "$SKILL_DIR/bin/taxclaw" export --all --format long >/dev/null || fail "export --all --format long"
 echo "[smoke] export --all (json/wide/long) on empty DB ok"
+"$SKILL_DIR/bin/taxclaw" export --all --format 8949 > "$OTHER_CWD/empty.8949.csv" 2> "$OTHER_CWD/empty.8949.err" || fail "export --all --format 8949"
+"$SKILL_DIR/bin/taxclaw" export --all --format txf > "$OTHER_CWD/empty.txf" 2> "$OTHER_CWD/empty.txf.err" || fail "export --all --format txf"
+head -1 "$OTHER_CWD/empty.8949.csv" | grep -q "^# TaxClaw Data Export" || fail "8949 CSV notice header"
+grep -q "^category,part,term,a_description" "$OTHER_CWD/empty.8949.csv" || fail "8949 CSV column header"
+[ "$(head -c 6 "$OTHER_CWD/empty.txf" | od -An -c | tr -d ' ')" = 'V042\r\n' ] || fail "TXF header V042 + CRLF"
+grep -q "Not tax advice" "$OTHER_CWD/empty.txf.err" || fail "TXF notice on stderr"
+if "$SKILL_DIR/bin/taxclaw" export --id no-such-doc --format txf >/dev/null 2>&1; then fail "txf with unknown id should fail"; fi
+echo "[smoke] export --format 8949/txf on empty DB ok"
 
 # 3) Ollama unreachable -> ingest fails fast with a friendly message (no traceback).
 "$PY" -I - "$OTHER_CWD/blank.pdf" <<'PY'
@@ -188,6 +196,48 @@ assert fields.get("wages") == "54321.00", fields
 assert docs[0]["extraction"] == extraction
 print("[smoke] export_all_json includes extracted fields ok")
 
+# Accountant exports from stored 1099-B lots and 1099-DA transactions (no model).
+from src.accountant_exports import build_8949, export_txf
+from src.store import store_1099b_lots, store_1099da_transactions
+
+cons_pdf = mkpdf("cons.pdf", "Consolidated 1099 (synthetic smoke seed)")
+dest, fhash, orig, mime = ingest_file(cons_pdf, cfg)
+cons_id = create_document_record(
+    cfg=cfg, file_path=dest, file_hash=fhash, original_filename=orig, mime_type=mime,
+    filer="smoke", tax_year=2025, doc_type="consolidated-1099", page_count=1, classification_confidence=0.9,
+)
+store_1099b_lots(doc_id=cons_id, lots=[
+    {"description": "10 SH ACME CORP", "date_acquired": "01/15/2025", "date_sold": "06/20/2025", "proceeds": "1,500.00",
+     "cost_basis": "1,000.00", "term": "short", "basis_reported_to_irs": True, "page": 2},
+    {"description": "40 SH INITECH", "date_acquired": "08/01/2025", "date_sold": "09/15/2025", "proceeds": "800.00",
+     "cost_basis": "1,000.00", "wash_sale_loss_disallowed": "150.00", "term": "short", "basis_reported_to_irs": True, "page": 2},
+    {"description": "12 SH UMBRELLA CO", "date_acquired": "05/05/2025", "date_sold": "07/07/2025", "proceeds": "640.00",
+     "cost_basis": None, "term": "short", "basis_reported_to_irs": False, "page": 2},
+])
+mark_processed(doc_id=cons_id, overall_confidence=0.9, needs_review=False)
+da_pdf = mkpdf("da.pdf", "Form 1099-DA (synthetic smoke seed)")
+dest, fhash, orig, mime = ingest_file(da_pdf, cfg)
+da_id = create_document_record(
+    cfg=cfg, file_path=dest, file_hash=fhash, original_filename=orig, mime_type=mime,
+    filer="smoke", tax_year=2025, doc_type="1099-DA", page_count=1, classification_confidence=0.9,
+)
+da_ext = {"header": {"payer_name": "Example Digital Exchange"}, "transactions": [
+    {"asset_code": "BTC", "units": "0.01", "date_acquired": "01/01/2023", "date_sold": "02/02/2025",
+     "proceeds": "950.00", "cost_basis": None, "basis_reported_to_irs": False}], "is_multi_transaction": False}
+sid = store_raw_extraction(doc_id=da_id, form_type="1099-DA", data=da_ext, confidence=0.9)
+store_extracted_fields(doc_id=da_id, section_id=sid, data=da_ext)
+store_1099da_transactions(doc_id=da_id, extraction=da_ext)
+mark_processed(doc_id=da_id, overall_confidence=0.9, needs_review=False)
+
+e = build_8949(None)
+assert (e.rows, e.needs_review) == (4, 2), (e.rows, e.needs_review)
+assert "\nA,I,short,40 SH INITECH,08/01/2025,09/15/2025,800.00,1000.00,W,150.00,-50.00," in e.content, e.content
+assert "\nK,II,long,0.01 BTC,01/01/2023,02/02/2025,950.00,,,,," in e.content, e.content
+t = export_txf(None)
+assert t.records == 2 and t.content.startswith("V042\r\n") and "\r\nN321\r\n" in t.content, t
+assert sum(w.startswith("skipped") for w in t.warnings) == 2, t.warnings
+print(f"[smoke] Form 8949 CSV ({e.rows} rows, {e.needs_review} need review) and TXF ({t.records} records, 2 skipped) ok")
+
 # Web UI: every HTML route returns 200.
 from fastapi.testclient import TestClient
 
@@ -195,7 +245,7 @@ from src.main import app
 
 client = TestClient(app, base_url="http://127.0.0.1:8421")
 routes = ["/", "/documents", "/review", "/upload", "/settings", "/digital_assets",
-          "/faq", "/contact", "/terms", "/privacy", f"/doc/{doc_id}"]
+          "/faq", "/contact", "/terms", "/privacy", f"/doc/{doc_id}", f"/doc/{cons_id}"]
 for r in routes:
     resp = client.get(r)
     assert resp.status_code == 200, (r, resp.status_code)
@@ -208,6 +258,28 @@ for marker in ("Tier 1", "Tier 2", "Tier 3", 'value="anthropic"', 'value="openai
     assert marker in settings_html, marker
 assert "sponsors" not in client.get("/").text.lower()
 print(f"[smoke] {len(routes)} HTML routes returned 200 (Settings shows tiers 1-3)")
+
+# Accountant export routes: CSRF required; buttons on dashboard + capital-gain detail pages.
+import re as _re0
+dash = client.get("/").text
+tok0 = _re0.search(r"/export\.8949\.csv\?csrf=([^\"&]+)", dash).group(1)
+assert "/export.txf?csrf=" in dash
+cons_html = client.get(f"/doc/{cons_id}").text
+assert f"/doc/{cons_id}/export.8949.csv?csrf=" in cons_html and "1099-B sales (3)" in cons_html
+assert "export.8949.csv" not in client.get(f"/doc/{doc_id}").text  # W-2: no 8949 button
+for path in ("/export.8949.csv", "/export.txf", f"/doc/{cons_id}/export.8949.csv", f"/doc/{da_id}/export.txf"):
+    assert client.get(path).status_code == 403, path
+    assert client.get(path + "?csrf=wrong").status_code == 403, path
+    resp = client.get(f"{path}?csrf={tok0}")
+    assert resp.status_code == 200, (path, resp.status_code)
+    assert "Not tax advice" in resp.headers.get("x-taxclaw-notice", ""), path
+    assert "attachment" in resp.headers.get("content-disposition", ""), path
+assert client.get(f"/doc/no-such-doc/export.txf?csrf={tok0}").status_code == 404
+r = client.get(f"/export.txf?csrf={tok0}")
+assert r.content.startswith(b"V042\r\n") and r.headers["x-taxclaw-warnings"] == "2", r.headers
+r = client.get(f"/doc/{cons_id}/export.8949.csv?csrf={tok0}")
+assert r.text.count("\nA,I,short,") == 2 and r.headers["x-taxclaw-rows-needing-review"] == "1", r.text
+print("[smoke] 8949/TXF web exports: CSRF enforced, buttons present, downloads ok")
 
 # Settings: every cloud choice requires the privacy acknowledgment; local saves.
 import re as _re

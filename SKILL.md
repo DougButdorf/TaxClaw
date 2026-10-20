@@ -46,6 +46,12 @@ Extracts the printed fields from tax documents into a local SQLite database and 
 4. **Review low-confidence items.** `{baseDir}/bin/taxclaw list --needs-review 1 --json`, then `{baseDir}/bin/taxclaw export --id ID --format json` to show the fields. Ask the user to check flagged values against the original document; corrections are made in the web UI (`bash {baseDir}/start.sh`, then `http://localhost:8421/doc/ID`).
 
 5. **Export.** `{baseDir}/bin/taxclaw export --all --format json` (or `wide` / `long` CSV; `--id ID` for one document). Write to a file the user names, e.g. `> ~/taxclaw-2025.json`.
+   For an accountant or tax software, export capital-gain sales from 1099-B, consolidated 1099 and 1099-DA documents:
+   - `--format 8949` writes a Form 8949-ready CSV: one row per sale, with the check-box `category` and `needs_review`/`review_reasons`.
+   - `--format txf` writes TXF v042 for TurboTax Desktop-style import.
+   - Both take `--all` or one or more `--id`. The notice and warnings go to stderr. Relay them to the user, including the rows TXF skipped: 1099-DA sales, missing basis, missing dates.
+   - Tell the user that rows with `needs_review=true` have a blank gain/loss or category on purpose.
+   - Never fill in missing basis or holding periods yourself.
 
 **MCP.** `{baseDir}/bin/taxclaw mcp` runs a local stdio MCP server with `ingest_document`, `list_documents`, `get_document`, `export_documents` and `list_models`; see README for client configs.
 

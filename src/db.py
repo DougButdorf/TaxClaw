@@ -126,6 +126,31 @@ CREATE TABLE IF NOT EXISTS transactions_1099da (
   raw_json TEXT
 );
 
+-- Per-sale rows read from 1099-B / consolidated-1099 transaction detail
+-- (separate extraction pass; feeds the Form 8949 CSV and TXF exports)
+CREATE TABLE IF NOT EXISTS transactions_1099b (
+  id TEXT PRIMARY KEY,
+  document_id TEXT REFERENCES documents(id) ON DELETE CASCADE,
+  lot_index INTEGER,
+  page INTEGER,
+  description TEXT,
+  cusip TEXT,
+  quantity TEXT,
+  date_acquired TEXT,
+  date_sold TEXT,
+  proceeds TEXT,
+  cost_basis TEXT,
+  accrued_market_discount TEXT,
+  wash_sale_loss_disallowed TEXT,
+  gain_loss TEXT,
+  term TEXT,
+  basis_reported_to_irs INTEGER,
+  form_8949_box TEXT,
+  raw_json TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_1099b_document_id ON transactions_1099b(document_id);
+
 CREATE TABLE IF NOT EXISTS review_queue (
   id TEXT PRIMARY KEY,
   document_id TEXT NOT NULL,

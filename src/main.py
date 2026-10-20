@@ -29,6 +29,7 @@ from .review import compute_needs_review, compute_overall_confidence, missing_re
 from .store import (
     create_document_record,
     delete_document,
+    extract_and_store_1099b_lots,
     generate_display_name,
     get_document,
     get_document_by_hash,
@@ -720,11 +721,16 @@ async def upload(
         store_extracted_fields(doc_id=doc_id, section_id=section_id, data=extracted, confidences=result.field_confidence)
         if doc_type == "1099-DA" and isinstance(extracted, dict):
             store_1099da_transactions(doc_id=doc_id, extraction=extracted)
+        _lot_count, lot_note = extract_and_store_1099b_lots(doc_id=doc_id, file_path=dest_path, doc_type=doc_type, cfg=cfg)
 
         missing = missing_required_fields(doc_type, extracted)
         overall = compute_overall_confidence(doc_type=doc_type, extraction=extracted, classification_confidence=classification_confidence)
         nr = compute_needs_review(classification_confidence=classification_confidence, overall_confidence=overall, missing_required=missing)
-        nr = nr or bool(result.review_fields)
+        nr = nr or bool(result.review_fields) or bool(lot_note)
+        review_notes = [n for n in (
+            f"low-confidence fields: {', '.join(result.review_fields)}" if result.review_fields else None,
+            lot_note,
+        ) if n]
 
         # store some common identity fields if present
         if isinstance(extracted, dict):
@@ -794,7 +800,7 @@ async def upload(
             doc_id=doc_id,
             overall_confidence=overall,
             needs_review=nr,
-            notes=f"low-confidence fields: {', '.join(result.review_fields)}" if result.review_fields else None,
+            notes="; ".join(review_notes) or None,
         )
     except Exception as e:
         # Hard failure (including JSON parse errors) → mark error, don't crash.
@@ -831,6 +837,13 @@ def doc_detail(request: Request, doc_id: str):
             ).fetchall()
             txns = [{k: r[k] for k in r.keys()} for r in rows2]
 
+        lots: list[dict[str, Any]] = []
+        if doc.get("doc_type") in ("1099-B", "consolidated-1099"):
+            rows3 = con.execute(
+                "SELECT * FROM transactions_1099b WHERE document_id=? ORDER BY lot_index ASC", (doc_id,)
+            ).fetchall()
+            lots = [{k: r[k] for k in r.keys()} for r in rows3]
+
     return _render(
         request,
         "detail.html",
@@ -841,6 +854,7 @@ def doc_detail(request: Request, doc_id: str):
             "extraction": extraction,
             "extraction_pretty": pretty_json(extraction) if extraction is not None else None,
             "transactions": txns,
+            "lots": lots,
         },
     )
 
@@ -1028,6 +1042,53 @@ def doc_export_json(request: Request, doc_id: str, csrf: str = Query("")):
         media_type="application/json",
         headers={"Content-Disposition": f"attachment; filename=taxclaw-{doc_id}.json"},
     )
+
+
+def _accountant_export_response(request: Request, csrf: str, kind: str, doc_id: str | None) -> Response:
+    """Form 8949 CSV / TXF download (same loopback + CSRF checks as the other exports)."""
+
+    from .accountant_exports import NOTICE_TEXT, build_8949, export_txf
+
+    try:
+        _assert_same_origin(request)
+        _require_csrf(request, csrf)
+    except Exception:
+        return Response("Forbidden", status_code=403)
+    if doc_id is not None and not get_document(doc_id):
+        return Response("Not found", status_code=404)
+
+    ids = None if doc_id is None else [doc_id]
+    stem = f"taxclaw-{doc_id}" if doc_id else "taxclaw-all"
+    headers = {"X-TaxClaw-Notice": NOTICE_TEXT}
+    if kind == "8949":
+        res = build_8949(ids)
+        headers["Content-Disposition"] = f"attachment; filename={stem}-form8949.csv"
+        headers["X-TaxClaw-Rows-Needing-Review"] = str(res.needs_review)
+        return Response(res.content, media_type="text/csv", headers=headers)
+    txf = export_txf(ids)
+    headers["Content-Disposition"] = f"attachment; filename={stem}.txf"
+    headers["X-TaxClaw-Warnings"] = str(len(txf.warnings))
+    return Response(txf.content.encode("ascii"), media_type="text/plain; charset=us-ascii", headers=headers)
+
+
+@app.get("/doc/{doc_id}/export.8949.csv")
+def doc_export_8949(request: Request, doc_id: str, csrf: str = Query("")):
+    return _accountant_export_response(request, csrf, "8949", doc_id)
+
+
+@app.get("/doc/{doc_id}/export.txf")
+def doc_export_txf(request: Request, doc_id: str, csrf: str = Query("")):
+    return _accountant_export_response(request, csrf, "txf", doc_id)
+
+
+@app.get("/export.8949.csv")
+def export_all_8949(request: Request, csrf: str = Query("")):
+    return _accountant_export_response(request, csrf, "8949", None)
+
+
+@app.get("/export.txf")
+def export_all_txf(request: Request, csrf: str = Query("")):
+    return _accountant_export_response(request, csrf, "txf", None)
 
 
 @app.get("/export.wide.csv")

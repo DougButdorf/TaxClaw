@@ -38,6 +38,10 @@
           <a href="/doc/{{ doc.id }}/export.json?csrf={{ csrf_token }}" class="btn export-link" data-export="json" title="Raw structured data including AI extraction metadata" style="white-space:nowrap;">🛠 Developer Export (JSON)</a>
         </div>
       </details>
+      {% if doc.doc_type in ('1099-B', '1099-DA', 'consolidated-1099') %}
+        <a href="/doc/{{ doc.id }}/export.8949.csv?csrf={{ csrf_token }}" class="btn export-link" data-export="8949" title="One row per sale with the Form 8949 columns and check-box category; incomplete rows are flagged needs_review. AI-extracted: verify before use. Not tax advice.">🧾 Form 8949 CSV</a>
+        <a href="/doc/{{ doc.id }}/export.txf?csrf={{ csrf_token }}" class="btn export-link" data-export="txf" title="TXF v042 for TurboTax Desktop-style import. 1099-DA rows and rows missing basis or dates are left out (use the 8949 CSV). AI-extracted: verify before use. Not tax advice.">TXF</a>
+      {% endif %}
       <span id="del-wrap">
         <button type="button" class="danger" onclick="document.getElementById('del-confirm-{{ doc.id }}').style.display='inline-flex'; this.style.display='none';">🗑 Delete</button>
         <span id="del-confirm-{{ doc.id }}" style="display:none; align-items:center; gap:6px;">
@@ -230,6 +234,49 @@
               <td>{{ t.gain_loss_term or '' }}</td>
               <td>{{ t.form_8949_code or '' }}</td>
               <td>{{ t.noncovered or '' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  {% if lots %}
+    <div class="card" style="margin-bottom: 14px;">
+      <h2 style="margin:0 0 10px 0; font-size: 16px;">1099-B sales ({{ lots|length }})</h2>
+      <div class="muted" style="font-size: 12px; margin-bottom: 8px;">Read from the transaction detail tables; these rows feed the Form 8949 CSV and TXF exports. Check them against the statement.</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Date acquired</th>
+            <th>Date sold</th>
+            <th>Proceeds</th>
+            <th>Cost basis</th>
+            <th>Wash sale</th>
+            <th>Term</th>
+            <th>Basis reported</th>
+            <th>Page</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in lots %}
+            <tr>
+              <td>{{ t.description or '' }}</td>
+              <td>{{ t.date_acquired or '' }}</td>
+              <td>{{ t.date_sold or '' }}</td>
+              <td>{{ t.proceeds or '' }}</td>
+              <td>
+                {% if t.cost_basis %}
+                  {{ t.cost_basis }}
+                {% else %}
+                  <span class="pill warn">missing</span>
+                {% endif %}
+              </td>
+              <td>{{ t.wash_sale_loss_disallowed or '' }}</td>
+              <td>{{ t.term or '' }}</td>
+              <td>{% if t.basis_reported_to_irs == 1 %}yes{% elif t.basis_reported_to_irs == 0 %}no{% endif %}</td>
+              <td>{{ t.page or '' }}</td>
             </tr>
           {% endfor %}
         </tbody>
