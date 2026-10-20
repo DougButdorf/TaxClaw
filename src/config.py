@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-PRIVACY_WARNING = """> ⚠️ PRIVACY WARNING: You have configured TaxClaw to use a cloud-hosted AI model. Tax documents contain sensitive personal and financial information including Social Security Numbers, income, and asset holdings. When using cloud models, document content is transmitted to a third-party AI provider outside your local control. This provider may log requests for safety monitoring. For maximum privacy, use local models (the default). Only continue if you understand and accept this. Set `privacy_acknowledged: true` in config.yaml to confirm.
+PRIVACY_WARNING = """> ⚠️ PRIVACY WARNING: You have configured TaxClaw to use a cloud-hosted AI model. Tax documents contain sensitive personal and financial information including Social Security Numbers, income, and asset holdings. When using cloud models, full page images of your documents are transmitted to a third-party AI provider outside your local control. This provider may log requests for safety monitoring. For maximum privacy, use local models (the default). Only continue if you understand and accept this. Set `privacy_acknowledged: true` in config.yaml to confirm.
 """
 
 # Extraction backends. "cloud" is the pre-1.0 name for the Anthropic backend and

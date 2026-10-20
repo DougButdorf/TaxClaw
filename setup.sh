@@ -65,7 +65,7 @@ fi
 PYTHONPATH="$SKILL_DIR" "$VENV_DIR/bin/python" -P -c "from src.db import init_db; init_db()"
 
 echo
-echo "✅ taxclaw setup complete"
+echo "✅ $("$SKILL_DIR/bin/taxclaw" --version 2>/dev/null || echo taxclaw) setup complete"
 echo
 echo "Model choices (full list, live cloud model lists: $SKILL_DIR/bin/taxclaw models):"
 "$SKILL_DIR/bin/taxclaw" models --short --offline 2>/dev/null | sed 's/^/  /' || echo "  (could not list models; run: $SKILL_DIR/bin/taxclaw models)"

@@ -22,6 +22,15 @@ from mcp import ClientSession, StdioServerParameters, stdio_client
 EXPECTED_TOOLS = {"ingest_document", "list_documents", "get_document", "export_documents", "list_models"}
 
 
+def _package_version() -> str:
+    # Run with `python -P` (no repo on sys.path), so read src/__init__.py as text.
+    init_py = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "__init__.py")
+    for line in open(init_py, encoding="utf-8"):
+        if line.startswith("__version__"):
+            return line.split("=", 1)[1].strip().strip("\"'")
+    raise AssertionError("no __version__ in src/__init__.py")
+
+
 def _payload(result: Any) -> Any:
     if getattr(result, "structured_content", None) is not None:
         sc = result.structured_content
@@ -39,7 +48,9 @@ async def run(server: str, ingest: str | None, expect: dict[str, str]) -> int:
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
             init = await session.initialize()
-            log(f"initialize ok: server={init.server_info.name} protocol={init.protocol_version}")
+            log(f"initialize ok: server={init.server_info.name} {init.server_info.version} protocol={init.protocol_version}")
+            want = _package_version()
+            assert init.server_info.version == want, (init.server_info.version, want)
 
             tools = await session.list_tools()
             names = {t.name for t in tools.tools}

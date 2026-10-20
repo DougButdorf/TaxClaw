@@ -4,7 +4,7 @@ description: Turn tax documents (W-2, 1099-NEC/INT/DIV/B/MISC/OID/R/G/K, 1099-DA
 license: MIT
 compatibility: Python 3.11+ and bash on macOS or Linux. Local mode needs Ollama with a vision model (e.g. gemma3:4b); cloud backends are opt-in. Install into a directory named taxclaw.
 metadata:
-  version: "0.1.2"
+  version: "1.0.0"
   homepage: https://github.com/DougButdorf/TaxClaw
   openclaw:
     emoji: "🧾"
@@ -38,7 +38,7 @@ Extracts the printed fields from tax documents into a local SQLite database and 
    - **Tier 2, cloud already configured:** providers whose API keys are present (presence only; values are never shown), with their vision models and a recommended balance/strongest pick.
    - **Tier 3, strongest with setup:** Cloudflare Clairic (per-field confidence), with setup steps.
 
-   Keep the local backend unless the user asks for cloud. A cloud backend sends document content (SSNs, income) to that provider, so only the user may switch to it and set `privacy_acknowledged: true` (Settings page at `http://localhost:8421/settings`, or `~/.config/taxclaw/config.yaml`). Never set it on the user's behalf.
+   Keep the local backend unless the user asks for cloud. A cloud backend sends full page images of each document (SSNs, income, account numbers) to that provider, so only the user may switch to it and set `privacy_acknowledged: true` (Settings page at `http://localhost:8421/settings`, or `~/.config/taxclaw/config.yaml`). Never set it on the user's behalf.
 
 3. **Ingest.** `{baseDir}/bin/taxclaw ingest /abs/path/to/doc.pdf --filer NAME --year 2025 --json`
    Exit codes: `0` ok (JSON has `document_id`, `doc_type`, `needs_review`, `overall_confidence`); `1` extraction failed, document kept and flagged; `2` invalid file (missing, wrong type, too large); `3` backend not ready (message says why, e.g. Ollama not running). A local model takes about 15-100 s per page.
@@ -61,14 +61,16 @@ Supported forms: W-2, 1099-NEC, 1099-INT, 1099-DIV, 1099-B, 1099-MISC, 1099-OID,
 
 | Permission | Scope | Default |
 |---|---|---|
-| Read files | Only the paths you pass to `ingest` | Required |
-| Write files | `~/.local/share/taxclaw/` (database, stored copies) and `~/.config/taxclaw/` | Required |
-| Network, local | Web UI on `127.0.0.1:8421`; Ollama at `OLLAMA_HOST` (default `127.0.0.1:11434`) | Required |
-| Network, cloud AI | Only after the user selects a cloud backend and acknowledges the privacy warning | Opt-in |
-| Network, model lists | `taxclaw models` asks a provider for its model list only when that provider's key is already set | Opt-in |
-| Credentials | Read from env vars at call time; presence checks only; never printed or stored by TaxClaw | Opt-in |
+| Read files | The paths you pass to `ingest`; TaxClaw's own config. `taxclaw models` also reads provider *names* (never keys) from OpenClaw config (`~/.openclaw*/openclaw.json`, `OPENCLAW_CONFIG_PATH`, `OPENCLAW_STATE_DIR`) | Required |
+| Write files | `{baseDir}/venv/` (setup), `~/.local/share/taxclaw/` (database, stored copies; `data_dir` in config) and `~/.config/taxclaw/` | Required |
+| Network, setup | `setup.sh` runs `pip install` of the pinned `requirements.txt` from PyPI into `{baseDir}/venv` | Required once |
+| Network, local | Web UI on `127.0.0.1:8421` (requests whose Host or Origin is not loopback are refused); Ollama at `OLLAMA_HOST` (default `127.0.0.1:11434`; page images go wherever it points) | Required |
+| Network, cloud AI | Full page images (and the prompt) go to the one provider the user chose, only after they select a cloud backend and acknowledge the privacy warning: `api.anthropic.com`, `api.openai.com`, `openrouter.ai`, `generativelanguage.googleapis.com`, a custom OpenAI-compatible URL, or `api.cloudflare.com` | Opt-in |
+| Network, model lists | `taxclaw models` and Settings ask a provider for its model list only when that provider's key is already set; no document data. `--offline` skips this | Opt-in |
+| Network, contact form | The in-app Contact page posts what the user types (never documents) to `formspree.io` when they press Send | Opt-in |
+| Environment variables | Keys: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `GEMINI_API_KEY`/`GOOGLE_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` (or the env var *name* set in config). Other: `OLLAMA_HOST`, `TAXCLAW_PORT`, `TAXCLAW_PYTHON`. Key values are read at call time, sent only to their own provider, and never printed or written by TaxClaw | Opt-in |
 
-TaxClaw does not send telemetry, read files you did not pass to it, or send documents anywhere in local mode. The optional in-app contact form sends only what the user types to Formspree. Source: https://github.com/DougButdorf/TaxClaw (MIT).
+TaxClaw sends no telemetry, starts no background services, and sends no documents anywhere in local mode. The web UI loads no third-party scripts. Exports contain the same sensitive data as the documents: write them where the user asks and nowhere else. Source: https://github.com/DougButdorf/TaxClaw (MIT).
 
 ## Not tax advice
 

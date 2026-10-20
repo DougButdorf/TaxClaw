@@ -81,7 +81,8 @@ set `TAXCLAW_PYTHON=/path/to/python3.11+`.
 Tax documents are extremely sensitive.
 
 - **Local mode (default)**: extraction runs on your machine via Ollama; your documents and extracted data never leave it.
-- **Cloud mode (optional)**: document content is sent to the configured AI provider.
+- **Cloud mode (optional)**: full page images of each document (everything printed on it, including SSNs and account numbers) are sent to the one AI provider you chose, only after you acknowledge the privacy warning. See [PRIVACY.md](PRIVACY.md) for exactly what goes where.
+- **Web UI**: listens on `127.0.0.1` only, refuses requests whose Host or Origin isn't loopback (blocks DNS-rebinding reads), sends a strict Content-Security-Policy and loads no third-party scripts.
 - **Contact form (optional)**: the in-app Contact page sends only what you type into it (name, email, message) to [Formspree](https://formspree.io), which forwards it to us. It never includes your documents or extracted tax data, and nothing is sent unless you submit the form.
 
 You can configure the backend + model via the settings UI:
@@ -313,6 +314,8 @@ By default:
 - Data dir: `~/.local/share/taxclaw/`
   - SQLite DB: `tax.db`
   - Stored uploads: `uploads/`
+
+Exports (CSV, JSON, 8949, TXF) hold the same sensitive data. Save them somewhere private, not a synced folder, and delete them when you're done.
 
 ## 🤝 Contributing
 
