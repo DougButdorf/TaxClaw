@@ -81,7 +81,7 @@ Return object:
     "recipient_name": string|null,
     "recipient_tin": string|null,
     "account_number": string|null,
-    "tax_year": number|null
+    "tax_year": integer|null
   },
   "transactions": [
     {
@@ -172,11 +172,11 @@ Formatting rules:
   "20Z", box 11 code ZZ is "11ZZ". Values are the amounts (or text) shown for that code.
   If a box shows "* STMT" / "See statement", use the value "STMT".
 """,
-    "1099-DIV": """You are extracting fields from US IRS Form 1099-DIV (Dividends and Distributions). Return JSON only. Do not hallucinate. Use null for missing/blank. Keys: {"payer_name":null,"payer_tin":null,"recipient_name":null,"recipient_tin":null, "ordinary_dividends":null,"qualified_dividends":null,"total_capital_gain":null, "unrecap_1250_gain":null,"section_1202_gain":null,"collectibles_gain":null, "nondividend_distributions":null,"federal_withheld":null,"section_199a_dividends":null, "investment_expenses":null,"foreign_tax_paid":null,"foreign_country":null, "cash_liquidation":null,"noncash_liquidation":null,"exempt_interest_dividends":null, "specified_pab_dividends":null,"tax_year":null} Formatting: dollar amounts as string with digits and optional commas, no $ sign. """,
-    "consolidated-1099": """You are extracting fields from a Consolidated 1099 tax statement (may combine DIV, INT, B, OID sections). Return JSON only. Do not hallucinate. Use null for missing/blank. Keys: {"payer_name":null,"payer_tin":null,"recipient_name":null,"recipient_tin":null, "account_number":null,"tax_year":null, "div_ordinary_dividends":null,"div_qualified_dividends":null,"div_total_capital_gain":null, "div_federal_withheld":null,"div_exempt_interest":null, "int_interest_income":null,"int_early_withdrawal_penalty":null,"int_us_bond_interest":null, "int_federal_withheld":null,"int_tax_exempt_interest":null, "oid_original_issue_discount":null,"oid_federal_withheld":null, "misc_gross_proceeds":null,"misc_federal_withheld":null} Formatting: dollar amounts as string, no $ sign. """,
-    "1099-B": """You are extracting fields from US IRS Form 1099-B (Proceeds from Broker Transactions). Return JSON only. Do not hallucinate. Use null for missing/blank. Keys: {"payer_name":null,"payer_tin":null,"recipient_name":null,"recipient_tin":null, "account_number":null,"tax_year":null,"proceeds":null,"cost_basis":null, "federal_withheld":null,"wash_sale_loss_disallowed":null,"gain_loss":null, "term":null,"description":null,"cusip":null} """,
-    "1099-MISC": """You are extracting fields from US IRS Form 1099-MISC. Return JSON only. Do not hallucinate. Use null for missing/blank. Keys: {"payer_name":null,"payer_tin":null,"recipient_name":null,"recipient_tin":null, "rents":null,"royalties":null,"other_income":null,"fishing_boat_proceeds":null, "medical_payments":null,"substitute_payments":null,"crop_insurance":null, "gross_proceeds_attorney":null,"section_409a_deferrals":null,"nonqualified_deferred":null, "federal_withheld":null,"state_income":null,"tax_year":null} """,
-    "1099-OID": """You are extracting fields from US IRS Form 1099-OID (Original Issue Discount). Return JSON only. Do not hallucinate. Use null for missing/blank. Keys: {"payer_name":null,"payer_tin":null,"recipient_name":null,"recipient_tin":null, "original_issue_discount":null,"other_periodic_interest":null,"oid_us_treasury":null, "federal_withheld":null,"market_discount":null,"acquisition_premium":null, "description":null,"tax_year":null} """,
+    "1099-DIV": """You are extracting fields from US IRS Form 1099-DIV (Dividends and Distributions). Return JSON only. Do not hallucinate. Use null for missing/blank. Keys: {"payer_name":null,"payer_tin":null,"recipient_name":null,"recipient_tin":null, "ordinary_dividends":null,"qualified_dividends":null,"total_capital_gain":null, "unrecap_1250_gain":null,"section_1202_gain":null,"collectibles_gain":null, "nondividend_distributions":null,"federal_withheld":null,"section_199a_dividends":null, "investment_expenses":null,"foreign_tax_paid":null,"foreign_country":null, "cash_liquidation":null,"noncash_liquidation":null,"exempt_interest_dividends":null, "specified_pab_dividends":null,"tax_year":string|null} Formatting: dollar amounts as string with digits and optional commas, no $ sign. """,
+    "consolidated-1099": """You are extracting fields from a Consolidated 1099 tax statement (may combine DIV, INT, B, OID sections). Return JSON only. Do not hallucinate. Use null for missing/blank. Keys: {"payer_name":null,"payer_tin":null,"recipient_name":null,"recipient_tin":null, "account_number":null,"tax_year":string|null, "div_ordinary_dividends":null,"div_qualified_dividends":null,"div_total_capital_gain":null, "div_federal_withheld":null,"div_exempt_interest":null, "int_interest_income":null,"int_early_withdrawal_penalty":null,"int_us_bond_interest":null, "int_federal_withheld":null,"int_tax_exempt_interest":null, "oid_original_issue_discount":null,"oid_federal_withheld":null, "misc_gross_proceeds":null,"misc_federal_withheld":null} Formatting: dollar amounts as string, no $ sign. """,
+    "1099-B": """You are extracting fields from US IRS Form 1099-B (Proceeds from Broker Transactions). Return JSON only. Do not hallucinate. Use null for missing/blank. Keys: {"payer_name":null,"payer_tin":null,"recipient_name":null,"recipient_tin":null, "account_number":null,"tax_year":string|null,"proceeds":null,"cost_basis":null, "federal_withheld":null,"wash_sale_loss_disallowed":null,"gain_loss":null, "term":null,"description":null,"cusip":null} """,
+    "1099-MISC": """You are extracting fields from US IRS Form 1099-MISC. Return JSON only. Do not hallucinate. Use null for missing/blank. Keys: {"payer_name":null,"payer_tin":null,"recipient_name":null,"recipient_tin":null, "rents":null,"royalties":null,"other_income":null,"fishing_boat_proceeds":null, "medical_payments":null,"substitute_payments":null,"crop_insurance":null, "gross_proceeds_attorney":null,"section_409a_deferrals":null,"nonqualified_deferred":null, "federal_withheld":null,"state_income":null,"tax_year":string|null} """,
+    "1099-OID": """You are extracting fields from US IRS Form 1099-OID (Original Issue Discount). Return JSON only. Do not hallucinate. Use null for missing/blank. Keys: {"payer_name":null,"payer_tin":null,"recipient_name":null,"recipient_tin":null, "original_issue_discount":null,"other_periodic_interest":null,"oid_us_treasury":null, "federal_withheld":null,"market_discount":null,"acquisition_premium":null, "description":null,"tax_year":string|null} """,
     "1099-R": """You are extracting fields from US IRS Form 1099-R (Distributions From Pensions, Annuities, Retirement or Profit-Sharing Plans, IRAs, Insurance Contracts, etc.).
 Return JSON only. Do not hallucinate. Use null for missing/blank.
 
@@ -298,12 +298,13 @@ Do not hallucinate values.
 _TYPE_MAP: dict[str, list[str]] = {
     "string|null": ["string", "null"],
     "number|null": ["number", "null"],
+    "integer|null": ["integer", "null"],
     "boolean|null": ["boolean", "null"],
     "object|null": ["object", "null"],
     "null": ["string", "null"],  # compact prompts: {"key":null,...}
 }
 
-_KEY_TYPE_RE = re.compile(r'"([A-Za-z0-9_]+)"\s*:\s*(string\|null|number\|null|boolean\|null|object\|null|null)\b')
+_KEY_TYPE_RE = re.compile(r'"([A-Za-z0-9_]+)"\s*:\s*(string\|null|number\|null|integer\|null|boolean\|null|object\|null|null)\b')
 
 
 def _object_schema_from_text(text: str) -> dict[str, Any]:
@@ -319,9 +320,11 @@ def _block(text: str, opener: str, close: str) -> str:
 
 
 def schema_for(doc_type: str) -> dict[str, Any] | None:
-    """JSON Schema passed to Ollama as structured-output ``format``.
+    """JSON Schema passed to backends as structured-output ``format``.
 
     Returns None for the free-form generic prompt (plain JSON mode is used).
+    The ``tax_year`` types are pinned here regardless of how the prompt text
+    spells them (see the tax_year contract below).
     """
 
     prompt = PROMPTS.get(doc_type)
@@ -329,6 +332,8 @@ def schema_for(doc_type: str) -> dict[str, Any] | None:
         return None
     if doc_type == "1099-DA":
         header = _object_schema_from_text(_block(prompt, '"header": {', "}"))
+        if "tax_year" in header["properties"]:
+            header["properties"]["tax_year"] = {"type": ["integer", "null"]}
         txn = _object_schema_from_text(_block(prompt, '"transactions": [', "]"))
         return {
             "type": "object",
@@ -340,7 +345,91 @@ def schema_for(doc_type: str) -> dict[str, Any] | None:
             "required": ["header", "transactions", "is_multi_transaction"],
         }
     schema = _object_schema_from_text(prompt)
+    if "tax_year" in schema["properties"]:
+        schema["properties"]["tax_year"] = {"type": ["string", "null"]}
     return schema if schema["properties"] else None
+
+
+# ---------------------------------------------------------------------------
+# tax_year output contract
+# ---------------------------------------------------------------------------
+#
+# Every top-level ``tax_year`` is a 4-digit string ("2025") or null. The one
+# exception is the 1099-DA ``header.tax_year``, which is an integer (2025) or
+# null. The prompts and the structured-output schema declare this, and
+# ``apply_tax_year_contract`` enforces it after extraction so that a model
+# (or a backend that ignores the schema) cannot return the wrong JSON type.
+
+TAX_YEAR_MIN = 1990
+TAX_YEAR_MAX = 2100
+_YEAR_TEXT_RE = re.compile(r"([0-9]{4})(?:\.0+)?")
+
+
+def parse_tax_year(value: Any) -> int | None:
+    """Return the year as an int if ``value`` is a plausible tax year, else None.
+
+    Accepts ints, whole floats (2025.0) and strings such as "2025", " 2025 " or
+    "2025.0". Booleans, non-whole floats, other text and years outside
+    1990-2100 are not plausible.
+    """
+
+    if isinstance(value, bool):
+        return None
+    year: int | None = None
+    if isinstance(value, int):
+        year = value
+    elif isinstance(value, float):
+        year = int(value) if value.is_integer() else None
+    elif isinstance(value, str):
+        m = _YEAR_TEXT_RE.fullmatch(value.strip())
+        year = int(m.group(1)) if m else None
+    if year is None or not TAX_YEAR_MIN <= year <= TAX_YEAR_MAX:
+        return None
+    return year
+
+
+def apply_tax_year_contract(data: Any, doc_type: str) -> tuple[Any, list[str]]:
+    """Normalize ``tax_year`` to its contract type; returns (new data, paths needing review).
+
+    Null stays null. A value that is not a plausible year is left as the model
+    returned it and its field path is reported for human review. ``data`` is
+    not mutated.
+    """
+
+    if not isinstance(data, dict):
+        return data, []
+    review: list[str] = []
+
+    def fix(container: dict[str, Any], prefix: str, as_int: bool) -> dict[str, Any]:
+        value = container.get("tax_year")
+        if value is None:
+            return container
+        year = parse_tax_year(value)
+        if year is None:
+            review.append(f"{prefix}tax_year")
+            return container
+        wanted: int | str = year if as_int else str(year)
+        if type(value) is type(wanted) and value == wanted:
+            return container
+        return {**container, "tax_year": wanted}
+
+    if doc_type == "1099-DA":
+        header = data.get("header")
+        if not isinstance(header, dict):
+            return data, review
+        return {**data, "header": fix(header, "header.", True)}, review
+    return fix(data, "", False), review
+
+
+def _finalize(result: ExtractionResult, doc_type: str) -> ExtractionResult:
+    """Common post-processing for every backend path (LLM and Clairic)."""
+
+    data, review = apply_tax_year_contract(result.data, doc_type)
+    result.data = data
+    for path in review:
+        if path not in result.review_fields:
+            result.review_fields.append(path)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -497,12 +586,12 @@ def extract_document_with_meta(file_path: str, doc_type: str, cfg: Config) -> Ex
             if doc_type == "K-1":
                 data = normalize_k1(data)
             result.data = data
-            return result
+            return _finalize(result, doc_type)
 
         data = _llm_extract(doc, doc_type, cfg)
         if doc_type == "K-1":
             data = normalize_k1(data)
-        return ExtractionResult(data=data)
+        return _finalize(ExtractionResult(data=data), doc_type)
     finally:
         doc.close()
 
