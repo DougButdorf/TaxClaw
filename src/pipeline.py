@@ -17,6 +17,7 @@ from .extract import extract_document_with_meta
 from .review import compute_needs_review, compute_overall_confidence, missing_required_fields
 from .store import (
     create_document_record,
+    extract_and_store_1099b_lots,
     get_document,
     get_document_by_hash,
     ingest_file,
@@ -108,17 +109,20 @@ def ingest_path(path: str, cfg: Config, *, filer: str | None = None, tax_year: i
         store_extracted_fields(doc_id=doc_id, section_id=section_id, data=extracted, confidences=result.field_confidence)
         if doc_type == "1099-DA" and isinstance(extracted, dict):
             store_1099da_transactions(doc_id=doc_id, extraction=extracted)
+        lot_count, lot_note = extract_and_store_1099b_lots(doc_id=doc_id, file_path=dest_path, doc_type=doc_type, cfg=cfg)
 
         missing = missing_required_fields(doc_type, extracted)
         overall = compute_overall_confidence(doc_type=doc_type, extraction=extracted, classification_confidence=classification_confidence)
         nr = compute_needs_review(classification_confidence=classification_confidence, overall_confidence=overall, missing_required=missing)
-        nr = nr or bool(result.review_fields)
+        nr = nr or bool(result.review_fields) or bool(lot_note)
         mark_processed(doc_id=doc_id, overall_confidence=overall, needs_review=nr)
         notes = []
         if missing:
             notes.append(f"missing required fields: {', '.join(missing)}")
         if result.review_fields:
             notes.append(f"low-confidence fields: {', '.join(result.review_fields)}")
+        if lot_note:
+            notes.append(lot_note)
         if nr and notes:
             mark_needs_review(doc_id=doc_id, notes="; ".join(notes))
     except Exception as e:  # noqa: BLE001
@@ -130,4 +134,6 @@ def ingest_path(path: str, cfg: Config, *, filer: str | None = None, tax_year: i
     out["extraction_method"] = result.method
     out["missing_required"] = missing
     out["low_confidence_fields"] = list(result.review_fields)
+    if lot_count is not None:
+        out["capital_lots"] = lot_count
     return out

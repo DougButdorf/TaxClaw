@@ -158,12 +158,17 @@ def get_document(
     title="Export documents",
     description=(
         "Export one document (document_id) or all documents (all=true) as a string in the chosen format: "
-        "json (documents with extracted fields), wide_csv (one row per document) or long_csv "
-        "(one row per field). Returns the content, never the original files."
+        "json (documents with extracted fields), wide_csv (one row per document), long_csv "
+        "(one row per field), 8949_csv (Form 8949-ready CSV, one row per sale from 1099-B, consolidated 1099 "
+        "and 1099-DA documents, with the check-box category and needs_review per row) or txf (TXF v042 for "
+        "desktop tax software import; 1099-DA rows and rows missing basis/dates are skipped and listed in "
+        "warnings). Returns the content, never the original files. AI-extracted data; not tax advice."
     ),
 )
 def export_documents(
-    format: Annotated[Literal["json", "wide_csv", "long_csv"], Field(description="Output format.")] = "json",
+    format: Annotated[
+        Literal["json", "wide_csv", "long_csv", "8949_csv", "txf"], Field(description="Output format.")
+    ] = "json",
     document_id: Annotated[str | None, Field(description="Export only this document.")] = None,
     all: Annotated[bool, Field(description="Export every document. Set this or document_id.")] = False,  # noqa: A002
 ) -> dict[str, Any]:
@@ -175,6 +180,24 @@ def export_documents(
         raise ToolError("set exactly one of document_id or all=true")
     if document_id and not _get(document_id):
         raise ToolError(f"document not found: {document_id}")
+    if format in ("8949_csv", "txf"):
+        from .accountant_exports import NOTICE_TEXT, build_8949, export_txf
+
+        ids = None if all else [document_id]
+        if format == "8949_csv":
+            res = build_8949(ids)
+            extra = {"rows": res.rows, "rows_needing_review": res.needs_review, "content_type": "text/csv"}
+        else:
+            res = export_txf(ids)
+            extra = {"records": res.records, "content_type": "text/plain", "line_endings": "CRLF"}
+        return {
+            "format": format,
+            "scope": "all" if all else document_id,
+            **extra,
+            "warnings": res.warnings,
+            "notice": NOTICE_TEXT,
+            "content": res.content,
+        }
     fn = {
         ("json", False): exporter.export_doc_json,
         ("wide_csv", False): exporter.export_doc_csv_wide,
