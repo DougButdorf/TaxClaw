@@ -243,6 +243,13 @@ By default:
 
 PRs welcome — especially new form schemas, tricky edge-case PDFs (redacted/synthetic), and export templates.
 
+## ☁️ TaxClaw Cloud (hosted, coming soon)
+
+- A hosted MCP is coming soon at `mcp.taxclaw.net` (placeholder — no live endpoint yet), with the same output schemas as local TaxClaw (fields + confidence + `needs_review`).
+- First 10 pages free per account, then $0.10 per page; pay per page with x402 (USDC on Base) or prepaid credits.
+- Documents are processed in memory and never stored; responses return data only.
+- Not tax advice.
+
 ## 📄 License
 
 MIT (core).
