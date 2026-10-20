@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "release_qualified": false,
+  "production_deployment_change": "none",
+  "real_world_accuracy_measured": false,
+  "scope": "Four changed form types, one synthetic grid case per type, paired clean and image-only moderate degraded scan; not real-world accuracy or release approval.",
+  "reference_comparator": {
+    "model": "claude-haiku-5-5",
+    "transport": "claude-subscription",
+    "exact_documents": 8,
+    "documents": 8,
+    "correct_fields": 224,
+    "expected_fields": 224,
+    "production_api_or_privacy_validation": false
+  },
+  "observed_local_tag_order_by_aggregate_field_match": [
+    "gemma3:12b",
+    "gemma3:4b",
+    "glm-ocr:latest",
+    "gemma4:latest",
+    "qwen3.5:4b"
+  ],
+  "local_followup_candidate": "gemma3:12b",
+  "immutable_checkpoint_ranking_established": false,
+  "required_next_work": [
+    "Resolve observed canonical extraction errors before promoting a local tag.",
+    "Repeat on independently curated real-form layouts and broader scan conditions, retaining review and strict grading.",
+    "Validate the intended production Haiku API transport and privacy controls separately before real tax data."
+  ],
+  "limitations": [
+    "Synthetic grid layouts; only one source case per form, paired variants are not independent cases.",
+    "Moderate deterministic degradation only: 100 DPI grayscale, 0.35-degree rotation, 0.25-pixel blur, JPEG 78.",
+    "Duplicate local inventory tag digests and resident snapshots do not prove immutable serving checkpoint identity.",
+    "One timing pass includes rendering, network, model loading or CLI startup; not a statistical speed ranking.",
+    "Classification scored separately; extraction uses answer-key form type.",
+    "Original 84 baseline records are unchanged and must not be pooled into this changed-form accuracy denominator."
+  ]
+}

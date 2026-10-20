@@ -1,0 +1,3311 @@
+[
+  {
+    "model": "gemma3:4b",
+    "fixture_id": "wp_f_changed_1099_r_clean",
+    "doc_type": "1099-R",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XX0000",
+        "present": true
+      },
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "capital_gain",
+        "kind": "money",
+        "expected": null,
+        "actual": "1850.00",
+        "present": true
+      },
+      {
+        "path": "distribution_codes",
+        "kind": "identifier",
+        "expected": "7Q",
+        "actual": "70",
+        "present": true
+      },
+      {
+        "path": "percent_of_total_distribution",
+        "kind": "percent",
+        "expected": "33.3333%",
+        "actual": "33.33333%",
+        "present": true
+      },
+      {
+        "path": "state_payer_number",
+        "kind": "identifier",
+        "expected": "NY QO-001908",
+        "actual": "NY Q0-001908",
+        "present": true
+      },
+      {
+        "path": "local_withheld",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:4b",
+    "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+    "doc_type": "1099-R",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XXX000",
+        "present": true
+      },
+      {
+        "path": "capital_gain",
+        "kind": "money",
+        "expected": null,
+        "actual": "123.47",
+        "present": true
+      },
+      {
+        "path": "distribution_codes",
+        "kind": "identifier",
+        "expected": "7Q",
+        "actual": "7",
+        "present": true
+      },
+      {
+        "path": "local_withheld",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:4b",
+    "fixture_id": "wp_f_changed_1099_g_clean",
+    "doc_type": "1099-G",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XX0000",
+        "present": true
+      },
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "rtaa_payments",
+        "kind": "money",
+        "expected": null,
+        "actual": "2190.08",
+        "present": true
+      },
+      {
+        "path": "taxable_grants",
+        "kind": "money",
+        "expected": "2190.08",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "agriculture_payments",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      },
+      {
+        "path": "trade_or_business_income",
+        "kind": "boolean",
+        "expected": false,
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "state_id",
+        "kind": "identifier",
+        "expected": "000QO1908",
+        "actual": "000Q01908",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:4b",
+    "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+    "doc_type": "1099-G",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XX0000",
+        "present": true
+      },
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "rtaa_payments",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      },
+      {
+        "path": "agriculture_payments",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      },
+      {
+        "path": "trade_or_business_income",
+        "kind": "boolean",
+        "expected": false,
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "state_id",
+        "kind": "identifier",
+        "expected": "000QO1908",
+        "actual": "000Q01908",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:4b",
+    "fixture_id": "wp_f_changed_1099_k_clean",
+    "doc_type": "1099-K",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "payer_name",
+        "kind": "text",
+        "expected": "Juniper Example Works LLC",
+        "actual": "Juniper Tin Works LLC",
+        "present": true
+      },
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XX0000",
+        "present": true
+      },
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "card_not_present",
+        "kind": "money",
+        "expected": "65001.09",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "march",
+        "kind": "money",
+        "expected": "2222.22",
+        "actual": "3333.33",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:4b",
+    "fixture_id": "wp_f_changed_1099_k_degraded_scan",
+    "doc_type": "1099-K",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "february",
+        "kind": "money",
+        "expected": "1111.11",
+        "actual": "11111.11",
+        "present": true
+      },
+      {
+        "path": "state_id",
+        "kind": "identifier",
+        "expected": "QO-0001908",
+        "actual": "QO-001908",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:4b",
+    "fixture_id": "wp_f_changed_k_1_clean",
+    "doc_type": "K-1",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "partnership_ein",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XXXX000",
+        "present": true
+      },
+      {
+        "path": "loss_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "capital_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "royalties",
+        "kind": "money",
+        "expected": null,
+        "actual": "7",
+        "present": true
+      },
+      {
+        "path": "other_income",
+        "kind": "object",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13W",
+        "kind": "money",
+        "expected": "87.65",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13A",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13H",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20A",
+        "kind": "money",
+        "expected": "127.90",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Z",
+        "kind": "text",
+        "expected": "STMT",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Q",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "self_employment_earnings",
+        "kind": "money",
+        "expected": "3749.50",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "other_credits.15A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_transactions.16A",
+        "kind": "text",
+        "expected": "Canada",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amt_items.17A",
+        "kind": "money",
+        "expected": "-32.10",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18C",
+        "kind": "money",
+        "expected": "32.45",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "distributions.19A",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      }
+    ],
+    "extra_fields": {
+      "amt_items": null,
+      "distributions": null,
+      "foreign_transactions": null,
+      "other_credits": null,
+      "other_deductions.13": "87.65",
+      "other_income.11": "STMT",
+      "other_information.20": "127.90",
+      "tax_exempt_and_nondeductible": null
+    },
+    "shape_errors": [
+      "amt_items",
+      "distributions",
+      "foreign_transactions",
+      "other_credits",
+      "tax_exempt_and_nondeductible"
+    ]
+  },
+  {
+    "model": "gemma3:4b",
+    "fixture_id": "wp_f_changed_k_1_degraded_scan",
+    "doc_type": "K-1",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "partnership_ein",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XXS000",
+        "present": true
+      },
+      {
+        "path": "loss_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "royalties",
+        "kind": "money",
+        "expected": null,
+        "actual": "7",
+        "present": true
+      },
+      {
+        "path": "other_income",
+        "kind": "object",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13W",
+        "kind": "money",
+        "expected": "87.65",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13A",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13H",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20A",
+        "kind": "money",
+        "expected": "127.90",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Z",
+        "kind": "text",
+        "expected": "STMT",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Q",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_credits.15A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_transactions.16A",
+        "kind": "text",
+        "expected": "Canada",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amt_items.17A",
+        "kind": "money",
+        "expected": "-32.10",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18C",
+        "kind": "money",
+        "expected": "32.45",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "distributions.19A",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      }
+    ],
+    "extra_fields": {
+      "amt_items": null,
+      "distributions": null,
+      "foreign_transactions": null,
+      "other_credits": null,
+      "other_deductions.13": "Other deductions",
+      "other_income.11": "Other income (coded)",
+      "other_information.20": "Investment income",
+      "tax_exempt_and_nondeductible": null
+    },
+    "shape_errors": [
+      "amt_items",
+      "distributions",
+      "foreign_transactions",
+      "other_credits",
+      "tax_exempt_and_nondeductible"
+    ]
+  },
+  {
+    "model": "gemma3:12b",
+    "fixture_id": "wp_f_changed_1099_r_clean",
+    "doc_type": "1099-R",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XXXX000",
+        "present": true
+      },
+      {
+        "path": "taxable_amount_not_determined",
+        "kind": "boolean",
+        "expected": false,
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "total_distribution",
+        "kind": "boolean",
+        "expected": false,
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "distribution_codes",
+        "kind": "identifier",
+        "expected": "7Q",
+        "actual": "70",
+        "present": true
+      },
+      {
+        "path": "percent_of_total_distribution",
+        "kind": "percent",
+        "expected": "33.3333%",
+        "actual": "33.333%",
+        "present": true
+      },
+      {
+        "path": "local_withheld",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:12b",
+    "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+    "doc_type": "1099-R",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XXXX000",
+        "present": true
+      },
+      {
+        "path": "taxable_amount_not_determined",
+        "kind": "boolean",
+        "expected": false,
+        "actual": true,
+        "present": true
+      },
+      {
+        "path": "total_distribution",
+        "kind": "boolean",
+        "expected": false,
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "distribution_codes",
+        "kind": "identifier",
+        "expected": "7Q",
+        "actual": "7",
+        "present": true
+      },
+      {
+        "path": "percent_of_total_distribution",
+        "kind": "percent",
+        "expected": "33.3333%",
+        "actual": "33.333%",
+        "present": true
+      },
+      {
+        "path": "local_withheld",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:12b",
+    "fixture_id": "wp_f_changed_1099_g_clean",
+    "doc_type": "1099-G",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "state_id",
+        "kind": "identifier",
+        "expected": "000QO1908",
+        "actual": "000Q01908",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:12b",
+    "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+    "doc_type": "1099-G",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XXXX0000",
+        "present": true
+      },
+      {
+        "path": "rtaa_payments",
+        "kind": "money",
+        "expected": null,
+        "actual": "2190.08",
+        "present": true
+      },
+      {
+        "path": "taxable_grants",
+        "kind": "money",
+        "expected": "2190.08",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "state_id",
+        "kind": "identifier",
+        "expected": "000QO1908",
+        "actual": "000Q01908",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:12b",
+    "fixture_id": "wp_f_changed_1099_k_clean",
+    "doc_type": "1099-K",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "state_id",
+        "kind": "identifier",
+        "expected": "QO-0001908",
+        "actual": "QQ-0001908",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:12b",
+    "fixture_id": "wp_f_changed_1099_k_degraded_scan",
+    "doc_type": "1099-K",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XX0000",
+        "present": true
+      },
+      {
+        "path": "state_id",
+        "kind": "identifier",
+        "expected": "QO-0001908",
+        "actual": "QO-001908",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma3:12b",
+    "fixture_id": "wp_f_changed_k_1_clean",
+    "doc_type": "K-1",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "partnership_ein",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XXX000",
+        "present": true
+      },
+      {
+        "path": "royalties",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      },
+      {
+        "path": "other_deductions.13W",
+        "kind": "money",
+        "expected": "87.65",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20A",
+        "kind": "money",
+        "expected": "127.90",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Z",
+        "kind": "text",
+        "expected": "STMT",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Q",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "charitable_contributions",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "self_employment_earnings",
+        "kind": "money",
+        "expected": "3749.50",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "other_credits.15A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_transactions.16A",
+        "kind": "text",
+        "expected": "Canada",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amt_items.17A",
+        "kind": "money",
+        "expected": "-32.10",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18C",
+        "kind": "money",
+        "expected": "32.45",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "distributions.19A",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      }
+    ],
+    "extra_fields": {
+      "amt_items": null,
+      "distributions": null,
+      "foreign_transactions": null,
+      "other_credits": null,
+      "other_deductions.13G": "125.00",
+      "other_deductions.14": "3749.50",
+      "other_deductions.15": "0.00",
+      "other_deductions.16": "Canada",
+      "other_deductions.17": "0.00",
+      "other_deductions.18": "32.45",
+      "other_deductions.19": "1500.00",
+      "other_deductions.20": "STMT",
+      "other_deductions.87.65": null,
+      "other_information.127.90": null,
+      "tax_exempt_and_nondeductible": null
+    },
+    "shape_errors": [
+      "amt_items",
+      "distributions",
+      "foreign_transactions",
+      "other_credits",
+      "tax_exempt_and_nondeductible"
+    ]
+  },
+  {
+    "model": "gemma3:12b",
+    "fixture_id": "wp_f_changed_k_1_degraded_scan",
+    "doc_type": "K-1",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "partnership_ein",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "00-XXX000",
+        "present": true
+      },
+      {
+        "path": "royalties",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      },
+      {
+        "path": "other_information.20Q",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "self_employment_earnings",
+        "kind": "money",
+        "expected": "3749.50",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "other_credits.15A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_transactions.16A",
+        "kind": "text",
+        "expected": "Canada",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amt_items.17A",
+        "kind": "money",
+        "expected": "-32.10",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18C",
+        "kind": "money",
+        "expected": "32.45",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "distributions.19A",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_taxes_paid",
+        "kind": "money",
+        "expected": null,
+        "actual": "2500.00",
+        "present": true
+      },
+      {
+        "path": "beginning_capital",
+        "kind": "money",
+        "expected": "25000.00",
+        "actual": "2000.00",
+        "present": true
+      },
+      {
+        "path": "capital_contributed",
+        "kind": "money",
+        "expected": "2000.00",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "capital_withdrawn",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": true
+      }
+    ],
+    "extra_fields": {
+      "amt_items": null,
+      "distributions.19": "1500.00",
+      "foreign_transactions.16": "Canada",
+      "other_credits": null,
+      "other_deductions.13C": "3749.50",
+      "other_deductions.13G": "125.00",
+      "other_deductions.18C": "32.45",
+      "tax_exempt_and_nondeductible.18": "0.00"
+    },
+    "shape_errors": [
+      "amt_items",
+      "other_credits"
+    ]
+  },
+  {
+    "model": "gemma4:latest",
+    "fixture_id": "wp_f_changed_1099_r_clean",
+    "doc_type": "1099-R",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "XXX-XX-0000",
+        "present": true
+      },
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "capital_gain",
+        "kind": "money",
+        "expected": null,
+        "actual": "1850.00",
+        "present": true
+      },
+      {
+        "path": "ira_sep_simple",
+        "kind": "boolean",
+        "expected": true,
+        "actual": false,
+        "present": true
+      },
+      {
+        "path": "local_withheld",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma4:latest",
+    "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+    "doc_type": "1099-R",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "capital_gain",
+        "kind": "money",
+        "expected": null,
+        "actual": "1850.00",
+        "present": true
+      },
+      {
+        "path": "local_withheld",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma4:latest",
+    "fixture_id": "wp_f_changed_1099_g_clean",
+    "doc_type": "1099-G",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "state_id",
+        "kind": "identifier",
+        "expected": "000QO1908",
+        "actual": "0000QO1908",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma4:latest",
+    "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+    "doc_type": "1099-G",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "rtaa_payments",
+        "kind": "money",
+        "expected": null,
+        "actual": "2190.08",
+        "present": true
+      },
+      {
+        "path": "taxable_grants",
+        "kind": "money",
+        "expected": "2190.08",
+        "actual": null,
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma4:latest",
+    "fixture_id": "wp_f_changed_1099_k_clean",
+    "doc_type": "1099-K",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": "XXX-XX-0000",
+        "present": true
+      },
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "january",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": "1111.11",
+        "present": true
+      },
+      {
+        "path": "february",
+        "kind": "money",
+        "expected": "1111.11",
+        "actual": "3333.33",
+        "present": true
+      },
+      {
+        "path": "march",
+        "kind": "money",
+        "expected": "2222.22",
+        "actual": "5555.55",
+        "present": true
+      },
+      {
+        "path": "april",
+        "kind": "money",
+        "expected": "3333.33",
+        "actual": "7777.77",
+        "present": true
+      },
+      {
+        "path": "may",
+        "kind": "money",
+        "expected": "4444.44",
+        "actual": "9999.99",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma4:latest",
+    "fixture_id": "wp_f_changed_1099_k_degraded_scan",
+    "doc_type": "1099-K",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "gemma4:latest",
+    "fixture_id": "wp_f_changed_k_1_clean",
+    "doc_type": "K-1",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "tax_year",
+        "kind": "text",
+        "expected": "2025",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partnership_name",
+        "kind": "text",
+        "expected": "Example Lantern Partners LP",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partnership_ein",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partner_name",
+        "kind": "text",
+        "expected": "Morgan Sample",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partner_ssn",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partner_type",
+        "kind": "text",
+        "expected": "Individual",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "profit_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "loss_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "capital_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "ordinary_income",
+        "kind": "money",
+        "expected": "-1250.50",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "net_rental_income",
+        "kind": "money",
+        "expected": "2480.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "guaranteed_payments",
+        "kind": "money",
+        "expected": "5000.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "interest_income",
+        "kind": "money",
+        "expected": "85.15",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "dividends",
+        "kind": "money",
+        "expected": "42.75",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "royalties",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "net_short_term_gain",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "net_long_term_gain",
+        "kind": "money",
+        "expected": "325.25",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_income",
+        "kind": "object",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "section_179",
+        "kind": "money",
+        "expected": "250.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13W",
+        "kind": "money",
+        "expected": "87.65",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13A",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13H",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20A",
+        "kind": "money",
+        "expected": "127.90",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Z",
+        "kind": "text",
+        "expected": "STMT",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Q",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "charitable_contributions",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "self_employment_earnings",
+        "kind": "money",
+        "expected": "3749.50",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_credits.15A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_transactions.16A",
+        "kind": "text",
+        "expected": "Canada",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amt_items.17A",
+        "kind": "money",
+        "expected": "-32.10",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18C",
+        "kind": "money",
+        "expected": "32.45",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "distributions.19A",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_taxes_paid",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "beginning_capital",
+        "kind": "money",
+        "expected": "25000.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "capital_contributed",
+        "kind": "money",
+        "expected": "2000.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "capital_withdrawn",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "ending_capital",
+        "kind": "money",
+        "expected": "27850.00",
+        "actual": null,
+        "present": false
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": [
+      "",
+      "amt_items",
+      "distributions",
+      "foreign_transactions",
+      "other_credits",
+      "other_deductions",
+      "other_information",
+      "tax_exempt_and_nondeductible"
+    ]
+  },
+  {
+    "model": "gemma4:latest",
+    "fixture_id": "wp_f_changed_k_1_degraded_scan",
+    "doc_type": "K-1",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "royalties",
+        "kind": "money",
+        "expected": null,
+        "actual": "0.00",
+        "present": true
+      },
+      {
+        "path": "other_income",
+        "kind": "object",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13A",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20A",
+        "kind": "money",
+        "expected": "127.90",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_transactions.16A",
+        "kind": "text",
+        "expected": "Canada",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amt_items.17A",
+        "kind": "money",
+        "expected": "-32.10",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18C",
+        "kind": "money",
+        "expected": "32.45",
+        "actual": null,
+        "present": false
+      }
+    ],
+    "extra_fields": {
+      "amt_items": null,
+      "foreign_transactions": null,
+      "other_deductions.17A": "-32.10",
+      "other_deductions.18C": "32.45",
+      "other_income.11": null,
+      "other_income.11ZZ": null
+    },
+    "shape_errors": [
+      "amt_items",
+      "foreign_transactions"
+    ]
+  },
+  {
+    "model": "qwen3.5:4b",
+    "fixture_id": "wp_f_changed_1099_r_clean",
+    "doc_type": "1099-R",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "payer_name",
+        "kind": "text",
+        "expected": "Juniper Example Works LLC",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "recipient_name",
+        "kind": "text",
+        "expected": "Morgan Sample",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "account_number",
+        "kind": "identifier",
+        "expected": "SYN-0042",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_year",
+        "kind": "text",
+        "expected": "2025",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "gross_distribution",
+        "kind": "money",
+        "expected": "18500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "taxable_amount",
+        "kind": "money",
+        "expected": "17500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "taxable_amount_not_determined",
+        "kind": "boolean",
+        "expected": false,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "total_distribution",
+        "kind": "boolean",
+        "expected": false,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "capital_gain",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "federal_withheld",
+        "kind": "money",
+        "expected": "1850.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "employee_contributions",
+        "kind": "money",
+        "expected": "1000.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "net_unrealized_appreciation",
+        "kind": "money",
+        "expected": "123.47",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "distribution_codes",
+        "kind": "identifier",
+        "expected": "7Q",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "ira_sep_simple",
+        "kind": "boolean",
+        "expected": true,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_amount",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_percent",
+        "kind": "percent",
+        "expected": "12.375%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "percent_of_total_distribution",
+        "kind": "percent",
+        "expected": "33.3333%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "total_employee_contributions",
+        "kind": "money",
+        "expected": "1456.78",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amount_allocable_to_irr",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "first_year_designated_roth",
+        "kind": "text",
+        "expected": "2017",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "fatca_filing_requirement",
+        "kind": "boolean",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "date_of_payment",
+        "kind": "date",
+        "expected": "2025-10-09",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "state_withheld",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "state_payer_number",
+        "kind": "identifier",
+        "expected": "NY QO-001908",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "state_distribution",
+        "kind": "money",
+        "expected": "17500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "local_withheld",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "locality_name",
+        "kind": "text",
+        "expected": "QO Example District",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "local_distribution",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": [
+      ""
+    ]
+  },
+  {
+    "model": "qwen3.5:4b",
+    "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+    "doc_type": "1099-R",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "payer_name",
+        "kind": "text",
+        "expected": "Juniper Example Works LLC",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "recipient_name",
+        "kind": "text",
+        "expected": "Morgan Sample",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "account_number",
+        "kind": "identifier",
+        "expected": "SYN-0042",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_year",
+        "kind": "text",
+        "expected": "2025",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "gross_distribution",
+        "kind": "money",
+        "expected": "18500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "taxable_amount",
+        "kind": "money",
+        "expected": "17500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "taxable_amount_not_determined",
+        "kind": "boolean",
+        "expected": false,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "total_distribution",
+        "kind": "boolean",
+        "expected": false,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "capital_gain",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "federal_withheld",
+        "kind": "money",
+        "expected": "1850.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "employee_contributions",
+        "kind": "money",
+        "expected": "1000.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "net_unrealized_appreciation",
+        "kind": "money",
+        "expected": "123.47",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "distribution_codes",
+        "kind": "identifier",
+        "expected": "7Q",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "ira_sep_simple",
+        "kind": "boolean",
+        "expected": true,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_amount",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_percent",
+        "kind": "percent",
+        "expected": "12.375%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "percent_of_total_distribution",
+        "kind": "percent",
+        "expected": "33.3333%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "total_employee_contributions",
+        "kind": "money",
+        "expected": "1456.78",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amount_allocable_to_irr",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "first_year_designated_roth",
+        "kind": "text",
+        "expected": "2017",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "fatca_filing_requirement",
+        "kind": "boolean",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "date_of_payment",
+        "kind": "date",
+        "expected": "2025-10-09",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "state_withheld",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "state_payer_number",
+        "kind": "identifier",
+        "expected": "NY QO-001908",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "state_distribution",
+        "kind": "money",
+        "expected": "17500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "local_withheld",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "locality_name",
+        "kind": "text",
+        "expected": "QO Example District",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "local_distribution",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": [
+      ""
+    ]
+  },
+  {
+    "model": "qwen3.5:4b",
+    "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+    "doc_type": "1099-G",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "payer_name",
+        "kind": "text",
+        "expected": "Juniper Example Works LLC",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "payer_tin",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "recipient_name",
+        "kind": "text",
+        "expected": "Morgan Sample",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "account_number",
+        "kind": "identifier",
+        "expected": "SYN-0042",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_year",
+        "kind": "text",
+        "expected": "2025",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "unemployment_compensation",
+        "kind": "money",
+        "expected": "8642.19",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "state_local_tax_refunds",
+        "kind": "money",
+        "expected": "1098.76",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "box2_tax_year",
+        "kind": "text",
+        "expected": "2024",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "federal_withheld",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "rtaa_payments",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "taxable_grants",
+        "kind": "money",
+        "expected": "2190.08",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "agriculture_payments",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "trade_or_business_income",
+        "kind": "boolean",
+        "expected": false,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "market_gain",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "state",
+        "kind": "text",
+        "expected": "NY",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "state_id",
+        "kind": "identifier",
+        "expected": "000QO1908",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "state_withheld",
+        "kind": "money",
+        "expected": "432.10",
+        "actual": null,
+        "present": false
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": [
+      ""
+    ]
+  },
+  {
+    "model": "qwen3.5:4b",
+    "fixture_id": "wp_f_changed_k_1_clean",
+    "doc_type": "K-1",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "tax_year",
+        "kind": "text",
+        "expected": "2025",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partnership_name",
+        "kind": "text",
+        "expected": "Example Lantern Partners LP",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partnership_ein",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partner_name",
+        "kind": "text",
+        "expected": "Morgan Sample",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partner_ssn",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partner_type",
+        "kind": "text",
+        "expected": "Individual",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "profit_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "loss_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "capital_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "ordinary_income",
+        "kind": "money",
+        "expected": "-1250.50",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "net_rental_income",
+        "kind": "money",
+        "expected": "2480.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "guaranteed_payments",
+        "kind": "money",
+        "expected": "5000.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "interest_income",
+        "kind": "money",
+        "expected": "85.15",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "dividends",
+        "kind": "money",
+        "expected": "42.75",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "royalties",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "net_short_term_gain",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "net_long_term_gain",
+        "kind": "money",
+        "expected": "325.25",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_income",
+        "kind": "object",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "section_179",
+        "kind": "money",
+        "expected": "250.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13W",
+        "kind": "money",
+        "expected": "87.65",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13A",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13H",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20A",
+        "kind": "money",
+        "expected": "127.90",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Z",
+        "kind": "text",
+        "expected": "STMT",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Q",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "charitable_contributions",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "self_employment_earnings",
+        "kind": "money",
+        "expected": "3749.50",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_credits.15A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_transactions.16A",
+        "kind": "text",
+        "expected": "Canada",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amt_items.17A",
+        "kind": "money",
+        "expected": "-32.10",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18C",
+        "kind": "money",
+        "expected": "32.45",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "distributions.19A",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_taxes_paid",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "beginning_capital",
+        "kind": "money",
+        "expected": "25000.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "capital_contributed",
+        "kind": "money",
+        "expected": "2000.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "capital_withdrawn",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "ending_capital",
+        "kind": "money",
+        "expected": "27850.00",
+        "actual": null,
+        "present": false
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": [
+      "",
+      "amt_items",
+      "distributions",
+      "foreign_transactions",
+      "other_credits",
+      "other_deductions",
+      "other_information",
+      "tax_exempt_and_nondeductible"
+    ]
+  },
+  {
+    "model": "qwen3.5:4b",
+    "fixture_id": "wp_f_changed_k_1_degraded_scan",
+    "doc_type": "K-1",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "tax_year",
+        "kind": "text",
+        "expected": "2025",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partnership_name",
+        "kind": "text",
+        "expected": "Example Lantern Partners LP",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partnership_ein",
+        "kind": "identifier",
+        "expected": "00-XXX0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partner_name",
+        "kind": "text",
+        "expected": "Morgan Sample",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partner_ssn",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "partner_type",
+        "kind": "text",
+        "expected": "Individual",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "profit_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "loss_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "capital_sharing_pct",
+        "kind": "percent",
+        "expected": "25.00%",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "ordinary_income",
+        "kind": "money",
+        "expected": "-1250.50",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "net_rental_income",
+        "kind": "money",
+        "expected": "2480.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "guaranteed_payments",
+        "kind": "money",
+        "expected": "5000.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "interest_income",
+        "kind": "money",
+        "expected": "85.15",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "dividends",
+        "kind": "money",
+        "expected": "42.75",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "royalties",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "net_short_term_gain",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "net_long_term_gain",
+        "kind": "money",
+        "expected": "325.25",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_income",
+        "kind": "object",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "section_179",
+        "kind": "money",
+        "expected": "250.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13W",
+        "kind": "money",
+        "expected": "87.65",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13A",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13H",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20A",
+        "kind": "money",
+        "expected": "127.90",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Z",
+        "kind": "text",
+        "expected": "STMT",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Q",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "charitable_contributions",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "self_employment_earnings",
+        "kind": "money",
+        "expected": "3749.50",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_credits.15A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_transactions.16A",
+        "kind": "text",
+        "expected": "Canada",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amt_items.17A",
+        "kind": "money",
+        "expected": "-32.10",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18C",
+        "kind": "money",
+        "expected": "32.45",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "distributions.19A",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_taxes_paid",
+        "kind": "money",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "beginning_capital",
+        "kind": "money",
+        "expected": "25000.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "capital_contributed",
+        "kind": "money",
+        "expected": "2000.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "capital_withdrawn",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "ending_capital",
+        "kind": "money",
+        "expected": "27850.00",
+        "actual": null,
+        "present": false
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": [
+      "",
+      "amt_items",
+      "distributions",
+      "foreign_transactions",
+      "other_credits",
+      "other_deductions",
+      "other_information",
+      "tax_exempt_and_nondeductible"
+    ]
+  },
+  {
+    "model": "glm-ocr:latest",
+    "fixture_id": "wp_f_changed_1099_r_clean",
+    "doc_type": "1099-R",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "ira_sep_simple",
+        "kind": "boolean",
+        "expected": true,
+        "actual": false,
+        "present": true
+      },
+      {
+        "path": "fatca_filing_requirement",
+        "kind": "boolean",
+        "expected": null,
+        "actual": false,
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "glm-ocr:latest",
+    "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+    "doc_type": "1099-R",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "percent_of_total_distribution",
+        "kind": "percent",
+        "expected": "33.3333%",
+        "actual": "33.333%",
+        "present": true
+      },
+      {
+        "path": "fatca_filing_requirement",
+        "kind": "boolean",
+        "expected": null,
+        "actual": false,
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "glm-ocr:latest",
+    "fixture_id": "wp_f_changed_1099_g_clean",
+    "doc_type": "1099-G",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "glm-ocr:latest",
+    "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+    "doc_type": "1099-G",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "glm-ocr:latest",
+    "fixture_id": "wp_f_changed_1099_k_clean",
+    "doc_type": "1099-K",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "april",
+        "kind": "money",
+        "expected": "3333.33",
+        "actual": "4444.44",
+        "present": true
+      },
+      {
+        "path": "may",
+        "kind": "money",
+        "expected": "4444.44",
+        "actual": "6666.66",
+        "present": true
+      },
+      {
+        "path": "august",
+        "kind": "money",
+        "expected": "7777.77",
+        "actual": "8888.88",
+        "present": true
+      },
+      {
+        "path": "october",
+        "kind": "money",
+        "expected": "9999.99",
+        "actual": "10101.01",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "glm-ocr:latest",
+    "fixture_id": "wp_f_changed_1099_k_degraded_scan",
+    "doc_type": "1099-K",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "recipient_tin",
+        "kind": "identifier",
+        "expected": "XXX-XX-0000",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "june",
+        "kind": "money",
+        "expected": "5555.55",
+        "actual": "6666.66",
+        "present": true
+      },
+      {
+        "path": "july",
+        "kind": "money",
+        "expected": "6666.66",
+        "actual": "8888.88",
+        "present": true
+      },
+      {
+        "path": "august",
+        "kind": "money",
+        "expected": "7777.77",
+        "actual": "8888.88",
+        "present": true
+      },
+      {
+        "path": "september",
+        "kind": "money",
+        "expected": "8888.88",
+        "actual": "10101.01",
+        "present": true
+      },
+      {
+        "path": "october",
+        "kind": "money",
+        "expected": "9999.99",
+        "actual": "10101.01",
+        "present": true
+      },
+      {
+        "path": "december",
+        "kind": "money",
+        "expected": "18022.49",
+        "actual": "NY",
+        "present": true
+      }
+    ],
+    "extra_fields": {},
+    "shape_errors": []
+  },
+  {
+    "model": "glm-ocr:latest",
+    "fixture_id": "wp_f_changed_k_1_clean",
+    "doc_type": "K-1",
+    "variant": "clean",
+    "incorrect_fields": [
+      {
+        "path": "ordinary_income",
+        "kind": "money",
+        "expected": "-1250.50",
+        "actual": "5000.00",
+        "present": true
+      },
+      {
+        "path": "guaranteed_payments",
+        "kind": "money",
+        "expected": "5000.00",
+        "actual": "42.75",
+        "present": true
+      },
+      {
+        "path": "dividends",
+        "kind": "money",
+        "expected": "42.75",
+        "actual": "6a",
+        "present": true
+      },
+      {
+        "path": "royalties",
+        "kind": "money",
+        "expected": null,
+        "actual": "7",
+        "present": true
+      },
+      {
+        "path": "other_income",
+        "kind": "object",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13W",
+        "kind": "money",
+        "expected": "87.65",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13A",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13H",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20A",
+        "kind": "money",
+        "expected": "127.90",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Z",
+        "kind": "text",
+        "expected": "STMT",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Q",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "charitable_contributions",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "self_employment_earnings",
+        "kind": "money",
+        "expected": "3749.50",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "other_credits.15A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_transactions.16A",
+        "kind": "text",
+        "expected": "Canada",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amt_items.17A",
+        "kind": "money",
+        "expected": "-32.10",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18C",
+        "kind": "money",
+        "expected": "32.45",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "distributions.19A",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "beginning_capital",
+        "kind": "money",
+        "expected": "25000.00",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "capital_contributed",
+        "kind": "money",
+        "expected": "2000.00",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "capital_withdrawn",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "ending_capital",
+        "kind": "money",
+        "expected": "27850.00",
+        "actual": null,
+        "present": true
+      }
+    ],
+    "extra_fields": {
+      "amt_items": {},
+      "distributions": {},
+      "foreign_transactions": {},
+      "other_credits": {},
+      "other_deductions.13 Code W - Other deductions": "87.65",
+      "other_income.11 Other income (loss)": "coded",
+      "other_information": {},
+      "tax_exempt_and_nondeductible": {}
+    },
+    "shape_errors": []
+  },
+  {
+    "model": "glm-ocr:latest",
+    "fixture_id": "wp_f_changed_k_1_degraded_scan",
+    "doc_type": "K-1",
+    "variant": "degraded_scan",
+    "incorrect_fields": [
+      {
+        "path": "ordinary_income",
+        "kind": "money",
+        "expected": "-1250.50",
+        "actual": "5000.00",
+        "present": true
+      },
+      {
+        "path": "guaranteed_payments",
+        "kind": "money",
+        "expected": "5000.00",
+        "actual": "42.75",
+        "present": true
+      },
+      {
+        "path": "dividends",
+        "kind": "money",
+        "expected": "42.75",
+        "actual": "6a",
+        "present": true
+      },
+      {
+        "path": "royalties",
+        "kind": "money",
+        "expected": null,
+        "actual": "7",
+        "present": true
+      },
+      {
+        "path": "other_income",
+        "kind": "object",
+        "expected": null,
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13W",
+        "kind": "money",
+        "expected": "87.65",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13A",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_deductions.13H",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20A",
+        "kind": "money",
+        "expected": "127.90",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Z",
+        "kind": "text",
+        "expected": "STMT",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "other_information.20Q",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "charitable_contributions",
+        "kind": "money",
+        "expected": "125.00",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "self_employment_earnings",
+        "kind": "money",
+        "expected": "3749.50",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "other_credits.15A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "foreign_transactions.16A",
+        "kind": "text",
+        "expected": "Canada",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "amt_items.17A",
+        "kind": "money",
+        "expected": "-32.10",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18A",
+        "kind": "money",
+        "expected": "0.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "tax_exempt_and_nondeductible.18C",
+        "kind": "money",
+        "expected": "32.45",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "distributions.19A",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": false
+      },
+      {
+        "path": "beginning_capital",
+        "kind": "money",
+        "expected": "25000.00",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "capital_contributed",
+        "kind": "money",
+        "expected": "2000.00",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "capital_withdrawn",
+        "kind": "money",
+        "expected": "1500.00",
+        "actual": null,
+        "present": true
+      },
+      {
+        "path": "ending_capital",
+        "kind": "money",
+        "expected": "27850.00",
+        "actual": null,
+        "present": true
+      }
+    ],
+    "extra_fields": {
+      "amt_items": {},
+      "distributions": {},
+      "foreign_transactions": {},
+      "other_credits": {},
+      "other_deductions.13 Code W - Other deductions": "87.65",
+      "other_income.11 Other income (loss)": "coded",
+      "other_information": {},
+      "tax_exempt_and_nondeductible": {}
+    },
+    "shape_errors": []
+  }
+]

@@ -1,0 +1,822 @@
+{
+  "scope": "Four changed form types, one synthetic grid case per type, paired clean and image-only moderate degraded scan; not real-world accuracy or release approval.",
+  "upstream_summary_scope_known_inaccurate": "Runner summary.json says clean-form despite both variants; preserved verbatim. This file and RESULTS.md supply accurate scope.",
+  "models": {
+    "gemma3:4b": {
+      "overall": {
+        "documents": 8,
+        "correct_fields": 158,
+        "expected_fields": 224,
+        "field_accuracy": 0.7053571428571429,
+        "exact_documents": 0,
+        "extraction_error_documents": 0,
+        "classification_correct": 8,
+        "classification_error_documents": 0,
+        "extra_fields": 16,
+        "shape_errors": 10,
+        "extraction_seconds_per_page": 18.87548371050507,
+        "classification_seconds_per_document": 4.890321881044656
+      },
+      "variants": {
+        "clean": {
+          "documents": 4,
+          "correct_fields": 75,
+          "expected_fields": 112,
+          "field_accuracy": 0.6696428571428571,
+          "exact_documents": 0,
+          "extraction_error_documents": 0,
+          "classification_correct": 4,
+          "classification_error_documents": 0,
+          "extra_fields": 8,
+          "shape_errors": 5,
+          "extraction_seconds_per_page": 17.20962665975094,
+          "classification_seconds_per_document": 1.275450688553974
+        },
+        "degraded_scan": {
+          "documents": 4,
+          "correct_fields": 83,
+          "expected_fields": 112,
+          "field_accuracy": 0.7410714285714286,
+          "exact_documents": 0,
+          "extraction_error_documents": 0,
+          "classification_correct": 4,
+          "classification_error_documents": 0,
+          "extra_fields": 8,
+          "shape_errors": 5,
+          "extraction_seconds_per_page": 20.5413407612592,
+          "classification_seconds_per_document": 8.505193073535338
+        }
+      },
+      "forms": [
+        {
+          "doc_type": "1099-R",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 21.705416398122907,
+          "classification_correct": true,
+          "correct_fields": 23,
+          "expected_fields": 30,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-R",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 22.933535897172987,
+          "classification_correct": true,
+          "correct_fields": 26,
+          "expected_fields": 30,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 11.78849765472114,
+          "classification_correct": true,
+          "correct_fields": 11,
+          "expected_fields": 18,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 12.242650149390101,
+          "classification_correct": true,
+          "correct_fields": 12,
+          "expected_fields": 18,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 15.327750254422426,
+          "classification_correct": true,
+          "correct_fields": 21,
+          "expected_fields": 26,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 15.67126982100308,
+          "classification_correct": true,
+          "correct_fields": 23,
+          "expected_fields": 26,
+          "exact_document": false
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "clean",
+          "page_count": 2,
+          "status": "ok",
+          "seconds_per_page": 18.61323449574411,
+          "classification_correct": true,
+          "correct_fields": 20,
+          "expected_fields": 38,
+          "exact_document": false
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "degraded_scan",
+          "page_count": 2,
+          "status": "ok",
+          "seconds_per_page": 25.92962396936491,
+          "classification_correct": true,
+          "correct_fields": 22,
+          "expected_fields": 38,
+          "exact_document": false
+        }
+      ]
+    },
+    "gemma3:12b": {
+      "overall": {
+        "documents": 8,
+        "correct_fields": 176,
+        "expected_fields": 224,
+        "field_accuracy": 0.7857142857142857,
+        "exact_documents": 0,
+        "extraction_error_documents": 0,
+        "classification_correct": 8,
+        "classification_error_documents": 0,
+        "extra_fields": 23,
+        "shape_errors": 7,
+        "extraction_seconds_per_page": 65.95293471077457,
+        "classification_seconds_per_document": 25.01286128826905
+      },
+      "variants": {
+        "clean": {
+          "documents": 4,
+          "correct_fields": 90,
+          "expected_fields": 112,
+          "field_accuracy": 0.8035714285714286,
+          "exact_documents": 0,
+          "extraction_error_documents": 0,
+          "classification_correct": 4,
+          "classification_error_documents": 0,
+          "extra_fields": 15,
+          "shape_errors": 5,
+          "extraction_seconds_per_page": 68.92639325559139,
+          "classification_seconds_per_document": 13.563011394813657
+        },
+        "degraded_scan": {
+          "documents": 4,
+          "correct_fields": 86,
+          "expected_fields": 112,
+          "field_accuracy": 0.7678571428571429,
+          "exact_documents": 0,
+          "extraction_error_documents": 0,
+          "classification_correct": 4,
+          "classification_error_documents": 0,
+          "extra_fields": 8,
+          "shape_errors": 2,
+          "extraction_seconds_per_page": 62.97947616595775,
+          "classification_seconds_per_document": 36.462711181724444
+        }
+      },
+      "forms": [
+        {
+          "doc_type": "1099-R",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 67.75304953381419,
+          "classification_correct": true,
+          "correct_fields": 24,
+          "expected_fields": 30,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-R",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 71.23619464971125,
+          "classification_correct": true,
+          "correct_fields": 24,
+          "expected_fields": 30,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 54.23082132730633,
+          "classification_correct": true,
+          "correct_fields": 17,
+          "expected_fields": 18,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 73.12463888619095,
+          "classification_correct": true,
+          "correct_fields": 14,
+          "expected_fields": 18,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 71.01460883952677,
+          "classification_correct": true,
+          "correct_fields": 25,
+          "expected_fields": 26,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 62.6292221006006,
+          "classification_correct": true,
+          "correct_fields": 24,
+          "expected_fields": 26,
+          "exact_document": false
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "clean",
+          "page_count": 2,
+          "status": "ok",
+          "seconds_per_page": 75.81674328865483,
+          "classification_correct": true,
+          "correct_fields": 24,
+          "expected_fields": 38,
+          "exact_document": false
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "degraded_scan",
+          "page_count": 2,
+          "status": "ok",
+          "seconds_per_page": 53.95366259664297,
+          "classification_correct": true,
+          "correct_fields": 24,
+          "expected_fields": 38,
+          "exact_document": false
+        }
+      ]
+    },
+    "gemma4:latest": {
+      "overall": {
+        "documents": 8,
+        "correct_fields": 156,
+        "expected_fields": 224,
+        "field_accuracy": 0.6964285714285714,
+        "exact_documents": 0,
+        "extraction_error_documents": 1,
+        "classification_correct": 8,
+        "classification_error_documents": 0,
+        "extra_fields": 6,
+        "shape_errors": 10,
+        "extraction_seconds_per_page": 75.42390234516934,
+        "classification_seconds_per_document": 13.465384291950613
+      },
+      "variants": {
+        "clean": {
+          "documents": 4,
+          "correct_fields": 59,
+          "expected_fields": 112,
+          "field_accuracy": 0.5267857142857143,
+          "exact_documents": 0,
+          "extraction_error_documents": 1,
+          "classification_correct": 4,
+          "classification_error_documents": 0,
+          "extra_fields": 0,
+          "shape_errors": 8,
+          "extraction_seconds_per_page": 81.14257177598775,
+          "classification_seconds_per_document": 5.818718355381861
+        },
+        "degraded_scan": {
+          "documents": 4,
+          "correct_fields": 97,
+          "expected_fields": 112,
+          "field_accuracy": 0.8660714285714286,
+          "exact_documents": 0,
+          "extraction_error_documents": 0,
+          "classification_correct": 4,
+          "classification_error_documents": 0,
+          "extra_fields": 6,
+          "shape_errors": 2,
+          "extraction_seconds_per_page": 69.70523291435093,
+          "classification_seconds_per_document": 21.112050228519365
+        }
+      },
+      "forms": [
+        {
+          "doc_type": "1099-R",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 87.70822614897043,
+          "classification_correct": true,
+          "correct_fields": 25,
+          "expected_fields": 30,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-R",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 70.53533620852977,
+          "classification_correct": true,
+          "correct_fields": 26,
+          "expected_fields": 30,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 43.29071772377938,
+          "classification_correct": true,
+          "correct_fields": 15,
+          "expected_fields": 18,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 50.302017224021256,
+          "classification_correct": true,
+          "correct_fields": 15,
+          "expected_fields": 18,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 94.54133282601833,
+          "classification_correct": true,
+          "correct_fields": 19,
+          "expected_fields": 26,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 59.94303378928453,
+          "classification_correct": true,
+          "correct_fields": 25,
+          "expected_fields": 26,
+          "exact_document": false
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "clean",
+          "page_count": 2,
+          "status": "error",
+          "seconds_per_page": 90.08629109058529,
+          "classification_correct": true,
+          "correct_fields": 0,
+          "expected_fields": 38,
+          "exact_document": false
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "degraded_scan",
+          "page_count": 2,
+          "status": "ok",
+          "seconds_per_page": 83.87288867495954,
+          "classification_correct": true,
+          "correct_fields": 31,
+          "expected_fields": 38,
+          "exact_document": false
+        }
+      ]
+    },
+    "qwen3.5:4b": {
+      "overall": {
+        "documents": 8,
+        "correct_fields": 70,
+        "expected_fields": 224,
+        "field_accuracy": 0.3125,
+        "exact_documents": 3,
+        "extraction_error_documents": 5,
+        "classification_correct": 8,
+        "classification_error_documents": 0,
+        "extra_fields": 0,
+        "shape_errors": 19,
+        "extraction_seconds_per_page": 48.40783181488514,
+        "classification_seconds_per_document": 17.437762967078015
+      },
+      "variants": {
+        "clean": {
+          "documents": 4,
+          "correct_fields": 44,
+          "expected_fields": 112,
+          "field_accuracy": 0.39285714285714285,
+          "exact_documents": 2,
+          "extraction_error_documents": 2,
+          "classification_correct": 4,
+          "classification_error_documents": 0,
+          "extra_fields": 0,
+          "shape_errors": 9,
+          "extraction_seconds_per_page": 45.3693483909592,
+          "classification_seconds_per_document": 7.563396945362911
+        },
+        "degraded_scan": {
+          "documents": 4,
+          "correct_fields": 26,
+          "expected_fields": 112,
+          "field_accuracy": 0.23214285714285715,
+          "exact_documents": 1,
+          "extraction_error_documents": 3,
+          "classification_correct": 4,
+          "classification_error_documents": 0,
+          "extra_fields": 0,
+          "shape_errors": 10,
+          "extraction_seconds_per_page": 51.446315238811074,
+          "classification_seconds_per_document": 27.31212898879312
+        }
+      },
+      "forms": [
+        {
+          "doc_type": "1099-R",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "error",
+          "seconds_per_page": 74.8192176008597,
+          "classification_correct": true,
+          "correct_fields": 0,
+          "expected_fields": 30,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-R",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "error",
+          "seconds_per_page": 68.67088585160673,
+          "classification_correct": true,
+          "correct_fields": 0,
+          "expected_fields": 30,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 40.74841516558081,
+          "classification_correct": true,
+          "correct_fields": 18,
+          "expected_fields": 18,
+          "exact_document": true
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "error",
+          "seconds_per_page": 75.25840598437935,
+          "classification_correct": true,
+          "correct_fields": 0,
+          "expected_fields": 18,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 49.68851071130484,
+          "classification_correct": true,
+          "correct_fields": 26,
+          "expected_fields": 26,
+          "exact_document": true
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 50.19831015076488,
+          "classification_correct": true,
+          "correct_fields": 26,
+          "expected_fields": 26,
+          "exact_document": true
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "clean",
+          "page_count": 2,
+          "status": "error",
+          "seconds_per_page": 30.79529923852533,
+          "classification_correct": true,
+          "correct_fields": 0,
+          "expected_fields": 38,
+          "exact_document": false
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "degraded_scan",
+          "page_count": 2,
+          "status": "error",
+          "seconds_per_page": 31.55198710365221,
+          "classification_correct": true,
+          "correct_fields": 0,
+          "expected_fields": 38,
+          "exact_document": false
+        }
+      ]
+    },
+    "glm-ocr:latest": {
+      "overall": {
+        "documents": 8,
+        "correct_fields": 158,
+        "expected_fields": 224,
+        "field_accuracy": 0.7053571428571429,
+        "exact_documents": 0,
+        "extraction_error_documents": 0,
+        "classification_correct": 6,
+        "classification_error_documents": 0,
+        "extra_fields": 16,
+        "shape_errors": 0,
+        "extraction_seconds_per_page": 11.753164877835662,
+        "classification_seconds_per_document": 8.465125259943306
+      },
+      "variants": {
+        "clean": {
+          "documents": 4,
+          "correct_fields": 80,
+          "expected_fields": 112,
+          "field_accuracy": 0.7142857142857143,
+          "exact_documents": 0,
+          "extraction_error_documents": 0,
+          "classification_correct": 3,
+          "classification_error_documents": 0,
+          "extra_fields": 8,
+          "shape_errors": 0,
+          "extraction_seconds_per_page": 13.943216898292302,
+          "classification_seconds_per_document": 2.4493890365120023
+        },
+        "degraded_scan": {
+          "documents": 4,
+          "correct_fields": 78,
+          "expected_fields": 112,
+          "field_accuracy": 0.6964285714285714,
+          "exact_documents": 0,
+          "extraction_error_documents": 0,
+          "classification_correct": 3,
+          "classification_error_documents": 0,
+          "extra_fields": 8,
+          "shape_errors": 0,
+          "extraction_seconds_per_page": 9.56311285737902,
+          "classification_seconds_per_document": 14.48086148337461
+        }
+      },
+      "forms": [
+        {
+          "doc_type": "1099-R",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 20.483179034665227,
+          "classification_correct": true,
+          "correct_fields": 27,
+          "expected_fields": 30,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-R",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 8.444251596927643,
+          "classification_correct": true,
+          "correct_fields": 27,
+          "expected_fields": 30,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 13.104515003971756,
+          "classification_correct": true,
+          "correct_fields": 17,
+          "expected_fields": 18,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 4.634195131249726,
+          "classification_correct": true,
+          "correct_fields": 17,
+          "expected_fields": 18,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 15.009140676818788,
+          "classification_correct": true,
+          "correct_fields": 21,
+          "expected_fields": 26,
+          "exact_document": false
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 6.510805707424879,
+          "classification_correct": true,
+          "correct_fields": 19,
+          "expected_fields": 26,
+          "exact_document": false
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "clean",
+          "page_count": 2,
+          "status": "ok",
+          "seconds_per_page": 10.559624888002872,
+          "classification_correct": false,
+          "correct_fields": 15,
+          "expected_fields": 38,
+          "exact_document": false
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "degraded_scan",
+          "page_count": 2,
+          "status": "ok",
+          "seconds_per_page": 14.113155925646424,
+          "classification_correct": false,
+          "correct_fields": 15,
+          "expected_fields": 38,
+          "exact_document": false
+        }
+      ]
+    },
+    "claude-haiku-5-5": {
+      "overall": {
+        "documents": 8,
+        "correct_fields": 224,
+        "expected_fields": 224,
+        "field_accuracy": 1.0,
+        "exact_documents": 8,
+        "extraction_error_documents": 0,
+        "classification_correct": 8,
+        "classification_error_documents": 0,
+        "extra_fields": 0,
+        "shape_errors": 0,
+        "extraction_seconds_per_page": 5.214615879673511,
+        "classification_seconds_per_document": 1.6179510122165084
+      },
+      "variants": {
+        "clean": {
+          "documents": 4,
+          "correct_fields": 112,
+          "expected_fields": 112,
+          "field_accuracy": 1.0,
+          "exact_documents": 4,
+          "extraction_error_documents": 0,
+          "classification_correct": 4,
+          "classification_error_documents": 0,
+          "extra_fields": 0,
+          "shape_errors": 0,
+          "extraction_seconds_per_page": 5.220333803445101,
+          "classification_seconds_per_document": 0.5913304078858346
+        },
+        "degraded_scan": {
+          "documents": 4,
+          "correct_fields": 112,
+          "expected_fields": 112,
+          "field_accuracy": 1.0,
+          "exact_documents": 4,
+          "extraction_error_documents": 0,
+          "classification_correct": 4,
+          "classification_error_documents": 0,
+          "extra_fields": 0,
+          "shape_errors": 0,
+          "extraction_seconds_per_page": 5.208897955901921,
+          "classification_seconds_per_document": 2.644571616547182
+        }
+      },
+      "forms": [
+        {
+          "doc_type": "1099-R",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 5.91367563046515,
+          "classification_correct": true,
+          "correct_fields": 30,
+          "expected_fields": 30,
+          "exact_document": true
+        },
+        {
+          "doc_type": "1099-R",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 3.603786788880825,
+          "classification_correct": true,
+          "correct_fields": 30,
+          "expected_fields": 30,
+          "exact_document": true
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 4.038396316580474,
+          "classification_correct": true,
+          "correct_fields": 18,
+          "expected_fields": 18,
+          "exact_document": true
+        },
+        {
+          "doc_type": "1099-G",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 4.829728001728654,
+          "classification_correct": true,
+          "correct_fields": 18,
+          "expected_fields": 18,
+          "exact_document": true
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "clean",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 3.050919810310006,
+          "classification_correct": true,
+          "correct_fields": 26,
+          "expected_fields": 26,
+          "exact_document": true
+        },
+        {
+          "doc_type": "1099-K",
+          "variant": "degraded_scan",
+          "page_count": 1,
+          "status": "ok",
+          "seconds_per_page": 4.906433121301234,
+          "classification_correct": true,
+          "correct_fields": 26,
+          "expected_fields": 26,
+          "exact_document": true
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "clean",
+          "page_count": 2,
+          "status": "ok",
+          "seconds_per_page": 6.549338629934937,
+          "classification_correct": true,
+          "correct_fields": 38,
+          "expected_fields": 38,
+          "exact_document": true
+        },
+        {
+          "doc_type": "K-1",
+          "variant": "degraded_scan",
+          "page_count": 2,
+          "status": "ok",
+          "seconds_per_page": 6.352270933799446,
+          "classification_correct": true,
+          "correct_fields": 38,
+          "expected_fields": 38,
+          "exact_document": true
+        }
+      ]
+    }
+  }
+}

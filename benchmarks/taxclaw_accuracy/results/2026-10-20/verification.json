@@ -1,0 +1,147 @@
+{
+  "verified_utc": "2026-10-20T13:53:37.902011+00:00",
+  "scope": "Synthetic strict canonical-contract smoke evidence; not release qualification or real-world/tax-preparation accuracy.",
+  "grader_tests": {
+    "command": ".venv/bin/python -m unittest benchmarks.taxclaw_accuracy.test_grader -v",
+    "passed": 7,
+    "failed": 0
+  },
+  "manifest_sha256": "041fdbd2a9a2064c6ce636e33065de9658439c15aff023119f5a1384766ae62a",
+  "fixture_count": 12,
+  "page_count": 14,
+  "runs": {
+    "app-baseline": {
+      "records": 60,
+      "per_model_documents": {
+        "gemma3:12b": 12,
+        "gemma3:4b": 12,
+        "qwen3.5:4b": 12,
+        "glm-ocr:latest": 12,
+        "gemma4:latest": 12
+      },
+      "all_12_fixture_hashes_match_manifest_and_launch_metadata": true,
+      "all_recorded_model_identities_match_requested": true,
+      "checked_response_counts": {
+        "pages": 67,
+        "classification_pages": 5
+      },
+      "immutable_raw_and_scoring_receipt_verified": true,
+      "recorded_application_and_harness_source_hashes_match_current_files": true,
+      "launch_time_benchmark_hashes_present": false,
+      "classification_correct_by_model": {
+        "gemma3:12b": 12,
+        "gemma3:4b": 12,
+        "qwen3.5:4b": 12,
+        "glm-ocr:latest": 11,
+        "gemma4:latest": 12
+      },
+      "resident_digest_sets": {
+        "gemma3:12b": [
+          "478f8be57615673547aeecd8f9245b058721001417ca67740d4c1ec5519500f0"
+        ],
+        "gemma3:4b": [
+          "c30276f7dffec93a536d283e15088990454b8d21cf180a3d6eea4959e4147291"
+        ],
+        "qwen3.5:4b": [
+          "2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd",
+          "96f38c742e0a10e194b237d2ffb8b55925ebfeed9d27df72688f565e773569e7"
+        ],
+        "glm-ocr:latest": [
+          "f31c7d1afe19dd6142e65f4d83149c75303cb596b95d26f97b8af03b223745b1"
+        ],
+        "gemma4:latest": [
+          "9ec987e7d0683d0f26056754a4e7c8dfec07f443f1b16b4cc70ebc676466aed5",
+          "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb"
+        ]
+      },
+      "launch_inventory_digest_sets": {
+        "gemma3:12b": [
+          "33649e288d58b4d1cd9ff279e8f3301117e88b215ead3d93b42cbcc88801b10a",
+          "478f8be57615673547aeecd8f9245b058721001417ca67740d4c1ec5519500f0"
+        ],
+        "gemma3:4b": [
+          "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a"
+        ],
+        "qwen3.5:4b": [
+          "2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd"
+        ],
+        "glm-ocr:latest": [
+          "6d2d9e1ee6b06943dd1770f5d92a03b5fe830ba35c6542d43b737f05fa8b1966",
+          "f31c7d1afe19dd6142e65f4d83149c75303cb596b95d26f97b8af03b223745b1"
+        ],
+        "gemma4:latest": [
+          "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb"
+        ]
+      },
+      "single_immutable_checkpoint_per_local_tag_verified": false,
+      "original_error_documents": 13
+    },
+    "haiku-frozen": {
+      "records": 12,
+      "per_model_documents": {
+        "claude-haiku-5-5": 12
+      },
+      "all_12_fixture_hashes_match_manifest_and_launch_metadata": true,
+      "all_recorded_model_identities_match_requested": true,
+      "checked_response_counts": {
+        "pages": 14,
+        "classification_pages": 1
+      },
+      "immutable_raw_and_scoring_receipt_verified": true,
+      "recorded_application_and_harness_source_hashes_match_current_files": true,
+      "launch_time_benchmark_hashes_present": true,
+      "classification_correct_by_model": {
+        "claude-haiku-5-5": 12
+      },
+      "resident_digest_sets": {},
+      "launch_inventory_digest_sets": null,
+      "single_immutable_checkpoint_per_local_tag_verified": null,
+      "original_error_documents": 0
+    },
+    "haiku-subscription": {
+      "records": 12,
+      "per_model_documents": {
+        "claude-haiku-5-5": 12
+      },
+      "all_12_fixture_hashes_match_manifest_and_launch_metadata": true,
+      "all_recorded_model_identities_match_requested": true,
+      "checked_response_counts": {
+        "pages": 14,
+        "classification_pages": 1
+      },
+      "immutable_raw_and_scoring_receipt_verified": true,
+      "recorded_application_and_harness_source_hashes_match_current_files": true,
+      "launch_time_benchmark_hashes_present": false,
+      "classification_correct_by_model": {
+        "claude-haiku-5-5": 12
+      },
+      "resident_digest_sets": {},
+      "launch_inventory_digest_sets": null,
+      "single_immutable_checkpoint_per_local_tag_verified": null,
+      "original_error_documents": 0
+    }
+  },
+  "evidence_sha256": {
+    "manifest.json": "041fdbd2a9a2064c6ce636e33065de9658439c15aff023119f5a1384766ae62a",
+    "RESULTS.md": "8c02d94ef36b459012e8cf76b2fcb03d77f09f4b88d5c42f3d767c265c07e526",
+    "recommendation.json": "42c5d32f33a967b68bd3b17a432de5d8e3ecfb4e7c30b85fc9a435c86a9a75f5",
+    "serialization-cases.json": "3ec7190ccd7e6c5f5b3b57e04278147d06d3dccc35aec971210ab0f2328bea48",
+    "haiku-subscription/scoring.json": "35fe65bd2c106e2268298f9bab0dba25a74ebe19c750bdb34410bc5c7239c38c",
+    "haiku-subscription/metadata.json": "edf89c29a71f44dd2a2091dbc59ae96fd165763a90869729605adf7e4aa1706e",
+    "haiku-subscription/launch-caveat.json": "0be383bc60b4eb1b41f172d12b09e786bac7ad75aee309b5db79e34e8a8b6760",
+    "haiku-subscription/scored-results.jsonl": "df802c0159984f21c43b322905cc8abfe1b896a801ebdd4c55b1b87c9d66c012",
+    "haiku-subscription/summary.json": "46445ec2ad9acdfaa7090cd5dfd08c07323f15b94521fb907f30a706e2b33b24",
+    "haiku-subscription/results.jsonl": "df802c0159984f21c43b322905cc8abfe1b896a801ebdd4c55b1b87c9d66c012",
+    "haiku-frozen/scoring.json": "22f5d52341ae16677e5f3784db70563c37db4abeaf61c1ac9b6b99160e7fdcc0",
+    "haiku-frozen/metadata.json": "b53f403075591e6955acc3bf24747bdcb57d61cd0e11069c43295c056b9703dc",
+    "haiku-frozen/scored-results.jsonl": "c6c48f425dc570ad55f972c8b40b4df7a308e98b02e30b15a5c95e752946a814",
+    "haiku-frozen/summary.json": "f63fc7ddd163c8c4286e836179498d86cd639d1097bb0d409591e14e031a1186",
+    "haiku-frozen/results.jsonl": "c6c48f425dc570ad55f972c8b40b4df7a308e98b02e30b15a5c95e752946a814",
+    "app-baseline/scoring.json": "8af632093cf53c2be642fd296586568c18774f3c218b13b6cfde478ba0d78979",
+    "app-baseline/metadata.json": "dbeb5d8bbbe596bf5f2bf107a9df01d44ebd801120a76b1fd68870242bbaf754",
+    "app-baseline/launch-caveat.json": "0be383bc60b4eb1b41f172d12b09e786bac7ad75aee309b5db79e34e8a8b6760",
+    "app-baseline/scored-results.jsonl": "355b746511574fc5de93e8ee976d651ca563002b5576137b2ed81a316791777a",
+    "app-baseline/summary.json": "94518fa731cfbfb50555dfaab971d6964b7f331d78ec8845c4f89775f8f913c1",
+    "app-baseline/results.jsonl": "c2cbfb9bbd8e1c8db31583ec1674501f4f15602d430083cfc930be04695399c1"
+  }
+}

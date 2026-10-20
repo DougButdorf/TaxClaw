@@ -1,0 +1,130 @@
+[
+  {
+    "model": "gemma4:latest",
+    "fixture_id": "wp_f_changed_k_1_clean",
+    "doc_type": "K-1",
+    "variant": "clean",
+    "status": "error",
+    "error": "Recorded provider model does not match requested model",
+    "classification": {
+      "doc_type": "K-1",
+      "confidence": 1.0,
+      "method": "vision"
+    },
+    "classification_error": null,
+    "classification_correct": true,
+    "raw_error": "LocalModelError: Ollama is not reachable at http://100.125.33.53:11434. Start it with `ollama serve` (or open the Ollama app), check OLLAMA_HOST if Ollama runs elsewhere, or switch TaxClaw to cloud mode in Settings."
+  },
+  {
+    "model": "qwen3.5:4b",
+    "fixture_id": "wp_f_changed_1099_r_clean",
+    "doc_type": "1099-R",
+    "variant": "clean",
+    "status": "error",
+    "error": "ValueError: model returned an empty response (expected JSON)",
+    "classification": {
+      "doc_type": "1099-R",
+      "confidence": 0.9,
+      "method": "text"
+    },
+    "classification_error": null,
+    "classification_correct": true,
+    "raw_error": "ValueError: model returned an empty response (expected JSON)"
+  },
+  {
+    "model": "qwen3.5:4b",
+    "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+    "doc_type": "1099-R",
+    "variant": "degraded_scan",
+    "status": "error",
+    "error": "ValueError: model response was not valid JSON (Unterminated string starting at); response began: '{   \"payer_name\": \"Juniper Example Works LLC\",   \"payer_tin\": \"00-XXX0000\",   \"recipient_name\": \"Morgan Sample\",   \"recipient_tin\": \"XXX-XX-0000\",   \"account_number\": \"SYN-0042\",   \"tax_year\": \"2025\",'",
+    "classification": {
+      "doc_type": "1099-R",
+      "confidence": 0.95,
+      "method": "vision"
+    },
+    "classification_error": null,
+    "classification_correct": true,
+    "raw_error": "ValueError: model response was not valid JSON (Unterminated string starting at); response began: '{   \"payer_name\": \"Juniper Example Works LLC\",   \"payer_tin\": \"00-XXX0000\",   \"recipient_name\": \"Morgan Sample\",   \"recipient_tin\": \"XXX-XX-0000\",   \"account_number\": \"SYN-0042\",   \"tax_year\": \"2025\",'"
+  },
+  {
+    "model": "qwen3.5:4b",
+    "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+    "doc_type": "1099-G",
+    "variant": "degraded_scan",
+    "status": "error",
+    "error": "ValueError: model returned an empty response (expected JSON)",
+    "classification": {
+      "doc_type": "1099-G",
+      "confidence": 0.95,
+      "method": "vision"
+    },
+    "classification_error": null,
+    "classification_correct": true,
+    "raw_error": "ValueError: model returned an empty response (expected JSON)"
+  },
+  {
+    "model": "qwen3.5:4b",
+    "fixture_id": "wp_f_changed_k_1_clean",
+    "doc_type": "K-1",
+    "variant": "clean",
+    "status": "error",
+    "error": "ValueError: model returned an empty response (expected JSON)",
+    "classification": {
+      "doc_type": "K-1",
+      "confidence": 0.95,
+      "method": "vision"
+    },
+    "classification_error": null,
+    "classification_correct": true,
+    "raw_error": "ValueError: model returned an empty response (expected JSON)"
+  },
+  {
+    "model": "qwen3.5:4b",
+    "fixture_id": "wp_f_changed_k_1_degraded_scan",
+    "doc_type": "K-1",
+    "variant": "degraded_scan",
+    "status": "error",
+    "error": "ValueError: model returned an empty response (expected JSON)",
+    "classification": {
+      "doc_type": "K-1",
+      "confidence": 0.98,
+      "method": "vision"
+    },
+    "classification_error": null,
+    "classification_correct": true,
+    "raw_error": "ValueError: model returned an empty response (expected JSON)"
+  },
+  {
+    "model": "glm-ocr:latest",
+    "fixture_id": "wp_f_changed_k_1_clean",
+    "doc_type": "K-1",
+    "variant": "clean",
+    "status": "ok",
+    "error": null,
+    "classification": {
+      "doc_type": "1099-DIV",
+      "confidence": 0.5,
+      "method": "vision"
+    },
+    "classification_error": null,
+    "classification_correct": false,
+    "raw_error": null
+  },
+  {
+    "model": "glm-ocr:latest",
+    "fixture_id": "wp_f_changed_k_1_degraded_scan",
+    "doc_type": "K-1",
+    "variant": "degraded_scan",
+    "status": "ok",
+    "error": null,
+    "classification": {
+      "doc_type": "1099-DIV",
+      "confidence": 0.5,
+      "method": "vision"
+    },
+    "classification_error": null,
+    "classification_correct": false,
+    "raw_error": null
+  }
+]
