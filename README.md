@@ -94,9 +94,14 @@ You can configure the backend + model via the settings UI:
 
 1. **Local-first (default)**: Ollama vision models installed on this machine, and a
    recommendation for its RAM, with the `ollama pull` command if it is missing.
-   Starting points, *provisional until the accuracy benchmark*: 8 GB or less:
-   `gemma3:4b`; 16 GB (reference: M4 Mac mini 16 GB): `gemma3:4b` default,
-   `gemma3:12b` for higher accuracy (slower); 32 GB or more: `gemma3:12b`.
+   Starting points: 8 GB or less: `gemma3:4b`; 16 GB (reference: M4 Mac mini
+   16 GB): `gemma3:4b` default, `gemma3:12b` for higher accuracy (slower);
+   32 GB or more: `gemma3:12b`. Measured on a synthetic 8-document benchmark
+   ([results](benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md)),
+   not real-world accuracy; Clairic is unbenchmarked:
+   - `gemma3:4b` 158/224 fields (70.5%), 0/8 exact documents, 18.88 s/page; `gemma3:12b` 176/224 (78.6%), 0/8 exact, 65.95 s/page. Assisted extraction only: review every value.
+   - `claude-haiku-5-5` 224/224 fields, 8/8 exact documents, 5.21 s/page (highest measured; run via a subscription CLI wrapper, not the production API path).
+   - `glm-ocr` misclassified the K-1s; `qwen3.5:4b` had 5 failed extractions; `gemma4:latest` had 1.
 2. **Cloud you already have configured**: detected by the *presence* of
    `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`/`GOOGLE_API_KEY`,
    `OPENROUTER_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`+`CLOUDFLARE_API_TOKEN` (values are
