@@ -95,7 +95,7 @@ def field_kind(key: str, json_types: list[str] | tuple[str, ...]) -> str:
         return "flag"
     if "object" in types:
         return "coded"
-    if "number" in types:
+    if "number" in types or "integer" in types:
         return "integer" if any(t in key for t in ("year", "count")) else "number"
     tokens = set(key.lower().split("_"))
     if key.lower() in _MONTHS:
@@ -206,7 +206,7 @@ def _convert(value: Any, fp: FieldPlan) -> Any:
         except (TypeError, ValueError):
             return None
     if k in ("integer", "number"):
-        if "number" in fp.json_types:
+        if "number" in fp.json_types or "integer" in fp.json_types:
             if isinstance(value, float) and value.is_integer() and k == "integer":
                 return int(value)
             return value

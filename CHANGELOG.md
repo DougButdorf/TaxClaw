@@ -15,6 +15,9 @@
 - `scripts/smoke.sh` is now a real test (isolated HOME, CLI from a foreign cwd, Ollama-down error, offline parser/schema/classification checks, export with fields, every HTML route 200, compileall) and fails on any error.
 - GitHub Actions CI (`.github/workflows/ci.yml`): Python 3.11 and 3.13, setup + smoke + compileall.
 
+### Fixed
+- `tax_year` output contract: every top-level `tax_year` is a 4-digit string or null (the compact 1099-DIV/consolidated/B/MISC/OID prompts now declare it, and the structured-output schema pins it), and the 1099-DA `header.tax_year` is an integer or null. `extract_document_with_meta` (CLI, MCP, web upload and every backend) normalizes `2025`/`2025.0`/`" 2025 "` to the contract type; an implausible value (not a year in 1990-2100) is kept as returned and added to the document's review fields.
+
 ### Changed
 - SKILL.md rewritten as a short agent-first procedure that follows the Agent Skills spec (validates with `skills-ref`): frontmatter is `name`, `description`, `license`, `compatibility`, `metadata` (version, homepage, `metadata.openclaw` gating); dropped `version`, `argument-hint`, `requires`, `optional` and `allowed-tools`; hardcoded `~/.openclaw/workspace/skills/taxclaw` paths replaced with `{baseDir}`; documents that installs must land in a directory named `taxclaw`.
 - `model_backend: cloud` is now an alias for `anthropic`; any non-local backend requires `privacy_acknowledged: true` (CLI, web upload, MCP).
