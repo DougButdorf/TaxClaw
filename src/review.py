@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 # v0.1 required fields per doc_type (minimal, conservative)
+# Keys are normalize_doc_type() output ("W-2" -> "w_2", "K-1" -> "k_1").
 REQUIRED: dict[str, list[str]] = {
-    "w2": [
+    "w_2": [
         "employer_name",
         "employer_ein",
         "employee_ssn",
@@ -18,7 +19,7 @@ REQUIRED: dict[str, list[str]] = {
     "1099_misc": ["payer_name", "recipient_tin"],
     "1099_g": ["payer_name", "recipient_tin"],
     "1099_k": ["payer_name", "recipient_tin"],
-    "k1": ["partner_name"],
+    "k_1": ["partner_name"],
     "1040": ["taxpayer_name"],
     "consolidated_1099": ["payer_name"],
     "1099_da": [

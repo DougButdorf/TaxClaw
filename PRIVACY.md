@@ -1,6 +1,6 @@
 # TaxClaw — Privacy Policy
 
-**Last updated:** February 22, 2026  
+**Last updated:** October 20, 2026  
 **Effective date:** February 22, 2026  
 **Publisher:** Outbranch Network LLC, a New York limited liability company  
 **Contact:** lando@outbranch.net
@@ -77,6 +77,8 @@ TaxClaw does **not** collect:
 - IP addresses
 
 There is no tracking of any kind built into TaxClaw.
+
+**Optional contact form:** The in-app Contact page is the only feature that sends anything to us. If — and only if — you submit it, the name, email address, subject and message you type are sent to Formspree (formspree.io), a form-forwarding service, which delivers them to Outbranch Network LLC by email. The form never attaches your documents or extracted tax data. Formspree's handling of submissions is governed by its privacy policy: https://formspree.io/legal/privacy-policy
 
 ---
 

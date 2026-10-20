@@ -18,7 +18,7 @@ def _expand_path(p: str) -> str:
 @dataclass
 class Config:
     model_backend: str = "local"  # local|cloud
-    local_model: str = "llama3.2"
+    local_model: str = "gemma3:4b"  # must be a vision-capable Ollama model
     cloud_model: str = "claude-haiku-5-5"
     cloud_api_key: str = ""
     privacy_acknowledged: bool = False

@@ -17,6 +17,8 @@
     }
   </style>
 
+  <div id="upload-error" role="alert" style="{% if not error %}display:none; {% endif %}margin: 0 auto 12px; max-width: 560px; padding:10px 12px; border-radius:8px; border:1px solid rgba(239,68,68,0.5); background:rgba(239,68,68,0.08); font-size:13px; color:#ef4444;">{{ error or '' }}</div>
+
   <div class="card" id="upload-card">
     <form id="upload-form" method="post" action="/upload" enctype="multipart/form-data" style="max-width: 560px; margin: 0 auto;">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
@@ -95,6 +97,7 @@
       const stageIcon  = document.getElementById('progress-stage-icon');
       const stageLabel = document.getElementById('progress-stage-label');
       const pctLabel   = document.getElementById('progress-pct');
+      const uploadErr  = document.getElementById('upload-error');
 
       if (!card || !chooseBtn || !input || !uploadBtn || !form) return;
 
@@ -168,6 +171,7 @@
         e.preventDefault();
 
         // Hide form, show progress
+        if (uploadErr) uploadErr.style.display = 'none';
         form.style.display = 'none';
         progressUI.style.display = 'block';
         setPct(0);
@@ -192,6 +196,18 @@
         // Full response received → done
         xhr.addEventListener('load', () => {
           if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+          // The server re-renders /upload with an error message (e.g. Ollama not
+          // running, text-only model selected) instead of redirecting to a document.
+          let finalPath = '';
+          try { finalPath = new URL(xhr.responseURL || '', window.location.href).pathname; } catch (err) { finalPath = ''; }
+          if (xhr.status >= 200 && xhr.status < 400 && finalPath === '/upload') {
+            const parsed = new DOMParser().parseFromString(xhr.responseText || '', 'text/html');
+            const errEl  = parsed.getElementById('upload-error');
+            const msg    = (errEl && errEl.textContent.trim()) || 'Upload failed — please try again.';
+            if (uploadErr) { uploadErr.textContent = msg; uploadErr.style.display = 'block'; }
+            form.style.display = ''; progressUI.style.display = 'none'; setPct(0);
+            return;
+          }
           if (xhr.status >= 200 && xhr.status < 400) {
             setPct(100);
             // Follow the redirect URL (XHR follows redirects; responseURL = final URL)

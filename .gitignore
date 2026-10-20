@@ -121,3 +121,7 @@ secrets.env
 
 # Editor settings
 .vscode/
+
+# Local agent instruction files (keep out of the published skill)
+AGENTS.md
+CLAUDE.md

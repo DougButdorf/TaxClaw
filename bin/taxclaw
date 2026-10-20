@@ -1,11 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Resolve the skill directory even when this script is invoked through a
+# symlink or from an unrelated working directory (how agents usually call it).
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  SOURCE_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  case "$SOURCE" in
+    /*) ;;
+    *) SOURCE="$SOURCE_DIR/$SOURCE" ;;
+  esac
+done
+SKILL_DIR="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
 
 if [ ! -x "$SKILL_DIR/venv/bin/python" ]; then
   echo "taxclaw: venv not found. Run: bash $SKILL_DIR/setup.sh" >&2
   exit 2
 fi
 
-exec "$SKILL_DIR/venv/bin/python" -c "from src.cli import main; raise SystemExit(main())" "$@"
+# Put the skill dir on the import path without changing the caller's cwd, so
+# relative file arguments (e.g. `taxclaw ingest ./w2.pdf`) still resolve
+# against the directory the caller ran from. `-P` (Python 3.11+) stops Python
+# from prepending the cwd to sys.path, so a `src/` package in the caller's
+# directory can never shadow TaxClaw's own modules.
+export PYTHONPATH="$SKILL_DIR${PYTHONPATH:+:$PYTHONPATH}"
+exec "$SKILL_DIR/venv/bin/python" -P -c "from src.cli import main; raise SystemExit(main())" "$@"

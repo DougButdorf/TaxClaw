@@ -8,16 +8,91 @@ from anthropic import Anthropic
 import ollama
 
 from .config import Config
+from .ollama_local import LocalModelError, client as ollama_client, ensure_vision_model, is_connection_error, unreachable_message
 
 
 def _b64_png(image_bytes: bytes) -> str:
     return base64.b64encode(image_bytes).decode("utf-8")
 
 
-def chat_json_from_image(*, cfg: Config, prompt: str, image_bytes: bytes) -> dict[str, Any]:
+def ensure_backend_ready(cfg: Config) -> None:
+    """Fail fast (before storing/processing anything) if the configured backend can't run.
+
+    Local: Ollama must be reachable and ``local_model`` installed with vision.
+    Cloud: an API key and an explicit privacy acknowledgement are required.
+    """
+
+    if cfg.model_backend == "cloud":
+        if not cfg.privacy_acknowledged:
+            raise RuntimeError(
+                "Cloud mode is configured but the privacy warning has not been acknowledged. "
+                "Set `privacy_acknowledged: true` in ~/.config/taxclaw/config.yaml (or use Settings), "
+                "or switch back to local mode."
+            )
+        if not cfg.cloud_api_key:
+            raise RuntimeError("cloud_api_key missing (set in config or ANTHROPIC_API_KEY)")
+        return
+
+    ensure_vision_model(cfg.local_model)
+
+
+def parse_json_text(text: str) -> Any:
+    """Parse the first JSON object/array in a model reply.
+
+    Tolerates a BOM, code fences, leading commentary and -- importantly --
+    trailing content after the JSON value (some OCR models emit a second
+    object or notes after the first one, which made plain ``json.loads`` fail
+    with "Extra data").
+    """
+
+    text = (text or "").strip().lstrip("﻿").strip()
+    if not text:
+        raise ValueError("model returned an empty response (expected JSON)")
+
+    decoder = json.JSONDecoder()
+    first_err: json.JSONDecodeError | None = None
+    idx = 0
+    while True:
+        starts = [i for i in (text.find("{", idx), text.find("[", idx)) if i != -1]
+        if not starts:
+            break
+        start = min(starts)
+        try:
+            value, _end = decoder.raw_decode(text, start)
+            return value
+        except json.JSONDecodeError as e:
+            first_err = first_err or e
+            idx = start + 1
+
+    snippet = text[:200].replace("\n", " ")
+    if first_err is not None:
+        raise ValueError(f"model response was not valid JSON ({first_err.msg}); response began: {snippet!r}")
+    raise ValueError(f"model response contained no JSON object; response began: {snippet!r}")
+
+
+def _ollama_chat(*, cfg: Config, prompt: str, b64: str, fmt: dict[str, Any] | str) -> str:
+    resp = ollama_client().chat(
+        model=cfg.local_model,
+        messages=[{"role": "user", "content": prompt, "images": [b64]}],
+        options={"temperature": 0},
+        format=fmt,
+    )
+    return resp["message"]["content"]
+
+
+def chat_json_from_image(
+    *,
+    cfg: Config,
+    prompt: str,
+    image_bytes: bytes,
+    schema: dict[str, Any] | None = None,
+) -> Any:
     """Send an image + prompt and require JSON-only output.
 
-    Returns parsed JSON dict; raises on parse error.
+    For Ollama, ``schema`` (a JSON Schema dict) is passed as structured-output
+    ``format`` so the model is constrained to valid JSON with the expected keys;
+    without a schema, ``format="json"`` is used. Returns parsed JSON; raises on
+    parse error.
     """
 
     untrusted_note = (
@@ -54,31 +129,22 @@ def chat_json_from_image(*, cfg: Config, prompt: str, image_bytes: bytes) -> dic
         )
         text = "".join([c.text for c in msg.content if getattr(c, "type", None) == "text"])
     else:
-        # Ollama multimodal: model must support images.
+        # Ollama multimodal: model must support images (checked up front, cached).
+        ensure_vision_model(cfg.local_model)
         b64 = _b64_png(image_bytes)
-        resp = ollama.chat(
-            model=cfg.local_model,
-            messages=[{"role": "user", "content": prompt, "images": [b64]}],
-            options={"temperature": 0},
-        )
-        text = resp["message"]["content"]
+        try:
+            try:
+                text = _ollama_chat(cfg=cfg, prompt=prompt, b64=b64, fmt=schema or "json")
+            except ollama.ResponseError as e:
+                if not schema or getattr(e, "status_code", None) == 404:
+                    raise
+                # Older Ollama builds may reject JSON-schema formats; fall back to plain JSON mode.
+                text = _ollama_chat(cfg=cfg, prompt=prompt, b64=b64, fmt="json")
+        except LocalModelError:
+            raise
+        except Exception as e:  # noqa: BLE001
+            if is_connection_error(e):
+                raise LocalModelError(unreachable_message()) from None
+            raise
 
-    text = text.strip().lstrip("\ufeff")
-
-    # Best-effort strip of code fences (hardened)
-    if text.startswith("```"):
-        text = text.split("\n", 1)[-1] if "\n" in text else text[3:]
-    if "```" in text:
-        text = text[: text.rfind("```")]
-
-    text = text.strip()
-
-    # If the model prefixed/suffixed commentary, extract the first JSON object/array.
-    if not text.startswith(("{", "[")):
-        import re as _re
-
-        m = _re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", text)
-        if m:
-            text = m.group(1)
-
-    return json.loads(text)
+    return parse_json_text(text)
