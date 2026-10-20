@@ -101,11 +101,24 @@ def run(args: argparse.Namespace) -> None:
     from src.classify import classify_document
     from src.config import Config
 
+    # WP-C moved Ollama behind src.ollama_local. Keep source behavior intact:
+    # instrument its client, not the backend/parser/schema implementation.
+    legacy_ollama = getattr(ai, "ollama", None)
+    try:
+        from src import ollama_local
+    except ImportError:
+        ollama_local = None
+    previous_host = os.environ.get("OLLAMA_HOST")
+    if args.transport != "claude-subscription":
+        os.environ["OLLAMA_HOST"] = args.host
+
     manifest_path = args.fixtures / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
     fixtures = manifest if isinstance(manifest, list) else manifest["fixtures"]
     if args.types:
         fixtures = [f for f in fixtures if f["doc_type"] in args.types]
+    if args.variants:
+        fixtures = [f for f in fixtures if f.get("variant", "clean") in args.variants]
     if not fixtures:
         raise SystemExit("No fixtures selected")
     args.output.mkdir(parents=True, exist_ok=True)
@@ -114,11 +127,15 @@ def run(args: argparse.Namespace) -> None:
     signature = {"git_revision": git_revision(), "transport": args.transport,
                  "models": args.models, "timeout_seconds": args.timeout,
                  "manifest_sha256": digest(manifest_path), "types": args.types,
+                 "variants": args.variants,
                  "source_sha256": {name: digest(ROOT / name) for name in
-                                    ("src/ai.py", "src/extract.py", "src/classify.py",
+                                    (*[str(p.relative_to(ROOT)) for p in sorted((ROOT / "src").glob("*.py"))],
+                                     "requirements.txt",
                                      "benchmarks/taxclaw_accuracy/runner.py",
                                      "benchmarks/taxclaw_accuracy/grader.py",
-                                     "benchmarks/taxclaw_accuracy/fixtures.py")},
+                                     "benchmarks/taxclaw_accuracy/fixtures.py",
+                                     *(["benchmarks/taxclaw_accuracy/followup_fixtures.py"]
+                                       if (ROOT / "benchmarks/taxclaw_accuracy/followup_fixtures.py").exists() else []))},
                  "ollama_host": args.host if inventory is not None else None,
                  "requested_model_digests": {name: sorted(m["digest"] for m in inventory["models"]
                     if (m.get("model") or m.get("name")) == name) for name in args.models}
@@ -148,7 +165,10 @@ def run(args: argparse.Namespace) -> None:
                      (json.loads(line) for line in result_file.read_text().splitlines())}
 
     original_image_call = extract.chat_json_from_image
-    original_ollama_chat = ai.ollama.chat
+    original_ollama_chat = legacy_ollama.chat if legacy_ollama is not None else None
+    original_local_client = ollama_local.client if ollama_local is not None else None
+    import src.classify as classifier
+    original_classification_call = classifier.chat_json_from_image
     base_chat = client.chat
     for model in args.models:
         if inventory is not None:
@@ -163,7 +183,8 @@ def run(args: argparse.Namespace) -> None:
             active_pages = pages
 
             def recording_chat(**kwargs):
-                page = {"prompt_sha256": hashlib.sha256(kwargs["messages"][0]["content"].encode()).hexdigest()}
+                page = {"prompt_sha256": hashlib.sha256(kwargs["messages"][0]["content"].encode()).hexdigest(),
+                        "format": kwargs.get("format"), "options": kwargs.get("options")}
                 active_pages.append(page)
                 before = time.perf_counter()
                 try:
@@ -180,7 +201,7 @@ def run(args: argparse.Namespace) -> None:
                 finally:
                     page["wall_seconds"] = time.perf_counter() - before
 
-            def custom_image_call(*, cfg, prompt, image_bytes):
+            def custom_image_call(*, cfg, prompt, image_bytes, schema=None):
                 if args.transport == "claude-subscription":
                     return claude_call(args.claude_wrapper, model, prompt, image_bytes,
                                        args.timeout, active_pages)
@@ -190,15 +211,25 @@ def run(args: argparse.Namespace) -> None:
                     options={"temperature": 0, "num_predict": 2048}, format="json")
                 return parse_json(response["message"]["content"])
 
-            ai.ollama.chat = recording_chat
+            if legacy_ollama is not None:
+                legacy_ollama.chat = recording_chat
+            if ollama_local is not None:
+                class RecordingClient:
+                    def chat(self, **kwargs):
+                        return recording_chat(**kwargs)
+
+                    def __getattr__(self, name):
+                        return getattr(client, name)
+
+                ollama_local.client = lambda **kwargs: RecordingClient()
             extract.chat_json_from_image = (original_image_call if args.transport == "app" else custom_image_call)
             # Classification is mostly text; use the same selected transport if vision is required.
-            import src.classify as classifier
             classifier.chat_json_from_image = extract.chat_json_from_image
             cfg = Config(model_backend="local", local_model=model)
             pdf = args.fixtures / fixture["pdf_path"]
             record = {"model": model, "transport": args.transport,
                       "fixture_id": fixture["fixture_id"], "doc_type": fixture["doc_type"],
+                      "variant": fixture.get("variant", "clean"),
                       "page_count": fixture["page_count"], "pdf_sha256": digest(pdf),
                       "started_utc": datetime.now(timezone.utc).isoformat(),
                       "dedicated_prompt": fixture["doc_type"] in extract.PROMPTS}
@@ -240,8 +271,16 @@ def run(args: argparse.Namespace) -> None:
             print(f"{model} {fixture['doc_type']} {record['status']}: "
                   f"{record['score']['correct']}/{record['score']['expected_fields']} fields; "
                   f"{record['seconds_per_page']:.2f}s/page", flush=True)
-            ai.ollama.chat = original_ollama_chat
+            if legacy_ollama is not None:
+                legacy_ollama.chat = original_ollama_chat
+            if ollama_local is not None:
+                ollama_local.client = original_local_client
             extract.chat_json_from_image = original_image_call
+            classifier.chat_json_from_image = original_classification_call
+    if previous_host is None:
+        os.environ.pop("OLLAMA_HOST", None)
+    else:
+        os.environ["OLLAMA_HOST"] = previous_host
     summarize(args.output)
 
 
@@ -270,7 +309,8 @@ def summarize(output: Path) -> dict:
             "classification_correct": sum(r["classification_correct"] for r in subset),
             "extra_field_count": sum(len(r["score"]["extra_fields"]) for r in subset),
             "wall_seconds_per_page": sum(r["extraction_seconds"] for r in subset) / sum(r["page_count"] for r in subset),
-            "forms": {r["doc_type"]: {"accuracy": r["score"]["accuracy"],
+            "forms": {(r["doc_type"] if r.get("variant", "clean") == "clean" else
+                       f"{r['doc_type']}:{r['variant']}"): {"accuracy": r["score"]["accuracy"],
                       "correct_fields": r["score"]["correct"], "expected_fields": r["score"]["expected_fields"],
                       "status": r["status"], "exact": r["score"]["exact_document"],
                       "seconds_per_page": r["seconds_per_page"]} for r in subset}}
@@ -319,11 +359,13 @@ def main():
     commands = parser.add_subparsers(dest="command", required=True)
     build = commands.add_parser("build")
     build.add_argument("--output", type=Path, required=True)
+    build.add_argument("--corpus", choices=("original", "changed-forms"), default="original")
     run_parser = commands.add_parser("run")
     run_parser.add_argument("--fixtures", type=Path, required=True)
     run_parser.add_argument("--output", type=Path, required=True)
     run_parser.add_argument("--models", nargs="+", required=True)
     run_parser.add_argument("--types", nargs="+")
+    run_parser.add_argument("--variants", nargs="+")
     run_parser.add_argument("--transport", choices=("app", "ollama-json", "claude-subscription"), default="app")
     run_parser.add_argument("--host", default="http://127.0.0.1:11434")
     run_parser.add_argument("--timeout", type=float, default=180)
@@ -335,7 +377,10 @@ def main():
     scoring.add_argument("--fixtures", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "build":
-        from .fixtures import build_fixtures
+        if args.corpus == "changed-forms":
+            from .followup_fixtures import build_fixtures
+        else:
+            from .fixtures import build_fixtures
         build_fixtures(args.output)
     elif args.command == "summarize":
         summarize(args.output)
