@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import pymupdf
 
-from .runner import run
+from .runner import run, regrade, digest
 
 
 class Response(dict):
@@ -19,6 +19,34 @@ class Response(dict):
 
 
 class RunnerTests(unittest.TestCase):
+    def test_regrade_preserves_no_response_error_but_rejects_observed_mismatch(self):
+        for response, expected_error in [({}, "TimeoutError: no response"),
+                                         ({"model": "wrong-model"}, "Recorded provider model does not match requested model")]:
+            with self.subTest(response=response), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                (root / "fixture.pdf").write_bytes(b"synthetic fixture placeholder")
+                fixture = {"fixture_id": "f", "pdf_path": "fixture.pdf",
+                           "expected": {"blank": None}, "field_types": {"blank": "money"}}
+                (root / "manifest.json").write_text(json.dumps([fixture]))
+                (root / "metadata.json").write_text(json.dumps({"signature": {
+                    "manifest_sha256": digest(root / "manifest.json")}}))
+                record = {"model": "test-model", "fixture_id": "f", "doc_type": "1099-R",
+                          "variant": "degraded_scan", "page_count": 1, "transport": "app",
+                          "pdf_sha256": digest(root / "fixture.pdf"), "status": "error",
+                          "error": "TimeoutError: no response", "pages": [response],
+                          "classification_correct": False, "extraction_seconds": 2,
+                          "seconds_per_page": 2}
+                raw = json.dumps(record) + "\n"
+                (root / "results.jsonl").write_text(raw)
+                regrade(argparse.Namespace(fixtures=root, output=root))
+                result = json.loads((root / "scored-results.jsonl").read_text())
+                self.assertEqual(result["error"], expected_error)
+                self.assertEqual(result["score"]["correct"], 0)
+                self.assertEqual((root / "results.jsonl").read_text(), raw)
+                summary = json.loads((root / "summary.json").read_text())
+                self.assertEqual(summary["variants"], ["degraded_scan"])
+                self.assertNotIn("clean-form", summary["scope"])
+
     def test_current_backend_schema_and_host_are_used(self):
         from src import ollama_local
         calls = []

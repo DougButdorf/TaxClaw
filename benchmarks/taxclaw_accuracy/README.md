@@ -146,3 +146,16 @@ Seconds/page means document extraction wall time divided by document page count,
 including rendering, network and model load, excluding classification. First-use
 and warm-page timings are retained; no attempt is made to claim pure model speed
 or statistically significant rankings from this single pass.
+
+
+## Completed evidence and release interpretation (2026-10-20)
+
+- [Original 12-type baseline](results/2026-10-20/RESULTS.md): 84 preserved records, measured before the dependency/schema upgrades. Historical only.
+- [Changed-form follow-up](results/2026-10-20-main-87efee5/RESULTS.md): all 48 requested evaluations completed, covering R/G/K/K-1 clean and degraded scans on application main `87efee5`, with source freeze `800b761`. Independent parent verification rederived every score from raw responses and verified archived evidence, source and fixture hashes.
+- Later main `a47c572` leaves the tested extraction functions/dependencies unchanged; its separate capital-lot/export path was not benchmarked here.
+
+Haiku subscription CLI matched 224/224 fields and 8/8 documents exactly (5.21 extraction seconds/page). The strongest observed local aggregate was Gemma3:12b, 176/224 fields (78.57%), with no exact documents and 65.95 seconds/page. Gemma3:4b was 158/224 (70.54%) at 18.88 seconds/page. GLM-OCR now parses but misclassified both K-1 variants; Qwen had five failed extractions. These are tag observations on one host, not a general model ranking.
+
+**Release recommendation:** the benchmark execution is complete. These results support positioning TaxClaw as assisted document extraction requiring a person to verify every extracted value; they do not support unattended filing, guaranteed accuracy, or automatic acceptance based on a model confidence score. Pip owns the version/release decision. Haiku's production API path and Clairic were not verified by this suite. A small synthetic grid corpus cannot establish representative real-document accuracy.
+
+Two reporting defects found during the run are fixed for future executions: summaries now identify actual variants, and regrading preserves a transport error when no model response arrived instead of calling it a model-identity mismatch. Historical artifacts remain immutable and explain their original labels; the numeric scores are unaffected.

@@ -314,7 +314,8 @@ def summarize(output: Path) -> dict:
                       "correct_fields": r["score"]["correct"], "expected_fields": r["score"]["expected_fields"],
                       "status": r["status"], "exact": r["score"]["exact_document"],
                       "seconds_per_page": r["seconds_per_page"]} for r in subset}}
-    report = {"schema_version": 1, "scope": "synthetic clean-form smoke benchmark, not real-world accuracy",
+    report = {"schema_version": 1, "scope": "synthetic document extraction benchmark, not real-world accuracy",
+              "variants": sorted({r.get("variant", "clean") for r in records}),
               "grader_sha256": digest(Path(__file__).with_name("grader.py")),
               "models": models}
     write_json(output / "summary.json", report)
@@ -337,8 +338,14 @@ def regrade(args: argparse.Namespace) -> None:
         if record["pdf_sha256"] != digest(args.fixtures / fixture["pdf_path"]):
             raise SystemExit("Fixture PDF changed; refusing regrade")
         # Earlier exploratory harnesses logged response identity but did not reject it.
+        # A timed-out attempt has no observed identity: preserve its real error.
+        # Reject actual mismatches, and successful records lacking identity evidence.
+        observed = [p for p in record["pages"] if
+                    p.get("model") is not None or p.get("models_used") is not None]
         identity_ok = all((p.get("model") == record["model"] if record["transport"] != "claude-subscription"
-                           else p.get("models_used") == [record["model"]]) for p in record["pages"])
+                           else p.get("models_used") == [record["model"]]) for p in observed)
+        if record["status"] == "ok" and (not observed or len(observed) != len(record["pages"])):
+            identity_ok = False
         if not identity_ok:
             record["status"] = "error"
             record["error"] = "Recorded provider model does not match requested model"
