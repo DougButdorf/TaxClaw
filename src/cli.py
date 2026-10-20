@@ -3,11 +3,11 @@ from __future__ import annotations
 # CLI implementation imported by bin/taxclaw and bin/tax-extract.
 
 import argparse
+import json
 import sys
 from pathlib import Path
+from typing import Any
 
-from .ai import ensure_backend_ready
-from .classify import classify_document
 from .config import load_config
 from .db import init_db
 from .exporter import (
@@ -18,98 +18,51 @@ from .exporter import (
     export_doc_csv_wide,
     export_doc_json,
 )
-from .extract import extract_document
-from .review import compute_needs_review, compute_overall_confidence, missing_required_fields
-from .store import (
-    create_document_record,
-    get_document_by_hash,
-    ingest_file,
-    list_documents,
-    mark_needs_review,
-    mark_processed,
-    page_count_for_pdf,
-    store_1099da_transactions,
-    store_extracted_fields,
-    store_raw_extraction,
-)
+from .store import list_documents
 
 
 def _err(msg: str) -> None:
     print(f"taxclaw: {msg}", file=sys.stderr)
 
 
+def _print_json(obj: Any) -> None:
+    sys.stdout.write(json.dumps(obj, indent=2, ensure_ascii=False, default=str) + "\n")
+
+
 def cmd_ingest(args: argparse.Namespace) -> int:
+    from .pipeline import IngestError, ingest_path
+
     cfg = load_config()
-    init_db()
-
-    if not Path(args.path).is_file():
-        _err(f"file not found: {args.path}")
-        return 2
-
-    # Fail fast before copying/recording anything if the model backend can't run
-    # (Ollama down, text-only local model, cloud privacy not acknowledged, ...).
     try:
-        ensure_backend_ready(cfg)
-    except Exception as e:  # noqa: BLE001
-        _err(str(e))
-        return 3
+        result = ingest_path(args.path, cfg, filer=args.filer, tax_year=args.year)
+    except IngestError as e:
+        if args.json:
+            _print_json({"ok": False, "stage": e.stage, "error": str(e), "document_id": e.document_id})
+        else:
+            if e.document_id:
+                print(e.document_id)
+            _err(str(e))
+        return e.exit_code
 
-    dest_path, file_hash, original_filename, mime_type = ingest_file(args.path, cfg)
-    existing = get_document_by_hash(file_hash)
-    if existing:
-        print(existing["id"])
-        return 0
-
-    page_count = page_count_for_pdf(dest_path) if dest_path.lower().endswith(".pdf") else 1
-
-    try:
-        cls = classify_document(dest_path, cfg)
-    except Exception as e:  # noqa: BLE001
-        _err(f"classification failed: {e}")
-        cls = {"doc_type": "unknown", "confidence": 0.0}
-    doc_type = cls.get("doc_type") or "unknown"
-    classification_confidence = float(cls.get("confidence") or 0.0)
-
-    doc_id = create_document_record(
-        cfg=cfg,
-        file_path=dest_path,
-        file_hash=file_hash,
-        original_filename=original_filename,
-        mime_type=mime_type,
-        filer=args.filer,
-        tax_year=args.year,
-        doc_type=doc_type,
-        page_count=page_count,
-        classification_confidence=classification_confidence,
-    )
-
-    try:
-        extracted = extract_document(dest_path, doc_type, cfg)
-        section_id = store_raw_extraction(doc_id=doc_id, form_type=doc_type, data=extracted, confidence=classification_confidence)
-        store_extracted_fields(doc_id=doc_id, section_id=section_id, data=extracted)
-        if doc_type == "1099-DA" and isinstance(extracted, dict):
-            store_1099da_transactions(doc_id=doc_id, extraction=extracted)
-
-        missing = missing_required_fields(doc_type, extracted)
-        overall = compute_overall_confidence(doc_type=doc_type, extraction=extracted, classification_confidence=classification_confidence)
-        nr = compute_needs_review(classification_confidence=classification_confidence, overall_confidence=overall, missing_required=missing)
-        mark_processed(doc_id=doc_id, overall_confidence=overall, needs_review=nr)
-        if nr and missing:
-            mark_needs_review(doc_id=doc_id, notes=f"missing required fields: {', '.join(missing)}")
-
-    except Exception as e:  # noqa: BLE001
-        mark_needs_review(doc_id=doc_id, notes=str(e))
-        print(doc_id)
-        _err(f"extraction failed for {doc_id} ({doc_type}): {e}")
-        return 1
-
-    print(doc_id)
+    if args.json:
+        _print_json({"ok": True, **result})
+    else:
+        print(result["document_id"])
     return 0
+
+
+_LIST_KEYS = (
+    "id", "doc_type", "tax_year", "filer", "status", "needs_review", "overall_confidence",
+    "classification_confidence", "original_filename", "display_name", "created_at", "notes",
+)
 
 
 def cmd_list(args: argparse.Namespace) -> int:
     init_db()
     docs = list_documents(filer=args.filer, year=args.year, doc_type=args.type, needs_review=args.needs_review)
+    if args.json:
+        _print_json({"documents": [{k: d.get(k) for k in _LIST_KEYS} for d in docs], "count": len(docs)})
+        return 0
     for d in docs:
         print(
             f"{d['id']}\t{d.get('doc_type')}\t{d.get('tax_year')}\t{d.get('filer')}\tneeds_review={d.get('needs_review')}\t{d.get('status')}"
@@ -148,6 +101,25 @@ def cmd_export(args: argparse.Namespace) -> int:
     raise SystemExit("unknown format")
 
 
+def cmd_models(args: argparse.Namespace) -> int:
+    from .models import build_report, format_report
+
+    cfg = load_config()
+    report = build_report(cfg, live=not args.offline)
+    if args.json:
+        _print_json(report)
+    else:
+        sys.stdout.write(format_report(report, short=args.short))
+    return 0
+
+
+def cmd_mcp(args: argparse.Namespace) -> int:
+    from .mcp_server import main as mcp_main
+
+    mcp_main()
+    return 0
+
+
 def cmd_serve(args: argparse.Namespace) -> int:
     import os
 
@@ -165,13 +137,14 @@ def cmd_serve(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="taxclaw")
+    p = argparse.ArgumentParser(prog="taxclaw", description="Turn tax documents into structured data (local-first).")
     sp = p.add_subparsers(dest="cmd", required=True)
 
     p_ing = sp.add_parser("ingest", help="ingest + classify + extract")
     p_ing.add_argument("path")
     p_ing.add_argument("--filer", default=None)
     p_ing.add_argument("--year", type=int, default=None)
+    p_ing.add_argument("--json", action="store_true", help="print a JSON result (document_id, doc_type, needs_review, ...)")
     p_ing.set_defaults(func=cmd_ingest)
 
     p_ls = sp.add_parser("list", help="list documents")
@@ -179,6 +152,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_ls.add_argument("--year", type=int, default=None)
     p_ls.add_argument("--type", default=None)
     p_ls.add_argument("--needs-review", type=int, choices=[0, 1], default=None)
+    p_ls.add_argument("--json", action="store_true", help="print JSON")
     p_ls.set_defaults(func=cmd_list)
 
     p_ex = sp.add_parser("export", help="export wide/long CSV or JSON")
@@ -186,6 +160,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_ex.add_argument("--all", action="store_true")
     p_ex.add_argument("--format", choices=["wide", "long", "json"], default="wide")
     p_ex.set_defaults(func=cmd_export)
+
+    p_md = sp.add_parser("models", help="show model choices: local, configured cloud, strongest with setup")
+    p_md.add_argument("--json", action="store_true", help="print JSON")
+    p_md.add_argument("--offline", action="store_true", help="skip live provider model lists (no network)")
+    p_md.add_argument("--short", action="store_true", help="short summary")
+    p_md.set_defaults(func=cmd_models)
+
+    p_mcp = sp.add_parser("mcp", help="run the local MCP server over stdio")
+    p_mcp.set_defaults(func=cmd_mcp)
 
     p_sv = sp.add_parser("serve", help="run web ui")
     p_sv.set_defaults(func=cmd_serve)

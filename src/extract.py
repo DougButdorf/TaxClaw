@@ -7,6 +7,7 @@ from typing import Any
 import pymupdf
 
 from .ai import chat_json_from_image
+from .backends import ExtractionResult, get_backend
 from .config import Config
 
 
@@ -425,8 +426,8 @@ def _merge_page_dicts(base: dict[str, Any], update: dict[str, Any]) -> dict[str,
     return result
 
 
-def extract_document(file_path: str, doc_type: str, cfg: Config) -> dict[str, Any]:
-    """LLM extraction.
+def _llm_extract(doc: pymupdf.Document, doc_type: str, cfg: Config) -> Any:
+    """Prompt-based extraction through the configured backend's ``chat_json``.
 
     For 1099-DA: per-page extraction, transactions aggregated across all pages.
     For all other types (incl. multi-page K-1, W-2, etc.): iterate all pages and
@@ -437,43 +438,79 @@ def extract_document(file_path: str, doc_type: str, cfg: Config) -> dict[str, An
     prompt = f"{UNTRUSTED_DOCUMENT_NOTE}\n\n{prompt}"
     schema = schema_for(doc_type)
 
-    doc = pymupdf.open(file_path)
-    try:
-        if doc_type == "1099-DA":
-            txns: list[dict[str, Any]] = []
-            header: dict[str, Any] | None = None
-            # Extract each page as a separate form copy when page count >1.
-            for i in range(doc.page_count):
-                img = _render_page_png(doc, i)
-                out = clean_null_strings(chat_json_from_image(cfg=cfg, prompt=prompt, image_bytes=img, schema=schema))
-                if header is None and isinstance(out, dict):
-                    header = out.get("header") or {}
-                page_txns = (out.get("transactions") or []) if isinstance(out, dict) else []
-                if isinstance(page_txns, list):
-                    txns.extend(page_txns)
-
-            return {
-                "header": header or {},
-                "transactions": txns,
-                "is_multi_transaction": len(txns) > 1,
-            }
-
-        # All other form types: iterate all pages, merge fields
-        # (handles multi-page K-1, W-2 copies, etc.)
-        merged: dict[str, Any] = {}
+    if doc_type == "1099-DA":
+        txns: list[dict[str, Any]] = []
+        header: dict[str, Any] | None = None
+        # Extract each page as a separate form copy when page count >1.
         for i in range(doc.page_count):
             img = _render_page_png(doc, i)
             out = clean_null_strings(chat_json_from_image(cfg=cfg, prompt=prompt, image_bytes=img, schema=schema))
-            if isinstance(out, dict):
-                merged = _merge_page_dicts(merged, out)
-            elif i == 0:
-                # First page returned a non-dict (unlikely but safe fallback)
-                return out  # type: ignore[return-value]
+            if header is None and isinstance(out, dict):
+                header = out.get("header") or {}
+            page_txns = (out.get("transactions") or []) if isinstance(out, dict) else []
+            if isinstance(page_txns, list):
+                txns.extend(page_txns)
+
+        return {
+            "header": header or {},
+            "transactions": txns,
+            "is_multi_transaction": len(txns) > 1,
+        }
+
+    merged: dict[str, Any] = {}
+    for i in range(doc.page_count):
+        img = _render_page_png(doc, i)
+        out = clean_null_strings(chat_json_from_image(cfg=cfg, prompt=prompt, image_bytes=img, schema=schema))
+        if isinstance(out, dict):
+            merged = _merge_page_dicts(merged, out)
+        elif i == 0:
+            # First page returned a non-dict (unlikely but safe fallback)
+            return out
+    return merged
+
+
+def extract_document_with_meta(file_path: str, doc_type: str, cfg: Config) -> ExtractionResult:
+    """Extract a document with the configured backend.
+
+    Backends with typed per-field extraction (Clairic) return per-field
+    confidence and review flags; prompt-based backends return data only.
+    1099-DA transaction tables always use the prompt path (for Clairic that is
+    ``clairic_fallback_backend``), while Clairic keeps the header fields.
+    """
+
+    backend = get_backend(cfg)
+    doc = pymupdf.open(file_path)
+    try:
+        if backend.supports_structured(doc_type):
+            pages = [(_render_page_png(doc, i), doc[i].get_text("text") or "") for i in range(doc.page_count)]
+            result = backend.extract_structured(doc_type=doc_type, pages=pages)
+            data = clean_null_strings(result.data) if isinstance(result.data, dict) else {}
+            if doc_type == "1099-DA":
+                llm = _llm_extract(doc, doc_type, cfg)
+                llm = llm if isinstance(llm, dict) else {}
+                header = dict(data.get("header") or {})
+                for k, v in (llm.get("header") or {}).items():
+                    if header.get(k) is None:
+                        header[k] = v
+                txns = llm.get("transactions") or []
+                data = {"header": header, "transactions": txns, "is_multi_transaction": len(txns) > 1}
+            if doc_type == "K-1":
+                data = normalize_k1(data)
+            result.data = data
+            return result
+
+        data = _llm_extract(doc, doc_type, cfg)
         if doc_type == "K-1":
-            merged = normalize_k1(merged)
-        return merged
+            data = normalize_k1(data)
+        return ExtractionResult(data=data)
     finally:
         doc.close()
+
+
+def extract_document(file_path: str, doc_type: str, cfg: Config) -> dict[str, Any]:
+    """Back-compat wrapper: extraction data only (see ``extract_document_with_meta``)."""
+
+    return extract_document_with_meta(file_path, doc_type, cfg).data
 
 
 def pretty_json(data: Any) -> str:

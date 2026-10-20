@@ -9,9 +9,9 @@
     {% if status_level == 'full_local' %}
       <div style="font-size: 16px; font-weight: 700;">🟢 FULLY LOCAL — All processing on this machine. Nothing leaves.</div>
     {% else %}
-      <div style="font-size: 16px; font-weight: 700;">🟡 PARTIALLY LOCAL — Data stored here, but sent to <b>{{ cloud_model }}</b> for extraction.</div>
+      <div style="font-size: 16px; font-weight: 700;">🟡 PARTIALLY LOCAL — Data stored here, but sent to <b>{{ selected_model_label }}</b> ({{ backend }}) for extraction.</div>
       {% if needs_privacy_ack %}
-        <div class="muted" style="margin-top: 8px;">Cloud mode is selected but not acknowledged. Upload/extraction will be blocked until you confirm below.</div>
+        <div class="muted" style="margin-top: 8px;">A cloud backend is selected but not acknowledged. Upload/extraction will be blocked until you confirm below.</div>
       {% endif %}
     {% endif %}
   </div>
@@ -22,157 +22,209 @@
     </div>
   {% endif %}
 
-  <div class="card">
-    <form method="post" action="/settings" id="settings-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-      <div style="display:grid; grid-template-columns: 1fr; gap: 14px;">
+  <form method="post" action="/settings" id="settings-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
 
-        <div>
-          <div style="font-weight:700; margin-bottom: 8px;">Model backend</div>
-          <label style="display:flex; gap:10px; align-items:center; margin-bottom: 6px;">
-            <input type="radio" name="model_backend" value="local" {% if cfg.model_backend == 'local' %}checked{% endif %} />
-            <span>Local (Ollama) — recommended</span>
-          </label>
-          <label style="display:flex; gap:10px; align-items:center;">
-            <input type="radio" name="model_backend" value="cloud" {% if cfg.model_backend == 'cloud' %}checked{% endif %} />
-            <span>Cloud — sends tax document content to an external AI provider</span>
-          </label>
-        </div>
-
-        <div id="local-section" style="padding-top: 6px;">
-          <div style="font-weight:700; margin-bottom: 8px;">Local model (Ollama)</div>
-          <select name="local_model" style="min-width: 320px;">
-            {% for m in local_models_info %}
-              {% set is_recommended = m.name in ('gemma3:4b', 'gemma3:4b-it-qat') %}
-              <option value="{{ m.name }}" {% if cfg.local_model == m.name %}selected{% endif %}>
-                {{ "✅" if m.vision else "⚠️" }} {{ m.name }}{% if is_recommended and m.vision %} — vision ⭐ recommended{% elif m.vision %} — vision{% else %} — text only, cannot read images{% endif %}
-              </option>
-            {% endfor %}
-            {% if local_models_info|length == 0 %}
-              <option value="{{ cfg.local_model }}" selected>{{ cfg.local_model }}</option>
-            {% endif %}
-          </select>
-          {% if local_models_info|length == 0 and cfg.model_backend == 'local' %}
-          <div style="margin-top:8px; padding:10px 12px; border-radius:8px; border:1px solid rgba(239,68,68,0.5); background:rgba(239,68,68,0.08); font-size:13px; color:#ef4444;">
-            ⚠️ Ollama is not reachable at <code>{{ ollama_host }}</code> (or has no models installed). Start it with <code>ollama serve</code> or open the Ollama app, then run <code>ollama pull gemma3:4b</code> — or use Cloud mode.
-          </div>
-          {% elif not selected_is_vision and cfg.model_backend == 'local' %}
-          <div style="margin-top:8px; padding:10px 12px; border-radius:8px; border:1px solid rgba(239,68,68,0.5); background:rgba(239,68,68,0.08); font-size:13px; color:#ef4444;">
-            ⚠️ <strong>{{ cfg.local_model }}</strong> is not an installed vision model — it cannot read document images, so extraction will fail. Switch to a vision model (e.g. <strong>gemma3:4b</strong> — run <code>ollama pull gemma3:4b</code>) or use Cloud mode.
-          </div>
-          {% endif %}
-          <div class="muted" style="margin-top: 8px; font-size: 13px;">Vision models (✅) can read document images. Text-only models (⚠️) will not extract any data.</div>
-        </div>
-
-        <div id="cloud-section" style="padding-top: 6px;">
-          <div style="font-weight:700; margin-bottom: 8px;">Cloud model</div>
-          <select name="cloud_model" id="cloud-model" style="min-width: 320px;">
-            {% for cm in cloud_models %}
-              <option value="{{ cm }}" {% if cfg.cloud_model == cm %}selected{% endif %}>{{ cm }}</option>
-            {% endfor %}
-          </select>
-
-          <div style="height: 10px;"></div>
-          <label style="display:flex; gap:10px; align-items:flex-start;">
-            <input type="checkbox" id="privacy-ack" name="privacy_acknowledged" value="1" {% if cfg.privacy_acknowledged %}checked{% endif %} />
-            <span>
-              <div style="font-weight:700;">I understand and accept the privacy risk</div>
-              <div class="muted" style="font-size: 13px; margin-top: 4px;">
-                ⚠️ Your tax documents will be sent to an external AI provider. This includes document content, which may contain SSNs, income, and account numbers.
-              </div>
-            </span>
-          </label>
-        </div>
-
-        <details style="
-          border: 1px solid rgba(148,163,184,0.22);
-          background: rgba(15,23,42,0.35);
-          border-radius: 14px;
-          padding: 12px 12px;
-        ">
-          <summary style="cursor:pointer; font-weight: 700; list-style: none;">
-            📊 How model choice affects extraction quality
-          </summary>
-          <div style="height: 10px;"></div>
-
-          <div style="display:grid; grid-template-columns: 1fr; gap: 12px; font-size: 13px;">
-            <div>
-              <div style="font-weight:700; margin-bottom: 6px;">Local (Ollama)</div>
-              <div class="muted">✅ Free · ✅ Fully private · your data never leaves this machine</div>
-              <div style="height: 8px;"></div>
-              <div class="muted" style="margin-bottom: 6px;">⚠️ Smaller models may struggle with:</div>
-              <ul class="muted" style="margin: 0 0 0 18px;">
-                <li>Complex multi-copy forms (consolidated 1099s, K-1s)</li>
-                <li>Low-quality scans or non-standard layouts</li>
-                <li>Handwritten or corrected fields</li>
-              </ul>
-              <div class="muted" style="margin-top: 8px;">Accuracy depends on the model and scan quality — always review extracted values against the original.</div>
-            </div>
-
-            <div>
-              <div style="font-weight:700; margin-bottom: 6px;">Cloud (Claude / OpenAI)</div>
-              <ul class="muted" style="margin: 0 0 0 18px;">
-                <li>✅ Higher accuracy on complex forms</li>
-                <li>✅ Better handling of edge cases and poor scans</li>
-                <li>✅ Confidence typically <code style="color: var(--text);">0.85–0.97</code></li>
-              </ul>
-              <div style="height: 8px;"></div>
-              <div class="muted">⚠️ Your document content leaves this machine — see <a href="/privacy">Privacy Policy</a></div>
-              <div class="muted">⚠️ Requires API key or cloud subscription</div>
-            </div>
-
-            <div class="muted">
-              💡 Tip: <strong>gemma3:4b</strong> (<code>ollama pull gemma3:4b</code>) is the recommended local model — a general vision model that runs on a 16 GB machine. <strong>glm-ocr</strong> (<code>ollama pull glm-ocr</code>) is a smaller OCR-focused alternative; larger vision models such as <strong>gemma3:12b</strong> or <strong>qwen3.5</strong> also work. Switch to cloud only for low-confidence results or complex multi-page K-1s.
-            </div>
-          </div>
-        </details>
-
-        <div class="row" style="justify-content: space-between;">
-          <button type="submit">Save</button>
-          <a class="muted" href="/">Back to documents</a>
-        </div>
+    <!-- Tier 1 -->
+    <div class="card" style="margin-bottom: 14px;" id="tier1">
+      <label style="display:flex; gap:10px; align-items:center; margin-bottom: 6px;">
+        <input type="radio" name="model_backend" value="local" {% if backend == 'local' %}checked{% endif %} />
+        <span style="font-weight:700;">Tier 1 · Local-first (recommended) — Ollama on this machine</span>
+      </label>
+      <div class="muted" style="font-size: 13px; margin: 0 0 8px 26px;">
+        This machine: {% if tier1.machine_ram_gb %}{{ tier1.machine_ram_gb }} GB RAM{% else %}RAM unknown{% endif %} → {{ tier1.ram_bucket }}.
+        Recommendations are <strong>{{ tier1.status }}</strong> (reference: {{ tier1.reference_machine }}).
       </div>
-    </form>
-  </div>
+      <div style="margin-left: 26px;">
+        {% set rec_names = tier1.recommended | map(attribute='model') | list %}
+        <select name="local_model" style="min-width: 320px;">
+          {% for m in local_models_info %}
+            <option value="{{ m.name }}" {% if cfg.local_model == m.name %}selected{% endif %}>
+              {{ "✅" if m.vision else "⚠️" }} {{ m.name }}{% if m.vision and m.name in rec_names %} — vision ⭐ recommended for this machine{% elif m.vision %} — vision{% else %} — text only, cannot read images{% endif %}
+            </option>
+          {% endfor %}
+          {% if local_models_info|length == 0 %}
+            <option value="{{ cfg.local_model }}" selected>{{ cfg.local_model }}</option>
+          {% endif %}
+        </select>
+        <ul class="muted" style="font-size: 13px; margin: 8px 0 0 18px;">
+          {% for r in tier1.recommended %}
+            <li>{{ r.role }}: <strong>{{ r.model }}</strong> — {% if r.installed %}installed{% else %}not installed: <code>{{ r.pull_command }}</code>{% endif %}</li>
+          {% endfor %}
+        </ul>
+        {% if tier1.bucket_note %}<div class="muted" style="font-size: 13px; margin-top: 4px;">{{ tier1.bucket_note }}</div>{% endif %}
+        {% if local_models_info|length == 0 and backend == 'local' %}
+        <div style="margin-top:8px; padding:10px 12px; border-radius:8px; border:1px solid rgba(239,68,68,0.5); background:rgba(239,68,68,0.08); font-size:13px; color:#ef4444;">
+          ⚠️ Ollama is not reachable at <code>{{ ollama_host }}</code> (or has no models installed). Start it with <code>ollama serve</code> or open the Ollama app, then run <code>ollama pull gemma3:4b</code> — or pick a cloud tier.
+        </div>
+        {% elif not selected_is_vision and backend == 'local' %}
+        <div style="margin-top:8px; padding:10px 12px; border-radius:8px; border:1px solid rgba(239,68,68,0.5); background:rgba(239,68,68,0.08); font-size:13px; color:#ef4444;">
+          ⚠️ <strong>{{ cfg.local_model }}</strong> is not an installed vision model — it cannot read document images, so extraction will fail. Switch to a vision model (e.g. <strong>gemma3:4b</strong> — run <code>ollama pull gemma3:4b</code>) or pick a cloud tier.
+        </div>
+        {% endif %}
+        <div class="muted" style="margin-top: 8px; font-size: 13px;">Vision models (✅) can read document images. Text-only models (⚠️) will not extract any data.</div>
+      </div>
+    </div>
+
+    <!-- Tier 2 -->
+    <div class="card" style="margin-bottom: 14px;" id="tier2">
+      <div style="font-weight:700; margin-bottom: 6px;">Tier 2 · Cloud you already have configured</div>
+      <div class="muted" style="font-size: 13px; margin-bottom: 8px;">
+        Detected by key <em>presence</em> only — values are never read into this page.
+        Cloud backends send document content to that provider.
+      </div>
+      <table style="width:100%; font-size: 13px; margin-bottom: 10px;">
+        <thead><tr><th style="text-align:left;">Provider</th><th style="text-align:left;">Status</th><th style="text-align:left;">Recommended (balance / strongest)</th></tr></thead>
+        <tbody>
+          {% for p in tier2.providers %}
+          <tr>
+            <td>{{ p.label }}</td>
+            <td>
+              {% if p.configured %}✅ configured{% else %}— not configured{% endif %}
+              <span class="muted">({% for k, v in p.env_presence.items() %}{{ k }} {{ "set" if v else "unset" }}{% if not loop.last %}, {% endif %}{% endfor %}{% if p.config_cloud_api_key_present %}, config cloud_api_key set{% endif %})</span>
+              {% if p.list_error %}<div class="muted">live model list failed: {{ p.list_error }}</div>{% endif %}
+            </td>
+            <td>
+              {% if p.recommended %}{{ p.recommended.balance or "—" }} / {{ p.recommended.strongest or "—" }}<div class="muted">{{ p.recommended.basis }}</div>{% elif p.note %}<span class="muted">{{ p.note }}</span>{% else %}<span class="muted">listed when the key is present</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if tier2.openclaw_providers %}
+      <div class="muted" style="font-size: 13px; margin-bottom: 10px;">
+        Also configured in OpenClaw: {% for oc in tier2.openclaw_providers %}<strong>{{ oc.provider }}</strong>{% if not loop.last %}, {% endif %}{% endfor %} — configured in OpenClaw; export the key to TaxClaw's environment to use it.
+      </div>
+      {% endif %}
+
+      <label style="display:flex; gap:10px; align-items:center; margin: 8px 0 6px;">
+        <input type="radio" name="model_backend" value="anthropic" {% if backend == 'anthropic' %}checked{% endif %} />
+        <span>Anthropic (needs <code>ANTHROPIC_API_KEY</code>)</span>
+      </label>
+      <div style="margin-left: 26px;">
+        <select name="cloud_model" id="cloud-model" style="min-width: 320px;">
+          {% for cm in cloud_models %}
+            <option value="{{ cm }}" {% if cfg.cloud_model == cm %}selected{% endif %}>{{ cm }}{% if loop.first %} — balance{% else %} — strongest{% endif %}</option>
+          {% endfor %}
+          {% if cfg.cloud_model not in cloud_models %}<option value="{{ cfg.cloud_model }}" selected>{{ cfg.cloud_model }}</option>{% endif %}
+        </select>
+      </div>
+
+      <label style="display:flex; gap:10px; align-items:center; margin: 12px 0 6px;">
+        <input type="radio" name="model_backend" value="openai_compat" {% if backend == 'openai_compat' %}checked{% endif %} />
+        <span>OpenAI-compatible: OpenAI, OpenRouter, Gemini, or a custom endpoint</span>
+      </label>
+      <div style="margin-left: 26px; display:grid; gap: 6px; max-width: 520px;">
+        <select name="openai_compat_provider" id="compat-provider">
+          {% for key, preset in compat_presets.items() %}
+            <option value="{{ key }}" {% if cfg.openai_compat_provider == key %}selected{% endif %}>{{ preset.label }}{% if preset.key_envs %} ({{ preset.key_envs | join(' or ') }}){% endif %}</option>
+          {% endfor %}
+        </select>
+        <input name="openai_compat_model" id="compat-model" placeholder="model id (vision-capable)" value="{{ cfg.openai_compat_model }}" list="compat-models-{{ cfg.openai_compat_provider }}" />
+        {% for key, models in compat_models.items() %}
+          <datalist id="compat-models-{{ key }}">{% for m in models %}<option value="{{ m }}"></option>{% endfor %}</datalist>
+        {% endfor %}
+        {% for key, rec in compat_recommended.items() %}
+          <div class="muted compat-rec" data-provider="{{ key }}" style="font-size: 12px;">{{ compat_presets[key].label }}: balance <code>{{ rec.balance or "—" }}</code>, strongest <code>{{ rec.strongest or "—" }}</code> ({{ rec.basis }})</div>
+        {% endfor %}
+        <details class="muted" style="font-size: 12px;">
+          <summary>Custom endpoint</summary>
+          <input name="openai_compat_base_url" placeholder="https://… (empty = provider preset)" value="{{ cfg.openai_compat_base_url }}" style="width: 100%; margin-top: 6px;" />
+          <input name="openai_compat_api_key_env" placeholder="API key env var NAME, e.g. MY_PROVIDER_API_KEY" value="{{ cfg.openai_compat_api_key_env }}" style="width: 100%; margin-top: 6px;" />
+          <div style="margin-top: 4px;">Enter the environment variable <em>name</em>, never the key itself.</div>
+        </details>
+      </div>
+    </div>
+
+    <!-- Tier 3 -->
+    <div class="card" style="margin-bottom: 14px;" id="tier3">
+      <div style="font-weight:700; margin-bottom: 6px;">Tier 3 · Strongest with setup</div>
+      {% for o in tier3.options %}
+        <label style="display:flex; gap:10px; align-items:center; margin-bottom: 6px;">
+          <input type="radio" name="model_backend" value="{{ o.backend }}" {% if backend == o.backend %}checked{% endif %} />
+          <span>{{ o.label }} — {% if o.configured %}✅ configured{% else %}not configured{% endif %}</span>
+        </label>
+        <div class="muted" style="font-size: 13px; margin-left: 26px;">
+          <div>{{ o.why }}</div>
+          <div>Pricing: {{ o.pricing }}. Status: {{ o.status }}.</div>
+          <ul style="margin: 6px 0 0 18px;">{% for c in o.caveats %}<li>{{ c }}</li>{% endfor %}</ul>
+          <details style="margin-top: 6px;">
+            <summary>Setup steps</summary>
+            <ol style="margin: 6px 0 0 18px;">{% for s in o.setup %}<li>{{ s }}</li>{% endfor %}</ol>
+            <div style="margin-top: 4px;">Docs: <a href="{{ o.docs }}" target="_blank" rel="noopener">{{ o.docs }}</a></div>
+          </details>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Privacy acknowledgment (required for every cloud choice) -->
+    <div class="card" style="margin-bottom: 14px;" id="cloud-section">
+      <label style="display:flex; gap:10px; align-items:flex-start;">
+        <input type="checkbox" id="privacy-ack" name="privacy_acknowledged" value="1" {% if cfg.privacy_acknowledged %}checked{% endif %} />
+        <span>
+          <div style="font-weight:700;">I understand and accept the privacy risk (required for any Tier 2 or Tier 3 choice)</div>
+          <div class="muted" style="font-size: 13px; margin-top: 4px;">
+            ⚠️ Your tax documents will be sent to an external AI provider. This includes document content, which may contain SSNs, income, and account numbers. See the <a href="/privacy">Privacy Policy</a>.
+          </div>
+        </span>
+      </label>
+    </div>
+
+    <div class="muted" style="font-size: 12px; margin-bottom: 10px;">
+      Recommendations: {{ catalog.source }} (as of {{ catalog.as_of }}; data file <code>{{ catalog.path }}</code>). Same information: <code>taxclaw models</code>.
+    </div>
+
+    <div class="row" style="justify-content: space-between;">
+      <button type="submit">Save</button>
+      <a class="muted" href="/">Back to documents</a>
+    </div>
+  </form>
 
   <script>
     (function () {
       const form = document.getElementById('settings-form');
-      const cloudModel = document.getElementById('cloud-model');
       const ack = document.getElementById('privacy-ack');
-      const cloudRadio = form.querySelector('input[name="model_backend"][value="cloud"]');
-      const localRadio = form.querySelector('input[name="model_backend"][value="local"]');
-      if (!form || !cloudModel || !ack || !cloudRadio) return;
+      if (!form || !ack) return;
+      const radios = form.querySelectorAll('input[name="model_backend"]');
+      const isCloud = () => {
+        const sel = form.querySelector('input[name="model_backend"]:checked');
+        return !!sel && sel.value !== 'local';
+      };
 
-      // Inline warning banner — shown when cloud is selected and ack not yet checked
       const banner = document.createElement('div');
       banner.id = 'cloud-warn-banner';
-      banner.style.cssText = 'display:none; margin-top:10px; padding:12px 14px; border-radius:10px; border:1px solid rgba(245,158,11,0.5); background:rgba(245,158,11,0.08); font-size:13px; color:#f59e0b; line-height:1.5;';
-      banner.innerHTML = '⚠️ <strong>Cloud mode selected.</strong> Your tax documents — including SSNs, income figures, and account numbers — will be sent to an external AI provider. Check the box below to confirm you accept this.';
+      banner.style.cssText = 'display:none; margin-bottom:10px; padding:12px 14px; border-radius:10px; border:1px solid rgba(245,158,11,0.5); background:rgba(245,158,11,0.08); font-size:13px; color:#f59e0b; line-height:1.5;';
+      banner.innerHTML = '⚠️ <strong>Cloud backend selected.</strong> Your tax documents — including SSNs, income figures, and account numbers — will be sent to an external AI provider. Check the box below to confirm you accept this.';
       const cloudSection = document.getElementById('cloud-section');
       if (cloudSection) cloudSection.prepend(banner);
 
-      // Inline submit error
       const submitErr = document.createElement('div');
       submitErr.id = 'cloud-submit-err';
-      submitErr.style.cssText = 'display:none; margin-top:8px; color:#ef4444; font-size:13px;';
-      submitErr.textContent = '⚠️ You must check the privacy acknowledgment before saving cloud mode.';
+      submitErr.style.cssText = 'display:none; margin:8px 0; color:#ef4444; font-size:13px;';
+      submitErr.textContent = '⚠️ You must check the privacy acknowledgment before saving a cloud backend.';
       const saveRow = form.querySelector('.row');
       if (saveRow) saveRow.before(submitErr);
 
       function updateBanner() {
-        const isCloud = cloudRadio.checked;
-        banner.style.display = (isCloud && !ack.checked) ? 'block' : 'none';
+        banner.style.display = (isCloud() && !ack.checked) ? 'block' : 'none';
         submitErr.style.display = 'none';
       }
-
-      form.querySelectorAll('input[name="model_backend"]').forEach((el) => {
-        el.addEventListener('change', updateBanner);
-      });
+      radios.forEach((el) => el.addEventListener('change', updateBanner));
       ack.addEventListener('change', updateBanner);
 
+      const provider = document.getElementById('compat-provider');
+      const model = document.getElementById('compat-model');
+      function updateCompat() {
+        if (!provider || !model) return;
+        model.setAttribute('list', 'compat-models-' + provider.value);
+        document.querySelectorAll('.compat-rec').forEach((el) => {
+          el.style.display = el.dataset.provider === provider.value ? 'block' : 'none';
+        });
+      }
+      if (provider) provider.addEventListener('change', updateCompat);
+
       form.addEventListener('submit', (e) => {
-        if (cloudRadio.checked && !ack.checked) {
+        if (isCloud() && !ack.checked) {
           e.preventDefault();
           submitErr.style.display = 'block';
           banner.style.display = 'block';
@@ -182,8 +234,8 @@
         }
       });
 
-      // Init on page load
       updateBanner();
+      updateCompat();
     })();
   </script>
 {% endblock %}

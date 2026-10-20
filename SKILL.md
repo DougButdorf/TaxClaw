@@ -1,95 +1,73 @@
 ---
 name: taxclaw
-version: "0.1.2"
-description: "Extract, store, and export tax documents (W-2, 1099-DA, all 1099 variants, K-1) using AI. Local-first — your documents never leave your machine. Web UI at localhost:8421."
-argument-hint: "open TaxClaw, extract my 1099, parse this tax form, process my W-2"
-allowed-tools: Bash, Read, Write
-requires: python3, pip
-optional: ollama (for local model mode)
+description: Turn tax documents (W-2, 1099-NEC/INT/DIV/B/MISC/OID/R/G/K, 1099-DA, K-1, consolidated 1099s; PDF or image) into structured JSON/CSV for accountants and tax software, locally by default. Use when the user wants to extract, read, parse or export the data on a tax form, find fields that need review, or choose a model for that. Does not prepare or file returns and is not tax advice.
+license: MIT
+compatibility: Python 3.11+ and bash on macOS or Linux. Local mode needs Ollama with a vision model (e.g. gemma3:4b); cloud backends are opt-in. Install into a directory named taxclaw.
+metadata:
+  version: "0.1.2"
+  homepage: https://github.com/DougButdorf/TaxClaw
+  openclaw:
+    emoji: "🧾"
+    homepage: https://github.com/DougButdorf/TaxClaw
+    os:
+      - darwin
+      - linux
+    requires:
+      bins:
+        - bash
+      anyBins:
+        - python3
+        - python3.11
+        - python3.12
+        - python3.13
+        - python3.14
 ---
 
-# taxclaw
+# TaxClaw
 
-Local-first AI tax document extraction skill for OpenClaw.
+Extracts the printed fields from tax documents into a local SQLite database and exports them as JSON or CSV. Local-first: the default backend (Ollama) never sends documents off the machine.
 
-## 🔐 Security & Permissions Manifest
+**Paths.** `{baseDir}` is this skill's directory (OpenClaw fills it in; in other Agent Skills clients use the directory that contains this SKILL.md). Every command below works from any working directory; relative file arguments resolve against the caller's cwd, but prefer absolute paths.
 
-TaxClaw declares the following permissions transparently. Review before installing.
+## Procedure
 
-| Permission | What & Why | Default |
+1. **Check setup.** If `{baseDir}/venv/bin/python` is missing, run `bash {baseDir}/setup.sh` (creates the venv and `~/.config/taxclaw/config.yaml`; touches nothing else). Then run `{baseDir}/bin/taxclaw models --json --offline` and read `current` (backend in use) and `tiers[0]` (Ollama reachable? vision models installed?).
+
+2. **Choose a model.** Run `{baseDir}/bin/taxclaw models` (add `--json` to parse). Three tiers:
+   - **Tier 1, local (default):** installed Ollama vision models plus a recommendation for this machine's RAM, with the `ollama pull` command if it is missing. Text-only models cannot read documents.
+   - **Tier 2, cloud already configured:** providers whose API keys are present (presence only; values are never shown), with their vision models and a recommended balance/strongest pick.
+   - **Tier 3, strongest with setup:** Cloudflare Clairic (per-field confidence), with setup steps.
+
+   Keep the local backend unless the user asks for cloud. A cloud backend sends document content (SSNs, income) to that provider, so only the user may switch to it and set `privacy_acknowledged: true` (Settings page at `http://localhost:8421/settings`, or `~/.config/taxclaw/config.yaml`). Never set it on the user's behalf.
+
+3. **Ingest.** `{baseDir}/bin/taxclaw ingest /abs/path/to/doc.pdf --filer NAME --year 2025 --json`
+   Exit codes: `0` ok (JSON has `document_id`, `doc_type`, `needs_review`, `overall_confidence`); `1` extraction failed, document kept and flagged; `2` invalid file (missing, wrong type, too large); `3` backend not ready (message says why, e.g. Ollama not running). A local model takes about 15-100 s per page.
+
+4. **Review low-confidence items.** `{baseDir}/bin/taxclaw list --needs-review 1 --json`, then `{baseDir}/bin/taxclaw export --id ID --format json` to show the fields. Ask the user to check flagged values against the original document; corrections are made in the web UI (`bash {baseDir}/start.sh`, then `http://localhost:8421/doc/ID`).
+
+5. **Export.** `{baseDir}/bin/taxclaw export --all --format json` (or `wide` / `long` CSV; `--id ID` for one document). Write to a file the user names, e.g. `> ~/taxclaw-2025.json`.
+
+**MCP.** `{baseDir}/bin/taxclaw mcp` runs a local stdio MCP server with `ingest_document`, `list_documents`, `get_document`, `export_documents` and `list_models`; see README for client configs.
+
+Supported forms: W-2, 1099-NEC, 1099-INT, 1099-DIV, 1099-B, 1099-MISC, 1099-OID, 1099-R, 1099-G, 1099-K, 1099-DA, K-1 (Form 1065), consolidated 1099; Form 1040 is best-effort.
+
+## Security and permissions
+
+| Permission | Scope | Default |
 |---|---|---|
-| **Read filesystem** | Reads uploaded PDF/image files you provide | Required |
-| **Write filesystem** | Stores extracted data at `~/.local/share/taxclaw/` and config at `~/.config/taxclaw/` | Required |
-| **Network (local only)** | Binds to `localhost:8421` only and talks to your local Ollama (`OLLAMA_HOST`, default `127.0.0.1:11434`) — no external network access in default mode | Required |
-| **Network (cloud AI)** | Only if you explicitly enable cloud mode in config + acknowledge privacy warning | Opt-in only |
-| **Network (contact form)** | Only if you submit the optional in-app Contact form: what you type (name, email, message) is sent to Formspree (formspree.io). No documents or tax data are included | Opt-in only |
-| **Credentials** | None read or stored — no API keys required in local-only mode | N/A |
-| **Sensitive data** | Tax documents stay on your machine. Nothing is sent externally in default (Ollama) mode | Local-only |
+| Read files | Only the paths you pass to `ingest` | Required |
+| Write files | `~/.local/share/taxclaw/` (database, stored copies) and `~/.config/taxclaw/` | Required |
+| Network, local | Web UI on `127.0.0.1:8421`; Ollama at `OLLAMA_HOST` (default `127.0.0.1:11434`) | Required |
+| Network, cloud AI | Only after the user selects a cloud backend and acknowledges the privacy warning | Opt-in |
+| Network, model lists | `taxclaw models` asks a provider for its model list only when that provider's key is already set | Opt-in |
+| Credentials | Read from env vars at call time; presence checks only; never printed or stored by TaxClaw | Opt-in |
 
-**TaxClaw does NOT:**
-- Exfiltrate documents, fields, or extracted data
-- Read files outside of paths you explicitly provide to ingest
-- Phone home, send telemetry, or contact external servers (default mode; the only exceptions are cloud mode and the optional contact form, both user-initiated)
-- Store or transmit SSN, EIN, or account numbers to any third party
+TaxClaw does not send telemetry, read files you did not pass to it, or send documents anywhere in local mode. The optional in-app contact form sends only what the user types to Formspree. Source: https://github.com/DougButdorf/TaxClaw (MIT).
 
-**If you enable cloud mode (Claude):** A mandatory privacy warning is displayed. You must explicitly set `privacy_acknowledged: true` in config before processing begins.
+## Not tax advice
 
-**Audit this skill:** Source code is fully open at [github.com/DougButdorf/TaxClaw](https://github.com/DougButdorf/TaxClaw) (MIT License). Read it before you install it.
+TaxClaw is a data-extraction tool, not a tax preparation or tax advice service. It does not prepare or file returns, compute cost basis, or give tax, legal or financial advice. AI extraction can be wrong: verify every value against the original document before use. See TERMS.md and PRIVACY.md.
 
-## Setup
+## Install note
 
-```bash
-bash ~/.openclaw/workspace/skills/taxclaw/setup.sh
-```
-
-## Config
-
-Config lives at:
-- `~/.config/taxclaw/config.yaml`
-
-Default is local-first (Ollama on your machine) with `local_model: gemma3:4b`. The local model must support vision (`ollama pull gemma3:4b`); TaxClaw fails fast with a clear message if Ollama is not running (honours `OLLAMA_HOST`) or the configured model is text-only. If you enable cloud mode, TaxClaw will refuse to run until you explicitly acknowledge the privacy warning in config.
-
-Supported forms: W-2, 1099-NEC, 1099-INT, 1099-DIV, 1099-B, 1099-MISC, 1099-OID, 1099-R, 1099-G, 1099-K, 1099-DA, K-1, consolidated 1099; Form 1040 is best-effort (generic extraction).
-
-## Start web UI
-
-```bash
-bash ~/.openclaw/workspace/skills/taxclaw/start.sh
-# Open: http://localhost:8421
-```
-
-## CLI usage
-
-`bin/taxclaw` works from any working directory; relative file paths resolve against the caller's cwd. `ingest` exits non-zero with a message on stderr if the model backend is unavailable or extraction fails.
-
-```bash
-# Ingest a document
-~/.openclaw/workspace/skills/taxclaw/bin/taxclaw \
-  ingest path/to/document.pdf --filer doug --year 2025
-
-# List documents
-~/.openclaw/workspace/skills/taxclaw/bin/taxclaw list
-
-# Export (wide CSV by default)
-~/.openclaw/workspace/skills/taxclaw/bin/taxclaw export --id <doc-id>
-
-# Export long CSV
-~/.openclaw/workspace/skills/taxclaw/bin/taxclaw export --id <doc-id> --format long
-
-# Export JSON
-~/.openclaw/workspace/skills/taxclaw/bin/taxclaw export --id <doc-id> --format json
-
-# Export everything as JSON (each document includes its extracted fields)
-~/.openclaw/workspace/skills/taxclaw/bin/taxclaw export --all --format json
-
-# Start server
-~/.openclaw/workspace/skills/taxclaw/bin/taxclaw serve
-```
-
-## Trigger phrases (OpenClaw agent)
-
-- "extract my tax document"
-- "parse this 1099" / "read this W-2"
-- "open TaxClaw" / "start taxclaw"
-- "process my tax forms"
-- "show my tax documents"
+The skill name is `taxclaw` and Agent Skills clients require the directory name to match, so install into a directory named `taxclaw` (for example `git clone https://github.com/DougButdorf/TaxClaw.git taxclaw`). `openclaw skills install @dougbutdorf/taxclaw` does this for you.

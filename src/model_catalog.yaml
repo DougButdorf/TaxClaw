@@ -1,0 +1,124 @@
+# TaxClaw model catalog: data behind `taxclaw models`, the Settings page and
+# the MCP list_models tool. Edit this file to refresh recommendations; no code
+# change needed. Live detection (installed Ollama models, provider model
+# lists, key presence) happens at run time; this file only holds the
+# recommendation rules.
+#
+# IMPORTANT: local recommendations are PROVISIONAL until the accuracy
+# benchmark (TaxClaw issue #3, WP-F) publishes measured numbers. Replace the
+# `source`/`as_of` fields when it does.
+
+catalog_version: 1
+source: "provisional: maintainer smoke runs on a synthetic W-2 (gemma3:4b 7/7 fields in ~29 s, gemma3:12b 7/7 in ~99 s, M4 Mac mini 16 GB); not a benchmark"
+as_of: "2026-10-20"
+
+tier1_local:
+  title: "Local-first (default): Ollama on this machine"
+  status: "provisional until benchmark"
+  reference_machine: "Apple M4 Mac mini, 16 GB unified memory (treated as standard low-end)"
+  # Buckets are matched in order; first bucket whose max_ram_gb >= this machine's RAM wins.
+  ram_buckets:
+    - max_ram_gb: 8
+      label: "8 GB or less"
+      default: "gemma3:4b"
+      accuracy: null
+      note: "gemma3:4b is the only recommended option at this size; expect slower runs."
+    - max_ram_gb: 31
+      label: "16 GB class (reference machine)"
+      default: "gemma3:4b"
+      accuracy: "gemma3:12b"
+      note: "gemma3:4b is the default; gemma3:12b is more accurate on hard scans but about 3x slower."
+    - max_ram_gb: null   # no upper bound
+      label: "32 GB or more"
+      default: "gemma3:12b"
+      accuracy: "gemma3:12b"
+      note: "gemma3:12b fits comfortably; use gemma3:4b if you want speed."
+  known_weak:
+    - model: "glm-ocr"
+      note: "vision OCR model; 4/7 fields on the synthetic W-2 smoke run"
+    - model: "llama3.2"
+      note: "text-only; cannot read document images"
+
+tier2_cloud:
+  title: "Cloud you already have configured"
+  # Recommendation heuristic for providers without confirmed IDs, applied to
+  # the LIVE model list (nothing below is assumed to exist):
+  #   1. keep only vision-capable models (provider metadata where available,
+  #      otherwise the `vision_include`/`vision_exclude` patterns);
+  #   2. `balance` = the newest-version model whose id matches the first
+  #      `balance_patterns` entry that has any match; `strongest` likewise
+  #      with `strongest_patterns`. "Newest" = highest version numbers in the
+  #      id, preferring undated, non-preview aliases.
+  # These picks are UNBENCHMARKED for tax forms.
+  heuristic_label: "unbenchmarked heuristic: newest balance-tier (mini/flash/haiku) and flagship model from the live list"
+  providers:
+    anthropic:
+      label: "Anthropic"
+      env: ["ANTHROPIC_API_KEY"]
+      backend: "anthropic"
+      models_api: "https://api.anthropic.com/v1/models"
+      confirmed:
+        balance: "claude-haiku-5-5"
+        strongest: "claude-sonnet-5-5"
+      confirmed_note: "confirmed current Anthropic model IDs; all current Claude models accept images"
+    openai:
+      label: "OpenAI"
+      env: ["OPENAI_API_KEY"]
+      backend: "openai_compat"
+      provider_preset: "openai"
+      models_api: "https://api.openai.com/v1/models"
+      vision_note: "OpenAI's model list has no modality field; vision is inferred from the model family"
+      vision_include: ['^gpt-4o', '^gpt-4\.1', '^gpt-5', '^o3', '^o4']
+      vision_exclude: ['audio', 'realtime', 'transcribe', 'tts', 'search', 'image', 'codex', 'embedding', 'moderation', 'instruct', 'chat-latest', 'deep-research', 'oss']
+      balance_patterns: ['^gpt-[\d.]+-mini', '^gpt-4o-mini', '^o4-mini']
+      strongest_patterns: ['^gpt-[\d.]+$', '^gpt-[\d.]+o?$']
+    gemini:
+      label: "Google Gemini"
+      env: ["GEMINI_API_KEY", "GOOGLE_API_KEY"]
+      backend: "openai_compat"
+      provider_preset: "gemini"
+      models_api: "https://generativelanguage.googleapis.com/v1beta/models"
+      vision_note: "Gemini chat models are multimodal; embedding/TTS/image-generation/live variants are excluded"
+      vision_include: ['^gemini-']
+      vision_exclude: ['embedding', 'tts', 'image', 'live', 'audio', 'aqa', 'native', 'robotics', 'computer-use']
+      balance_patterns: ['^gemini-[\d.]+-flash(?!-lite)']
+      strongest_patterns: ['^gemini-[\d.]+-pro']
+    openrouter:
+      label: "OpenRouter"
+      env: ["OPENROUTER_API_KEY"]
+      backend: "openai_compat"
+      provider_preset: "openrouter"
+      models_api: "https://openrouter.ai/api/v1/models"
+      vision_note: "filtered on architecture.input_modalities containing 'image'"
+      balance_patterns: ['^anthropic/claude-haiku', '^google/gemini-[\d.]+-flash(?!-lite)', '^openai/gpt-[\d.]+-mini']
+      strongest_patterns: ['^anthropic/claude-sonnet', '^google/gemini-[\d.]+-pro', '^openai/gpt-[\d.]+$']
+    cloudflare:
+      label: "Cloudflare Workers AI"
+      env: ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN"]
+      env_all_required: true
+      backend: "cloudflare_clairic"
+      note: "used for Clairic; see tier 3"
+
+tier3_setup:
+  title: "Strongest with setup"
+  options:
+    - id: "cloudflare_clairic"
+      label: "Cloudflare Workers AI: Clairic (@cf/cloudflare/clairic)"
+      backend: "cloudflare_clairic"
+      model: "@cf/cloudflare/clairic"
+      status: "preview model; TaxClaw adapter unit-tested with mocked responses, not live-tested"
+      pricing: "$0.10 per million input tokens; no output tokens are billed (preview pricing)"
+      docs: "https://developers.cloudflare.com/workers-ai/models/clairic/"
+      why: "typed fields with per-field confidence and null probability, which TaxClaw uses to flag fields for review"
+      caveats:
+        - "Sends page images and the PDF text layer to Cloudflare (cloud backend: privacy acknowledgment required)."
+        - "Max 4 images per call, 4 MiB each; TaxClaw batches longer documents."
+        - "1099-DA transaction tables and free-form/generic forms use clairic_fallback_backend (local by default)."
+      setup:
+        - "Create or sign in to a Cloudflare account: https://dash.cloudflare.com/sign-up/workers-and-pages"
+        - "In the dashboard open Workers AI (https://dash.cloudflare.com/?to=/:account/ai/workers-ai) and select 'Use REST API'."
+        - "Select 'Create a Workers AI API Token', review, 'Create API Token', then copy it (a custom token needs Workers AI - Read and Workers AI - Edit)."
+        - "On the same page copy the Account ID."
+        - "Export both in the environment TaxClaw runs in: CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN (do not put the token in config.yaml)."
+        - "Set model_backend: cloudflare_clairic in ~/.config/taxclaw/config.yaml (or pick it in Settings) and acknowledge the privacy warning."
+        - "Run `taxclaw models` to confirm tier 3 shows configured: true, then ingest a test document."

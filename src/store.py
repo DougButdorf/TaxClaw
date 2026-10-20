@@ -68,6 +68,45 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def validate_input_file(src_path: str, cfg: Config, original_name: str | None = None) -> tuple[str, str]:
+    """Validate a file before ingesting it, without copying or reading more than the header.
+
+    Returns (ext, sniffed_mime). Raises FileNotFoundError / ValueError with a
+    user-facing message. Same rules as web uploads: existing regular file,
+    size <= max_upload_bytes, extension allowlist, magic bytes must match.
+    """
+
+    src = Path(src_path)
+    if not src.exists():
+        raise FileNotFoundError(f"file not found: {src_path}")
+    if not src.is_file():
+        raise ValueError(f"not a regular file: {src_path}")
+
+    size = src.stat().st_size
+    if size > int(cfg.max_upload_bytes):
+        raise ValueError(f"file too large ({size} bytes) — max is {int(cfg.max_upload_bytes)}")
+    if size == 0:
+        raise ValueError("file is empty")
+
+    safe_original_name = Path(original_name or src.name).name
+    ext = Path(safe_original_name).suffix.lower().lstrip(".") or src.suffix.lower().lstrip(".")
+    ext = {"jpg": "jpeg", "tif": "tiff"}.get(ext, ext)
+    if ext not in ALLOWED_UPLOAD_EXTS:
+        raise ValueError(f"unsupported file type: .{ext} (allowed: {', '.join(sorted(ALLOWED_UPLOAD_EXTS))})")
+
+    sniffed = sniff_mime_type(src)
+    expected = {
+        "pdf": "application/pdf",
+        "jpeg": "image/jpeg",
+        "png": "image/png",
+        "tiff": "image/tiff",
+        "webp": "image/webp",
+    }[ext]
+    if sniffed != expected:
+        raise ValueError(f"file extension .{ext} does not match detected type")
+    return ext, sniffed
+
+
 def ingest_file(src_path: str, cfg: Config, original_name: str | None = None) -> tuple[str, str, str, str]:
     """Copy to data_dir/files/{sha256}.{ext} and return (dest_path, file_hash, original_filename, mime_type).
 
@@ -237,8 +276,26 @@ def _walk_fields(obj: Any, prefix: str = "") -> Iterable[tuple[str, Any]]:
         yield prefix, obj
 
 
-def store_extracted_fields(*, doc_id: str, section_id: str | None, data: Any) -> None:
-    rows: list[tuple[str, str, str | None]] = []
+def _confidence_for(path: str, confidences: dict[str, float] | None) -> float | None:
+    """Exact path match, else the closest parent path (e.g. "other_deductions" for "other_deductions.13W")."""
+
+    if not confidences:
+        return None
+    cur = path
+    while cur:
+        if cur in confidences:
+            return confidences[cur]
+        cut = max(cur.rfind("."), cur.rfind("["))
+        if cut <= 0:
+            break
+        cur = cur[:cut]
+    return None
+
+
+def store_extracted_fields(
+    *, doc_id: str, section_id: str | None, data: Any, confidences: dict[str, float] | None = None
+) -> None:
+    rows: list[tuple[str, str, str | None, float | None]] = []
     for path, value in _walk_fields(data):
         if not path:
             continue
@@ -248,16 +305,16 @@ def store_extracted_fields(*, doc_id: str, section_id: str | None, data: Any) ->
             v = str(value)
         else:
             v = json_dumps(value)
-        rows.append((str(uuid.uuid4()), path, v))
+        rows.append((str(uuid.uuid4()), path, v, _confidence_for(path, confidences)))
 
     with db() as con:
         # delete prior extracted fields for doc (v0.1 keeps only latest)
         con.execute("DELETE FROM extracted_fields WHERE document_id=?", (doc_id,))
-        for row_id, path, v in rows:
+        for row_id, path, v, conf in rows:
             con.execute(
                 """INSERT INTO extracted_fields (id, document_id, section_id, field_path, field_value, confidence)
-                   VALUES (?, ?, ?, ?, ?, NULL)""",
-                (row_id, doc_id, section_id, path, v),
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (row_id, doc_id, section_id, path, v, conf),
             )
 
 

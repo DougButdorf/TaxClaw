@@ -10,7 +10,9 @@ trap 'rm -rf "$TMP_HOME" "$OTHER_CWD"' EXIT
 
 export HOME="$TMP_HOME"
 export OLLAMA_HOST="http://127.0.0.1:9"
-unset ANTHROPIC_API_KEY || true
+# No cloud calls in the smoke test: drop any provider keys from the environment.
+unset ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY GOOGLE_API_KEY OPENROUTER_API_KEY \
+  CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_API_TOKEN OPENCLAW_CONFIG_PATH OPENCLAW_STATE_DIR || true
 
 fail() { echo "[smoke] FAIL: $*" >&2; exit 1; }
 
@@ -51,6 +53,49 @@ set -e
 grep -q "Ollama is not reachable at http://127.0.0.1:9" "$OTHER_CWD/ingest.err" || { cat "$OTHER_CWD/ingest.err" >&2; fail "friendly Ollama error"; }
 if grep -q "Traceback" "$OTHER_CWD/ingest.err"; then cat "$OTHER_CWD/ingest.err" >&2; fail "traceback on Ollama down"; fi
 echo "[smoke] ingest with Ollama down -> friendly error (exit $rc) ok"
+
+# 3b) Machine-readable CLI output for agents: list/ingest/models --json.
+"$SKILL_DIR/bin/taxclaw" list --json > "$OTHER_CWD/list.json" || fail "list --json"
+set +e
+"$SKILL_DIR/bin/taxclaw" ingest blank.pdf --json > "$OTHER_CWD/ingest.json" 2>/dev/null
+rc=$?
+set -e
+[ "$rc" -eq 3 ] || fail "ingest --json with Ollama down should exit 3 (got $rc)"
+"$SKILL_DIR/bin/taxclaw" models --json --offline > "$OTHER_CWD/models.json" || fail "models --json --offline"
+"$PY" -I - "$OTHER_CWD" <<'PY' || fail "--json outputs"
+import json, sys
+from pathlib import Path
+w = Path(sys.argv[1])
+lst = json.loads((w / "list.json").read_text())
+assert lst == {"documents": [], "count": 0}, lst
+ing = json.loads((w / "ingest.json").read_text())
+assert ing["ok"] is False and ing["stage"] == "backend" and "Ollama is not reachable" in ing["error"], ing
+m = json.loads((w / "models.json").read_text())
+t1, t2, t3 = m["tiers"]
+assert (t1["tier"], t2["tier"], t3["tier"]) == (1, 2, 3)
+# The recommendation depends on host RAM (gemma3:4b up to 16 GB, gemma3:12b on 32 GB+ hosts).
+rec = t1["recommended"][0]
+assert t1["ollama_reachable"] is False and rec["model"] in ("gemma3:4b", "gemma3:12b"), t1
+assert rec["pull_command"] == f"ollama pull {rec['model']}", rec
+assert t2["presence_only"] is True
+for p in t2["providers"]:
+    assert all(isinstance(v, bool) for v in p["env_presence"].values()), p
+    assert p["configured"] is False, p
+assert t3["options"][0]["id"] == "cloudflare_clairic" and t3["options"][0]["configured"] is False
+assert m["current"]["model_backend"] == "local"
+PY
+echo "[smoke] list/ingest/models --json ok"
+
+# 3c) Unit tests (Clairic adapter, openai_compat, tiers; mocked HTTP, no network).
+PYTHONPATH="$SKILL_DIR" "$PY" -P -m unittest discover -s "$SKILL_DIR/tests" -t "$SKILL_DIR" 2> "$OTHER_CWD/unittest.err" \
+  || { cat "$OTHER_CWD/unittest.err" >&2; fail "unit tests"; }
+echo "[smoke] unit tests ok ($(grep -Eo 'Ran [0-9]+ tests' "$OTHER_CWD/unittest.err"))"
+
+# 3d) MCP server over stdio with a real client: initialize, list tools, list_models, list_documents.
+"$PY" -P "$SKILL_DIR/tests/mcp_stdio_client.py" --server "$SKILL_DIR/bin/taxclaw" > "$OTHER_CWD/mcp.out" 2> "$OTHER_CWD/mcp.err" \
+  || { cat "$OTHER_CWD/mcp.out" "$OTHER_CWD/mcp.err" >&2; fail "MCP stdio client"; }
+grep -q "list_documents ok: count=0" "$OTHER_CWD/mcp.out" || { cat "$OTHER_CWD/mcp.out" >&2; fail "MCP list_documents"; }
+echo "[smoke] MCP stdio: $(grep -c '^\[mcp-client\]' "$OTHER_CWD/mcp.out") client checks ok"
 
 # 4) Offline unit checks + web routes via FastAPI TestClient.
 cd "$OTHER_CWD"
@@ -159,8 +204,63 @@ assert client.get("/api/stats").status_code == 200
 assert client.get("/affiliate-info", follow_redirects=False).status_code == 301
 settings_html = client.get("/settings").text
 assert "not reachable" in settings_html and "127.0.0.1:9" in settings_html
+for marker in ("Tier 1", "Tier 2", "Tier 3", 'value="anthropic"', 'value="openai_compat"', 'value="cloudflare_clairic"', "privacy-ack"):
+    assert marker in settings_html, marker
 assert "sponsors" not in client.get("/").text.lower()
-print(f"[smoke] {len(routes)} HTML routes returned 200")
+print(f"[smoke] {len(routes)} HTML routes returned 200 (Settings shows tiers 1-3)")
+
+# Settings: every cloud choice requires the privacy acknowledgment; local saves.
+import re as _re
+
+from src.config import load_config as _load
+
+tok = _re.search(r'name="csrf_token" value="([^"]+)"', settings_html).group(1)
+for backend in ("anthropic", "openai_compat", "cloudflare_clairic", "cloud"):
+    r = client.post("/settings", data={"csrf_token": tok, "model_backend": backend}, follow_redirects=False)
+    assert r.status_code == 200 and "privacy confirmation" in r.text, (backend, r.status_code)
+    assert _load().backend == "local", backend  # not saved
+r = client.post("/settings", data={"csrf_token": tok, "model_backend": "openai_compat", "openai_compat_provider": "custom",
+                                    "openai_compat_api_key_env": "sk-not-an-env-name", "privacy_acknowledged": "1"}, follow_redirects=False)
+assert r.status_code == 200 and "environment variable NAME" in r.text, r.status_code
+r = client.post("/settings", data={"csrf_token": tok, "model_backend": "openai_compat", "openai_compat_provider": "openrouter",
+                                    "openai_compat_model": "vendor/some-vision-model", "privacy_acknowledged": "1"}, follow_redirects=False)
+assert r.status_code == 303, r.status_code
+c = _load()
+assert (c.backend, c.openai_compat_provider, c.privacy_acknowledged) == ("openai_compat", "openrouter", True), c
+assert client.get("/settings").status_code == 200
+r = client.post("/settings", data={"csrf_token": tok, "model_backend": "local", "local_model": "gemma3:4b"}, follow_redirects=False)
+assert r.status_code == 303 and _load().backend == "local" and _load().privacy_acknowledged is False
+print("[smoke] settings: cloud choices require privacy ack; save/restore ok")
+PY
+
+# 5) Packaging: ClawHub publishes only text files with allowed extensions (plus
+# extensionless text) and honours .gitignore/.clawhubignore. Runtime files must survive.
+"$PY" -I - "$SKILL_DIR" <<'PY' || fail "packaging check"
+import subprocess, sys
+from pathlib import Path
+root = Path(sys.argv[1])
+# clawhub 0.23.0 dist/schema/textFiles.js
+allowed = set("md mdx txt json json5 yaml yml toml js cjs mjs ts tsx jsx py sh ps1 psm1 psd1 r rb go rs swift kt java cs cpp c h hpp sql csv tsv ini cfg conf env properties dat xml html css scss sass svg".split())
+required = ["SKILL.md", "setup.sh", "start.sh", "requirements.txt", "config.example.yaml", "bin/taxclaw", "bin/tax-extract",
+            "src/model_catalog.yaml", "src/mcp_server.py", "templates/settings.html", "scripts/smoke.sh"]
+try:
+    tracked = subprocess.run(["git", "-C", str(root), "ls-files"], capture_output=True, text=True, check=True).stdout.split()
+except Exception:
+    print("[smoke] packaging: git unavailable, checking required files only")
+    tracked = required
+for rel in tracked:
+    if rel.split("/")[0] not in ("bin", "src", "templates", "scripts", "tests") and rel not in required:
+        continue
+    ext = rel.rsplit(".", 1)[-1].lower() if "." in Path(rel).name else ""
+    assert (root / rel).is_file(), rel
+    assert ext in allowed or not ext, f"{rel}: .{ext} would be dropped by ClawHub"
+    if not ext:
+        (root / rel).read_bytes().decode("utf-8")
+for rel in required:
+    assert (root / rel).is_file(), rel
+    ignored = subprocess.run(["git", "-C", str(root), "check-ignore", "-q", "--no-index", rel]).returncode == 0
+    assert not ignored, f"{rel} is excluded by an ignore file"
+print(f"[smoke] packaging: {len(required)} required runtime files present, not ignored, ClawHub-publishable")
 PY
 
 cd "$SKILL_DIR"

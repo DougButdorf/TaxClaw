@@ -55,7 +55,7 @@ echo "Using Python: $("$PYTHON_BIN" -V) ($PYTHON_BIN)"
 "$VENV_DIR/bin/pip" install -r "$SKILL_DIR/requirements.txt"
 
 if [ ! -f "$CONFIG_PATH" ]; then
-  cp "$SKILL_DIR/config.yaml.example" "$CONFIG_PATH"
+  cp "$SKILL_DIR/config.example.yaml" "$CONFIG_PATH"
   echo "Created config at $CONFIG_PATH"
 else
   echo "Config already exists at $CONFIG_PATH"
@@ -66,7 +66,12 @@ PYTHONPATH="$SKILL_DIR" "$VENV_DIR/bin/python" -P -c "from src.db import init_db
 
 echo
 echo "✅ taxclaw setup complete"
+echo
+echo "Model choices (full list, live cloud model lists: $SKILL_DIR/bin/taxclaw models):"
+"$SKILL_DIR/bin/taxclaw" models --short --offline 2>/dev/null | sed 's/^/  /' || echo "  (could not list models; run: $SKILL_DIR/bin/taxclaw models)"
+echo
 echo "Next steps:"
-echo "  1) Local mode needs Ollama with a vision model: ollama pull gemma3:4b"
-echo "  2) Edit config: $CONFIG_PATH"
+echo "  1) Local mode needs Ollama with a vision model, e.g.: ollama pull gemma3:4b"
+echo "  2) Edit config: $CONFIG_PATH (or use Settings in the web UI)"
 echo "  3) Start UI: bash $SKILL_DIR/start.sh"
+echo "  4) Use from any MCP client: $SKILL_DIR/bin/taxclaw mcp"
