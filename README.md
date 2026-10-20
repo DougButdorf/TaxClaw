@@ -23,11 +23,16 @@ TaxClaw turns messy tax PDFs into clean, reviewable structured data — **locall
 openclaw skills install @dougbutdorf/taxclaw
 ```
 
-Or install manually from GitHub. The skill is named `taxclaw` and Agent Skills
-clients (OpenClaw, Claude Code, Codex, Gemini CLI, Hermes, ...) require the
-directory name to match, so clone into a directory named `taxclaw` (the repo
-itself is `TaxClaw`):
+Or install manually from GitHub into your agent's skills directory. The skill is
+named `taxclaw` and Agent Skills clients (OpenClaw, Claude Code, Codex, Gemini
+CLI, Hermes, ...) require the directory name to match (the repo itself is
+`TaxClaw`):
 ```bash
+# OpenClaw:    ~/.openclaw/workspace/skills/taxclaw
+# Codex:       ~/.codex/skills/taxclaw
+# Hermes:      ~/.hermes/skills/taxclaw   (clone directly here; Hermes warns on external symlinks)
+# Claude Code: ~/.claude/skills/taxclaw
+# Gemini CLI:  ~/.gemini/skills/taxclaw
 git clone https://github.com/DougButdorf/TaxClaw.git taxclaw && cd taxclaw
 ```
 
@@ -151,11 +156,26 @@ modelcontextprotocol.io "Connect to local MCP servers"):
 }
 ```
 
-**Codex** (`~/.codex/config.toml`; this is exactly what `codex mcp add taxclaw -- /ABS/PATH/taxclaw/bin/taxclaw mcp` writes):
+**Codex** (`~/.codex/config.toml`; `codex mcp add taxclaw -- /ABS/PATH/taxclaw/bin/taxclaw mcp` writes the command/args, and `tool_timeout_sec` gives local vision models enough time to finish):
 ```toml
 [mcp_servers.taxclaw]
 command = "/ABS/PATH/taxclaw/bin/taxclaw"
 args = ["mcp"]
+tool_timeout_sec = 180
+# Optional if Ollama is on another host or you use a cloud backend:
+# env = { OLLAMA_HOST = "http://127.0.0.1:11434" }
+```
+
+**Hermes Agent** (`~/.hermes/config.yaml`):
+```yaml
+mcp_servers:
+  taxclaw:
+    command: "/ABS/PATH/taxclaw/bin/taxclaw"
+    args: ["mcp"]
+    timeout: 180
+    # Optional if Ollama is on another host or you use a cloud backend:
+    # env:
+    #   OLLAMA_HOST: "http://127.0.0.1:11434"
 ```
 
 **Cursor** (`~/.cursor/mcp.json`, or `.cursor/mcp.json` in a project; format per
