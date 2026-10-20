@@ -3,15 +3,15 @@ from __future__ import annotations
 import json
 from typing import Any
 
-import fitz
+import pymupdf
 
 from .ai import chat_json_from_image
 from .config import Config
 
 
-def _render_page_png(doc: fitz.Document, page_index: int) -> bytes:
+def _render_page_png(doc: pymupdf.Document, page_index: int) -> bytes:
     page = doc[page_index]
-    mat = fitz.Matrix(2.0, 2.0)
+    mat = pymupdf.Matrix(2.0, 2.0)
     pix = page.get_pixmap(matrix=mat)
     return pix.tobytes("png")
 
@@ -195,7 +195,7 @@ def extract_document(file_path: str, doc_type: str, cfg: Config) -> dict[str, An
     prompt = PROMPTS.get(doc_type, PROMPTS["generic"])
     prompt = f"{UNTRUSTED_DOCUMENT_NOTE}\n\n{prompt}"
 
-    doc = fitz.open(file_path)
+    doc = pymupdf.open(file_path)
     try:
         if doc_type == "1099-DA":
             txns: list[dict[str, Any]] = []

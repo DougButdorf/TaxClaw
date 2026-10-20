@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-import fitz  # PyMuPDF
+import pymupdf
 
 from .ai import chat_json_from_image
 from .config import Config
@@ -76,7 +76,7 @@ Rules:
 
 
 def classify_document(file_path: str, cfg: Config) -> dict[str, Any]:
-    doc = fitz.open(file_path)
+    doc = pymupdf.open(file_path)
     try:
         text_parts: list[str] = []
         # first 2 pages is enough for most forms
@@ -109,7 +109,7 @@ def classify_document(file_path: str, cfg: Config) -> dict[str, Any]:
 
         # Vision fallback
         page = doc[0]
-        mat = fitz.Matrix(2.0, 2.0)
+        mat = pymupdf.Matrix(2.0, 2.0)
         pix = page.get_pixmap(matrix=mat)
         img = pix.tobytes("png")
         out = chat_json_from_image(cfg=cfg, prompt=CLASSIFY_PROMPT, image_bytes=img)

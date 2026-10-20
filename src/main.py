@@ -13,7 +13,7 @@ from typing import Any
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
-import fitz
+import pymupdf
 from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
@@ -136,7 +136,7 @@ def _render(request: Request, name: str, context: dict[str, Any]) -> Response:
     tok = _get_or_create_csrf_token(request)
     ctx = dict(context)
     ctx.setdefault("csrf_token", tok)
-    resp = templates.TemplateResponse(name, ctx)
+    resp = templates.TemplateResponse(request, name, ctx)
     # Double-submit cookie (HTTP-only so JS can't read it, but the form token can).
     if request.cookies.get(CSRF_COOKIE) != tok:
         resp.set_cookie(CSRF_COOKIE, tok, httponly=True, samesite="lax")
@@ -265,7 +265,7 @@ def _ollama_tags() -> list[str]:
 def _cloud_models() -> list[str]:
     # Keep this small; can expand later.
     return [
-        "claude-haiku-4-5",
+        "claude-haiku-5-5",
         "claude-sonnet-4-5",
     ]
 
@@ -920,12 +920,12 @@ def doc_preview_page_png(doc_id: str, page: int = 0):
 
     path = doc["file_path"]
     if path.lower().endswith(".pdf"):
-        pdf = fitz.open(path)
+        pdf = pymupdf.open(path)
         try:
             page_count = pdf.page_count
             if page < 0 or page >= page_count:
                 return Response("Page out of range", status_code=404)
-            pix = pdf[page].get_pixmap(matrix=fitz.Matrix(2, 2))
+            pix = pdf[page].get_pixmap(matrix=pymupdf.Matrix(2, 2))
             return Response(pix.tobytes("png"), media_type="image/png")
         finally:
             pdf.close()

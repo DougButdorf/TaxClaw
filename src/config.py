@@ -19,7 +19,7 @@ def _expand_path(p: str) -> str:
 class Config:
     model_backend: str = "local"  # local|cloud
     local_model: str = "llama3.2"
-    cloud_model: str = "claude-haiku-4-5"
+    cloud_model: str = "claude-haiku-5-5"
     cloud_api_key: str = ""
     privacy_acknowledged: bool = False
     port: int = 8421

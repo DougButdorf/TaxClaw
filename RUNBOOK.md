@@ -10,9 +10,9 @@ bash setup.sh
 #   ~/.config/taxclaw/config.yaml
 ```
 
-TaxClaw requires Python 3.10+. If `python3` points to an older interpreter,
-`setup.sh` will try `python3.10` through `python3.14`. Override with
-`TAXCLAW_PYTHON=/path/to/python3.10+ bash setup.sh` when needed.
+TaxClaw requires Python 3.11+. If `python3` points to an older interpreter,
+`setup.sh` will try `python3.11` through `python3.14`. Override with
+`TAXCLAW_PYTHON=/path/to/python3.11+ bash setup.sh` when needed.
 
 ## Start the web UI
 

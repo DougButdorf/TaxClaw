@@ -16,13 +16,13 @@ pick_python() {
     return 0
   fi
 
-  for candidate in python3.14 python3.13 python3.12 python3.11 python3.10 python3; do
+  for candidate in python3.14 python3.13 python3.12 python3.11 python3; do
     if ! command -v "$candidate" >/dev/null 2>&1; then
       continue
     fi
     if "$candidate" - <<'PY' >/dev/null 2>&1
 import sys
-raise SystemExit(0 if sys.version_info >= (3, 10) else 1)
+raise SystemExit(0 if sys.version_info >= (3, 11) else 1)
 PY
     then
       command -v "$candidate"
@@ -35,15 +35,15 @@ PY
 
 PYTHON_BIN="$(pick_python || true)"
 if [ -z "$PYTHON_BIN" ]; then
-  echo "TaxClaw requires Python 3.10 or newer. Set TAXCLAW_PYTHON=/path/to/python3.10+ and rerun setup." >&2
+  echo "TaxClaw requires Python 3.11 or newer. Set TAXCLAW_PYTHON=/path/to/python3.11+ and rerun setup." >&2
   exit 2
 fi
 if ! "$PYTHON_BIN" - <<'PY' >/dev/null 2>&1
 import sys
-raise SystemExit(0 if sys.version_info >= (3, 10) else 1)
+raise SystemExit(0 if sys.version_info >= (3, 11) else 1)
 PY
 then
-  echo "TaxClaw requires Python 3.10 or newer; $PYTHON_BIN is too old." >&2
+  echo "TaxClaw requires Python 3.11 or newer; $PYTHON_BIN is too old." >&2
   exit 2
 fi
 
