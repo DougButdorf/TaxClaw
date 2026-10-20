@@ -5,6 +5,10 @@ accuracy. All names, identifiers and financial figures are invented. No personal
 documents or credentials belong in this directory. It does not calculate or file
 taxes. Websites are outside this work package.
 
+The original 12-form results in `results/2026-10-20/` are **historical**: they
+measure the pre-upgrade application at `79cf4c3`. They are not current-main scores.
+The subsequent changed-form corpus and run below use the merged `87efee5` source.
+
 ## Corpus
 
 `fixtures.py` deterministically builds 12 documents / 14 pages: W-2, 1099-NEC,
@@ -23,6 +27,31 @@ example per type, no held-out population, repeated trials, scan damage, handwrit
 unseen brokerage layouts or scanned-document classification. Do not generalize
 these results to customer documents. Add varied/scan-only examples and validation
 before making broader claims or charging for an accuracy promise.
+
+## Targeted post-upgrade corpus
+
+`followup_fixtures.py` provides a separate, versioned corpus for 1099-R, 1099-G,
+1099-K and K-1. Each form has a clean and an image-only degraded-scan variant.
+The expected keys follow the merged schemas, including `distribution_codes` and
+K-1's `13W`-style code keys. Original fixtures and answer keys are not rewritten.
+Rasterization/degradation parameters are stored in the new manifest. Scanned
+versions contain no text layer, exercising vision classification as well as
+extraction. This remains a small synthetic test, not a representative scan study.
+
+```bash
+python -m benchmarks.taxclaw_accuracy.runner build \
+  --corpus changed-forms --output .benchmark/changed-forms
+python -m benchmarks.taxclaw_accuracy.runner run \
+  --fixtures .benchmark/changed-forms --output .benchmark/changed-local \
+  --transport app --host http://127.0.0.1:11434 \
+  --types 1099-R 1099-G 1099-K K-1 \
+  --models gemma3:4b gemma3:12b gemma4:latest qwen3.5:4b glm-ocr:latest
+```
+
+Use `--variants clean` or `--variants degraded_scan` to select one variant. The
+summary keeps clean and degraded results separate; it does not overwrite one
+with the other. Run the same selected corpus through `claude-subscription` for
+the bounded Haiku comparator, using the wrapper syntax below.
 
 ## Run
 
@@ -47,9 +76,11 @@ requested configuration change. Resume skips already recorded model/document
 pairs, including failures; reruns belong in a new directory. A timeout/error is a
 failed document and earns no field credit, not an omitted observation.
 
-`app` runs the actual `src.extract.extract_document` / `src.ai` code with an
+`app` runs the actual `src.extract.extract_document` / `src.ai` / backend code with an
 explicit Ollama client endpoint and request timeout; it does not add structured
-output or modify model parameters. Classification is scored separately. Extraction
+output beyond what the application itself sends, or modify model parameters.
+On current main the application sends its per-form JSON schema; raw page records
+preserve that request format. Classification is scored separately. Extraction
 uses the known document type to isolate extraction accuracy, so this is **not**
 an end-to-end ingest/CLI benchmark.
 
