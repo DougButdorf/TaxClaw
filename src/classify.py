@@ -6,6 +6,7 @@ from typing import Any
 import pymupdf
 
 from .ai import chat_json_from_image
+from .backends import get_backend
 from .config import Config
 
 
@@ -132,6 +133,9 @@ def classify_document(file_path: str, cfg: Config) -> dict[str, Any]:
         mat = pymupdf.Matrix(2.0, 2.0)
         pix = page.get_pixmap(matrix=mat)
         img = pix.tobytes("png")
+        native = get_backend(cfg).classify_image(img)
+        if native is not None:
+            return native
         out = chat_json_from_image(cfg=cfg, prompt=CLASSIFY_PROMPT, image_bytes=img, schema=CLASSIFY_SCHEMA)
         if not isinstance(out, dict):
             out = {}

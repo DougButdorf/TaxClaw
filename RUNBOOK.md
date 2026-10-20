@@ -3,7 +3,7 @@
 ## Setup
 
 ```bash
-cd ~/.openclaw/workspace/skills/taxclaw
+cd /path/to/taxclaw   # the skill directory
 bash setup.sh
 
 # Config is created (if missing) at:
@@ -17,7 +17,7 @@ TaxClaw requires Python 3.11+. If `python3` points to an older interpreter,
 ## Start the web UI
 
 ```bash
-cd ~/.openclaw/workspace/skills/taxclaw
+cd /path/to/taxclaw   # the skill directory
 bash start.sh
 # open http://localhost:8421
 ```
@@ -25,7 +25,7 @@ bash start.sh
 ## Ingest via CLI
 
 ```bash
-cd ~/.openclaw/workspace/skills/taxclaw
+cd /path/to/taxclaw   # the skill directory
 ./bin/taxclaw ingest /path/to/doc.pdf --filer doug --year 2025
 
 ./bin/taxclaw list
@@ -52,6 +52,6 @@ cd ~/.openclaw/workspace/skills/taxclaw
 ## Smoke test
 
 ```bash
-cd ~/.openclaw/workspace/skills/taxclaw
+cd /path/to/taxclaw   # the skill directory
 ./scripts/smoke.sh
 ```

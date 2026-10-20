@@ -8,6 +8,7 @@ the same variable so error messages name the host that was actually tried.
 from __future__ import annotations
 
 import os
+import re
 from functools import lru_cache
 from typing import Any
 from urllib.parse import urlsplit
@@ -20,6 +21,8 @@ DEFAULT_OLLAMA_HOST = "http://127.0.0.1:11434"
 # Fallback only: used when an older Ollama's /api/show response has no
 # "capabilities" list. Current Ollama reports capabilities directly.
 _VISION_FAMILIES = frozenset({"clip", "glmocr", "qwen2vl", "qwen25vl", "internvl", "mllama"})
+
+_RUNNER_DIGEST_ALIAS = re.compile(r"^[a-z0-9_-]+:[0-9a-f]{64}$")
 
 
 class LocalModelError(RuntimeError):
@@ -153,6 +156,10 @@ def list_models_with_vision(*, timeout: float = 1.5) -> list[dict[str, Any]]:
     for m in _field(listed, "models") or []:
         name = _field(m, "model") or _field(m, "name")
         if not isinstance(name, str) or not name or name in seen:
+            continue
+        if _RUNNER_DIGEST_ALIAS.match(name):
+            # Ollama 0.40+ also lists runner-internal digest aliases
+            # (e.g. "llamacpp:<sha256>") for models already listed by name.
             continue
         seen.add(name)
         details = _field(m, "details")

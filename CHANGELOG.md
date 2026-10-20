@@ -2,7 +2,29 @@
 
 ## Unreleased
 
+### Added
+- Three-tier model selection (WP-D): `taxclaw models [--json] [--offline] [--short]`, the Settings page and the MCP `list_models` tool show (1) installed Ollama vision models with a RAM-based recommendation and `ollama pull` commands, (2) cloud providers detected by API-key presence only (values never read into output; OpenClaw-configured providers by name only) with live vision-model lists and a balance/strongest pick, (3) Cloudflare Clairic with setup steps. Recommendations live in `src/model_catalog.yaml` with `source`/`as_of` (local picks are provisional until the accuracy benchmark). `setup.sh` prints a short version.
+- Backend interface (`src/backends.py`) with `local`, `anthropic`, `openai_compat` (OpenAI, OpenRouter, Gemini's OpenAI-compatible endpoint or a custom base URL + key env var name; image as data URL; `json_schema` -> `json_object` -> plain fallback) and `cloudflare_clairic` (typed fields mapped from each form schema, per-field confidence stored in `extracted_fields.confidence`, review flags from confidence < 0.8 or ambiguous `p_null`, max 4 images per call with batching; 1099-DA transaction tables and generic forms use `clairic_fallback_backend`). Clairic is unit-tested with mocked responses only; not live-tested.
+- Local MCP server (WP-E): `taxclaw mcp` (stdio, official `mcp` SDK `MCPServer`) with `ingest_document`, `list_documents`, `get_document`, `export_documents`, `list_models`. README has config snippets for Claude Code, Claude Desktop, Codex, Cursor and Gemini CLI.
+- `--json` output for `taxclaw ingest`, `list` and `models`.
+- Unit tests (`tests/`, stdlib unittest; mocked HTTP) and an MCP stdio client check, both run by `scripts/smoke.sh`, which also checks that runtime files survive ClawHub packaging.
+- Extraction schemas for 1099-R, 1099-G and 1099-K using official IRS box names; text classification recognizes 1099-G and 1099-K.
+- K-1 coded boxes use canonical keys of box number + code (e.g. `13W`, `20Z`); keys returned as bare codes or "Box 13, code W" are normalized. New K-1 fields for boxes 11, 18, 19 and 21.
+- `scripts/smoke.sh` is now a real test (isolated HOME, CLI from a foreign cwd, Ollama-down error, offline parser/schema/classification checks, export with fields, every HTML route 200, compileall) and fails on any error.
+- GitHub Actions CI (`.github/workflows/ci.yml`): Python 3.11 and 3.13, setup + smoke + compileall.
+
+### Changed
+- SKILL.md rewritten as a short agent-first procedure that follows the Agent Skills spec (validates with `skills-ref`): frontmatter is `name`, `description`, `license`, `compatibility`, `metadata` (version, homepage, `metadata.openclaw` gating); dropped `version`, `argument-hint`, `requires`, `optional` and `allowed-tools`; hardcoded `~/.openclaw/workspace/skills/taxclaw` paths replaced with `{baseDir}`; documents that installs must land in a directory named `taxclaw`.
+- `model_backend: cloud` is now an alias for `anthropic`; any non-local backend requires `privacy_acknowledged: true` (CLI, web upload, MCP).
+- The Anthropic "strongest" choice in Settings is `claude-sonnet-5-5`.
+- Settings lets you choose among all three tiers; the old two-option local/cloud form is gone.
+- Ollama's runner-internal digest aliases (e.g. `llamacpp:<sha256>`, Ollama 0.40+) are hidden from model lists.
+- README/SKILL/FAQ/Settings recommend `gemma3:4b` (glm-ocr stays a listed option). Supported-forms list updated; Form 1040 is labelled best-effort.
+- Install command corrected to `openclaw skills install @dougbutdorf/taxclaw`; manual clone instructions use the `TaxClaw` directory name.
+- Privacy docs disclose that the optional in-app contact form sends what you type to Formspree (never documents or tax data).
+
 ### Fixed
+- `config.yaml.example` was renamed to `config.example.yaml`: ClawHub only publishes files with known text extensions, so the old name was dropped from the published bundle and `setup.sh` could not create a config.
 - `bin/taxclaw` and `bin/tax-extract` now work from any working directory (and through symlinks); previously they failed with `ModuleNotFoundError: No module named 'src'` unless run from the skill directory. Relative file arguments still resolve against the caller's cwd.
 - Default `local_model` is now `gemma3:4b` (vision-capable). The old default `llama3.2` is text-only, so every extraction failed with "model does not support multimodal requests".
 - Local extraction fails fast with a clear message when the configured Ollama model is not installed or lacks vision, before anything is stored.
@@ -13,17 +35,6 @@
 - Required-field review rules for W-2 and K-1 were never applied (keys `w2`/`k1` never matched the normalized types `w_2`/`k_1`).
 - CLI `ingest` refuses cloud mode until `privacy_acknowledged: true`, matching the web UI, and exits non-zero with a message on stderr when extraction fails.
 - Upload page now shows server-side errors (e.g. Ollama not running) instead of silently reloading.
-
-### Added
-- Extraction schemas for 1099-R, 1099-G and 1099-K using official IRS box names; text classification recognizes 1099-G and 1099-K.
-- K-1 coded boxes use canonical keys of box number + code (e.g. `13W`, `20Z`); keys returned as bare codes or "Box 13, code W" are normalized. New K-1 fields for boxes 11, 18, 19 and 21.
-- `scripts/smoke.sh` is now a real test (isolated HOME, CLI from a foreign cwd, Ollama-down error, offline parser/schema/classification checks, export with fields, every HTML route 200, compileall) and fails on any error.
-- GitHub Actions CI (`.github/workflows/ci.yml`): Python 3.11 and 3.13, setup + smoke + compileall.
-
-### Changed
-- README/SKILL/FAQ/Settings recommend `gemma3:4b` (glm-ocr stays a listed option). Supported-forms list updated; Form 1040 is labelled best-effort.
-- Install command corrected to `openclaw skills install @dougbutdorf/taxclaw`; manual clone instructions use the `TaxClaw` directory name.
-- Privacy docs disclose that the optional in-app contact form sends what you type to Formspree (never documents or tax data).
 
 ### Removed
 - GitHub Sponsors links (README badge, web UI footer, `.github/FUNDING.yml` `github:` entry), the dead `https://taxclaw.net/sponsor` funding URL and the unverified `ko_fi` entry.

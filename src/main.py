@@ -23,7 +23,7 @@ from .classify import classify_document
 from .config import CONFIG_PATH, load_config, save_config
 from .db import db, init_db
 from .exporter import export_all_csv_long, export_all_csv_wide, export_all_json, export_doc_csv_long, export_doc_csv_wide, export_doc_json
-from .extract import extract_document, pretty_json
+from .extract import extract_document_with_meta, pretty_json
 from .ollama_local import list_models_with_vision, ollama_host
 from .review import compute_needs_review, compute_overall_confidence, missing_required_fields
 from .store import (
@@ -255,10 +255,10 @@ def _ollama_tags() -> list[str]:
 
 
 def _cloud_models() -> list[str]:
-    # Keep this small; can expand later.
+    # Confirmed current Anthropic model IDs (balance, strongest); see src/model_catalog.yaml.
     return [
         "claude-haiku-5-5",
-        "claude-sonnet-4-5",
+        "claude-sonnet-5-5",
     ]
 
 
@@ -297,7 +297,7 @@ def dashboard(request: Request):
     stats = _get_stats()
 
     cfg_now = load_config()
-    if cfg_now.model_backend == "local":
+    if not cfg_now.is_cloud:
         status_label = "🟢 FULLY LOCAL"
         status_pill_class = "ok"
     else:
@@ -402,42 +402,65 @@ def upload_form(request: Request):
     cfg_now = load_config()
     return _render(request, "upload.html", {
         "request": request,
-        "model_backend": cfg_now.model_backend,
-        "cloud_model": cfg_now.cloud_model,
+        "model_backend": "cloud" if cfg_now.is_cloud else "local",
+        "cloud_model": cfg_now.selected_model_label(),
         "local_model": cfg_now.local_model,
     })
+
+
+_ENV_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]{0,63}$")
+
+
+def _settings_context(request: Request, cfg_now: Any, *, error: str | None = None) -> dict[str, Any]:
+    from .config import OPENAI_COMPAT_PRESETS
+    from .models import build_report
+
+    local_models_info = _ollama_model_info()
+    vision_models = {m["name"] for m in local_models_info if m["vision"]}
+    selected_is_vision = _with_tag(cfg_now.local_model) in {_with_tag(n) for n in vision_models}
+    report = build_report(cfg_now, live=True, ollama_models=local_models_info)
+    tier1, tier2, tier3 = report["tiers"]
+
+    # Model suggestions for the OpenAI-compatible picker: live vision lists per preset.
+    compat_models: dict[str, list[str]] = {}
+    compat_recommended: dict[str, dict[str, Any]] = {}
+    for p in tier2["providers"]:
+        preset = p.get("openai_compat_provider")
+        if preset:
+            compat_models[preset] = list(p.get("vision_models") or [])
+            if p.get("recommended"):
+                compat_recommended[preset] = p["recommended"]
+
+    return {
+        "request": request,
+        "cfg": cfg_now,
+        "backend": cfg_now.backend,
+        "local_models": [m["name"] for m in local_models_info],
+        "local_models_info": local_models_info,
+        "vision_models": vision_models,
+        "selected_is_vision": selected_is_vision,
+        "cloud_models": _cloud_models(),
+        "cloud_model": cfg_now.cloud_model,
+        "selected_model_label": cfg_now.selected_model_label(),
+        "status_level": "full_local" if not cfg_now.is_cloud else "partial_local",
+        "needs_privacy_ack": bool(cfg_now.is_cloud and not cfg_now.privacy_acknowledged),
+        "config_path": str(CONFIG_PATH),
+        "ollama_host": ollama_host(),
+        "tier1": tier1,
+        "tier2": tier2,
+        "tier3": tier3,
+        "catalog": report["catalog"],
+        "compat_presets": OPENAI_COMPAT_PRESETS,
+        "compat_models": compat_models,
+        "compat_recommended": compat_recommended,
+        "error": error,
+    }
 
 
 @app.get("/settings", response_class=HTMLResponse)
 def settings(request: Request):
     cfg_now = load_config()
-    local_models_info = _ollama_model_info()
-    local_models = [m["name"] for m in local_models_info]
-    vision_models = {m["name"] for m in local_models_info if m["vision"]}
-    selected_is_vision = _with_tag(cfg_now.local_model) in {_with_tag(n) for n in vision_models}
-
-    status_level = "full_local" if cfg_now.model_backend == "local" else "partial_local"
-    needs_privacy_ack = bool(cfg_now.model_backend == "cloud" and not cfg_now.privacy_acknowledged)
-
-    return _render(
-        request,
-        "settings.html",
-        {
-            "request": request,
-            "cfg": cfg_now,
-            "local_models": local_models,
-            "local_models_info": local_models_info,
-            "vision_models": vision_models,
-            "selected_is_vision": selected_is_vision,
-            "cloud_models": _cloud_models(),
-            "cloud_model": cfg_now.cloud_model,
-            "status_level": status_level,
-            "needs_privacy_ack": needs_privacy_ack,
-            "config_path": str(CONFIG_PATH),
-            "ollama_host": ollama_host(),
-            "error": None,
-        },
-    )
+    return _render(request, "settings.html", _settings_context(request, cfg_now))
 
 
 @app.post("/settings", response_class=HTMLResponse)
@@ -447,8 +470,14 @@ async def settings_save(
     model_backend: str = Form(...),
     local_model: str = Form(default=""),
     cloud_model: str = Form(default=""),
+    openai_compat_provider: str = Form(default=""),
+    openai_compat_model: str = Form(default=""),
+    openai_compat_base_url: str = Form(default=""),
+    openai_compat_api_key_env: str = Form(default=""),
     privacy_acknowledged: str | None = Form(default=None),
 ):
+    from .config import OPENAI_COMPAT_PRESETS, is_cloud_backend, normalize_backend
+
     cfg_now = load_config()
 
     try:
@@ -457,35 +486,34 @@ async def settings_save(
     except Exception:
         return Response("Forbidden", status_code=403)
 
-    cfg_now.model_backend = "cloud" if model_backend == "cloud" else "local"
+    cfg_now.model_backend = normalize_backend(model_backend)
     if local_model:
-        cfg_now.local_model = local_model
+        cfg_now.local_model = local_model.strip()
     if cloud_model:
-        cfg_now.cloud_model = cloud_model
-    cfg_now.privacy_acknowledged = bool(privacy_acknowledged) if cfg_now.model_backend == "cloud" else False
+        cfg_now.cloud_model = cloud_model.strip()
+    if openai_compat_provider in OPENAI_COMPAT_PRESETS:
+        cfg_now.openai_compat_provider = openai_compat_provider
+    if openai_compat_model:
+        cfg_now.openai_compat_model = openai_compat_model.strip()
+    cfg_now.openai_compat_base_url = openai_compat_base_url.strip()
+    cfg_now.openai_compat_api_key_env = openai_compat_api_key_env.strip()
+    cloud = is_cloud_backend(cfg_now.model_backend)
+    cfg_now.privacy_acknowledged = bool(privacy_acknowledged) if cloud else False
 
-    if cfg_now.model_backend == "cloud" and not cfg_now.privacy_acknowledged:
-        _lmi = _ollama_model_info()
-        _vm = {m["name"] for m in _lmi if m["vision"]}
-        return _render(
-            request,
-            "settings.html",
-            {
-                "request": request,
-                "cfg": cfg_now,
-                "local_models": [m["name"] for m in _lmi],
-                "local_models_info": _lmi,
-                "vision_models": _vm,
-                "selected_is_vision": _with_tag(cfg_now.local_model) in {_with_tag(n) for n in _vm},
-                "cloud_models": _cloud_models(),
-                "cloud_model": cfg_now.cloud_model,
-                "status_level": "partial_local",
-                "needs_privacy_ack": True,
-                "config_path": str(CONFIG_PATH),
-                "ollama_host": ollama_host(),
-                "error": "Cloud mode requires privacy confirmation.",
-            },
-        )
+    error = None
+    if cfg_now.openai_compat_api_key_env and not _ENV_NAME_RE.match(cfg_now.openai_compat_api_key_env):
+        error = "API key env var must be an environment variable NAME such as OPENAI_API_KEY (never the key itself)."
+        cfg_now.openai_compat_api_key_env = ""
+    elif cfg_now.openai_compat_base_url and not re.match(
+        r"^(https://|http://(127\.0\.0\.1|localhost)(:\d+)?/)", cfg_now.openai_compat_base_url
+    ):
+        error = "Custom base URL must start with https:// (or http://localhost/...)."
+        cfg_now.openai_compat_base_url = ""
+    elif cloud and not cfg_now.privacy_acknowledged:
+        error = "Cloud backends require the privacy confirmation."
+
+    if error:
+        return _render(request, "settings.html", _settings_context(request, cfg_now, error=error))
 
     save_config(cfg=cfg_now)
     global cfg
@@ -508,7 +536,7 @@ async def upload(
     except Exception:
         return Response("Forbidden", status_code=403)
 
-    if cfg.model_backend == "cloud" and not cfg.privacy_acknowledged:
+    if cfg.is_cloud and not cfg.privacy_acknowledged:
         return RedirectResponse(url="/settings", status_code=303)
 
     # Fail fast with a clear message (Ollama not running, text-only model, ...)
@@ -521,8 +549,8 @@ async def upload(
             "upload.html",
             {
                 "request": request,
-                "model_backend": cfg.model_backend,
-                "cloud_model": cfg.cloud_model,
+                "model_backend": "cloud" if cfg.is_cloud else "local",
+                "cloud_model": cfg.selected_model_label(),
                 "local_model": cfg.local_model,
                 "error": str(e),
             },
@@ -558,8 +586,8 @@ async def upload(
             "upload.html",
             {
                 "request": request,
-                "model_backend": cfg.model_backend,
-                "cloud_model": cfg.cloud_model,
+                "model_backend": "cloud" if cfg.is_cloud else "local",
+                "cloud_model": cfg.selected_model_label(),
                 "local_model": cfg.local_model,
                 "error": f"Unsupported file extension: {claimed_ext or '(none)'}",
             },
@@ -591,8 +619,8 @@ async def upload(
                 "upload.html",
                 {
                     "request": request,
-                    "model_backend": cfg.model_backend,
-                    "cloud_model": cfg.cloud_model,
+                    "model_backend": "cloud" if cfg.is_cloud else "local",
+                    "cloud_model": cfg.selected_model_label(),
                     "local_model": cfg.local_model,
                     "error": f"Unsupported file type: {detected}",
                 },
@@ -610,8 +638,8 @@ async def upload(
             "upload.html",
             {
                 "request": request,
-                "model_backend": cfg.model_backend,
-                "cloud_model": cfg.cloud_model,
+                "model_backend": "cloud" if cfg.is_cloud else "local",
+                "cloud_model": cfg.selected_model_label(),
                 "local_model": cfg.local_model,
                 "error": e.detail,
             },
@@ -622,8 +650,8 @@ async def upload(
             "upload.html",
             {
                 "request": request,
-                "model_backend": cfg.model_backend,
-                "cloud_model": cfg.cloud_model,
+                "model_backend": "cloud" if cfg.is_cloud else "local",
+                "cloud_model": cfg.selected_model_label(),
                 "local_model": cfg.local_model,
                 "error": f"Upload failed: {str(e)}",
             },
@@ -641,8 +669,8 @@ async def upload(
             "upload.html",
             {
                 "request": request,
-                "model_backend": cfg.model_backend,
-                "cloud_model": cfg.cloud_model,
+                "model_backend": "cloud" if cfg.is_cloud else "local",
+                "cloud_model": cfg.selected_model_label(),
                 "local_model": cfg.local_model,
                 "error": f"Unsupported or unsafe upload: {str(e)}",
             },
@@ -686,15 +714,17 @@ async def upload(
         update_document_metadata(doc_id=doc_id, filer=None, tax_year=None, doc_type=None, notes=classify_note)
 
     try:
-        extracted = extract_document(dest_path, doc_type, cfg)
+        result = extract_document_with_meta(dest_path, doc_type, cfg)
+        extracted = result.data
         section_id = store_raw_extraction(doc_id=doc_id, form_type=doc_type, data=extracted, confidence=classification_confidence)
-        store_extracted_fields(doc_id=doc_id, section_id=section_id, data=extracted)
+        store_extracted_fields(doc_id=doc_id, section_id=section_id, data=extracted, confidences=result.field_confidence)
         if doc_type == "1099-DA" and isinstance(extracted, dict):
             store_1099da_transactions(doc_id=doc_id, extraction=extracted)
 
         missing = missing_required_fields(doc_type, extracted)
         overall = compute_overall_confidence(doc_type=doc_type, extraction=extracted, classification_confidence=classification_confidence)
         nr = compute_needs_review(classification_confidence=classification_confidence, overall_confidence=overall, missing_required=missing)
+        nr = nr or bool(result.review_fields)
 
         # store some common identity fields if present
         if isinstance(extracted, dict):
@@ -760,7 +790,12 @@ async def upload(
 
             set_display_name_if_empty(doc_id=doc_id, display_name=display_name)
 
-        mark_processed(doc_id=doc_id, overall_confidence=overall, needs_review=nr)
+        mark_processed(
+            doc_id=doc_id,
+            overall_confidence=overall,
+            needs_review=nr,
+            notes=f"low-confidence fields: {', '.join(result.review_fields)}" if result.review_fields else None,
+        )
     except Exception as e:
         # Hard failure (including JSON parse errors) → mark error, don't crash.
         mark_error(doc_id=doc_id, error=str(e))

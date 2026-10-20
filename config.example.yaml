@@ -1,0 +1,28 @@
+# TaxClaw config (copied to ~/.config/taxclaw/config.yaml by setup.sh).
+# Run `bin/taxclaw models` to see the model choices for this machine.
+
+# Backend: local (default, nothing leaves this machine) | anthropic | openai_compat | cloudflare_clairic
+# ("cloud" is accepted as an alias for anthropic). Every non-local backend sends
+# document content to that provider and requires privacy_acknowledged: true.
+model_backend: local
+local_model: gemma3:4b  # Ollama model name; must support vision (ollama pull gemma3:4b)
+privacy_acknowledged: false
+
+# anthropic: key from the ANTHROPIC_API_KEY env var
+cloud_model: claude-haiku-5-5
+cloud_api_key: ""  # prefer the ANTHROPIC_API_KEY env var
+
+# openai_compat: OpenAI, OpenRouter, Gemini (OpenAI-compatible endpoint) or a custom endpoint.
+# Keys come from env vars (OPENAI_API_KEY / OPENROUTER_API_KEY / GEMINI_API_KEY or GOOGLE_API_KEY);
+# for a custom endpoint set openai_compat_base_url and the NAME of the env var holding its key.
+openai_compat_provider: openai  # openai | openrouter | gemini | custom
+openai_compat_model: ""         # a vision-capable model id from `taxclaw models`
+openai_compat_base_url: ""      # empty = provider preset
+openai_compat_api_key_env: ""   # env var NAME, never the key itself
+
+# cloudflare_clairic: CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN env vars
+clairic_fallback_backend: local   # used for 1099-DA transaction tables and generic forms
+review_confidence_threshold: 0.8  # per-field confidence below this flags the document for review
+
+port: 8421
+data_dir: ~/.local/share/taxclaw/
