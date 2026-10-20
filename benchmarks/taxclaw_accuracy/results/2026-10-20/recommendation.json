@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "release_qualified": false,
+  "scope": "Single clean synthetic example per type; strict canonical contract, not OCR accuracy, tax-preparation accuracy, or real-world accuracy.",
+  "deployment_change": "none",
+  "strict_12_form_smoke_gate_passed": false,
+  "reference_comparator": {
+    "model": "claude-haiku-5-5",
+    "run": "haiku-frozen",
+    "role": "bounded comparison only; subscription CLI is not the application SDK/API transport"
+  },
+  "local_followup_candidate": {
+    "model": "gemma4:latest",
+    "run": "app-baseline",
+    "checkpoint_identity_verified": false,
+    "basis": "highest observed strict full-corpus canonical field match among five requested local tags; exploratory pre-freeze inference only, not an immutable-checkpoint ranking"
+  },
+  "required_contract_work": [
+    "Add dedicated 1099-R and 1040 extraction schemas; generic-label output is not canonical support.",
+    "Resolve tax_year type and coded-object key conventions before interpreting serialization misses as reading failures."
+  ],
+  "limitations": [
+    "No evaluated model passes the strict 12-form gate.",
+    "Local and initial Haiku inference lack launch-time runner/grader hashes; final scoring is receipt-bound without changing raw outputs.",
+    "Retain both Haiku trials; do not select only the higher score.",
+    "Local resident snapshots change digests within the Qwen and Gemma 4 tag runs, and inventory has duplicate/mismatching tags. Response tag identity is verified, but local aggregates do not establish one immutable checkpoint per tag.",
+    "Timings include rendering, network, model load, and CLI startup where applicable; one pass is not a statistical ranking."
+  ],
+  "clairic": {
+    "status": "not_integrated_or_measured",
+    "score": null
+  }
+}

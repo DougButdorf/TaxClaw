@@ -1,0 +1,557 @@
+{
+  "schema_version": 1,
+  "scope": "synthetic clean-form smoke benchmark, not real-world accuracy",
+  "grader_sha256": "39227b5ccffac57639e110a3e6d9502803af444d88336780ac5c8ebab7e6b28b",
+  "models": {
+    "gemma3:12b": {
+      "documents_finished": 12,
+      "correct_fields": 177,
+      "expected_fields": 233,
+      "field_accuracy": 0.759656652360515,
+      "populated_accuracy": 0.7536945812807881,
+      "exact_documents": 3,
+      "error_documents": 0,
+      "classification_correct": 12,
+      "extra_field_count": 42,
+      "wall_seconds_per_page": 36.89360127252127,
+      "forms": {
+        "W-2": {
+          "accuracy": 0.8,
+          "correct_fields": 8,
+          "expected_fields": 10,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 35.161143481731415
+        },
+        "1099-NEC": {
+          "accuracy": 1.0,
+          "correct_fields": 6,
+          "expected_fields": 6,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 14.015619094483554
+        },
+        "1099-INT": {
+          "accuracy": 1.0,
+          "correct_fields": 8,
+          "expected_fields": 8,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 36.54160410631448
+        },
+        "1099-DIV": {
+          "accuracy": 0.9047619047619048,
+          "correct_fields": 19,
+          "expected_fields": 21,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 33.51489974465221
+        },
+        "consolidated-1099": {
+          "accuracy": 0.75,
+          "correct_fields": 15,
+          "expected_fields": 20,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 32.61445261538029
+        },
+        "1099-B": {
+          "accuracy": 0.8571428571428571,
+          "correct_fields": 12,
+          "expected_fields": 14,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 24.161025437526405
+        },
+        "1099-MISC": {
+          "accuracy": 0.9411764705882353,
+          "correct_fields": 16,
+          "expected_fields": 17,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 26.98127408977598
+        },
+        "1099-OID": {
+          "accuracy": 1.0,
+          "correct_fields": 12,
+          "expected_fields": 12,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 21.448744701221585
+        },
+        "K-1": {
+          "accuracy": 0.7931034482758621,
+          "correct_fields": 23,
+          "expected_fields": 29,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 44.66026141261682
+        },
+        "1099-DA": {
+          "accuracy": 0.9508196721311475,
+          "correct_fields": 58,
+          "expected_fields": 61,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 68.79734495049343
+        },
+        "1099-R": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 16,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 27.91635112836957
+        },
+        "1040": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 19,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 37.240090689621866
+        }
+      }
+    },
+    "gemma3:4b": {
+      "documents_finished": 12,
+      "correct_fields": 155,
+      "expected_fields": 233,
+      "field_accuracy": 0.6652360515021459,
+      "populated_accuracy": 0.6945812807881774,
+      "exact_documents": 2,
+      "error_documents": 0,
+      "classification_correct": 12,
+      "extra_field_count": 41,
+      "wall_seconds_per_page": 15.416420844050922,
+      "forms": {
+        "W-2": {
+          "accuracy": 0.8,
+          "correct_fields": 8,
+          "expected_fields": 10,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 19.430648530833423
+        },
+        "1099-NEC": {
+          "accuracy": 0.8333333333333334,
+          "correct_fields": 5,
+          "expected_fields": 6,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 18.040401275269687
+        },
+        "1099-INT": {
+          "accuracy": 1.0,
+          "correct_fields": 8,
+          "expected_fields": 8,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 7.402876087464392
+        },
+        "1099-DIV": {
+          "accuracy": 0.9047619047619048,
+          "correct_fields": 19,
+          "expected_fields": 21,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 13.391876753419638
+        },
+        "consolidated-1099": {
+          "accuracy": 0.65,
+          "correct_fields": 13,
+          "expected_fields": 20,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 13.503821656107903
+        },
+        "1099-B": {
+          "accuracy": 0.7142857142857143,
+          "correct_fields": 10,
+          "expected_fields": 14,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 9.624128326773643
+        },
+        "1099-MISC": {
+          "accuracy": 0.8235294117647058,
+          "correct_fields": 14,
+          "expected_fields": 17,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 10.629615314304829
+        },
+        "1099-OID": {
+          "accuracy": 1.0,
+          "correct_fields": 12,
+          "expected_fields": 12,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 8.93447052128613
+        },
+        "K-1": {
+          "accuracy": 0.7241379310344828,
+          "correct_fields": 21,
+          "expected_fields": 29,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 15.204814560245723
+        },
+        "1099-DA": {
+          "accuracy": 0.7377049180327869,
+          "correct_fields": 45,
+          "expected_fields": 61,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 29.74642628710717
+        },
+        "1099-R": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 16,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 11.034316632896662
+        },
+        "1040": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 19,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 13.935255023650825
+        }
+      }
+    },
+    "qwen3.5:4b": {
+      "documents_finished": 12,
+      "correct_fields": 130,
+      "expected_fields": 233,
+      "field_accuracy": 0.5579399141630901,
+      "populated_accuracy": 0.5517241379310345,
+      "exact_documents": 7,
+      "error_documents": 1,
+      "classification_correct": 12,
+      "extra_field_count": 49,
+      "wall_seconds_per_page": 49.89773563681437,
+      "forms": {
+        "W-2": {
+          "accuracy": 0.8,
+          "correct_fields": 8,
+          "expected_fields": 10,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 53.743124358356
+        },
+        "1099-NEC": {
+          "accuracy": 1.0,
+          "correct_fields": 6,
+          "expected_fields": 6,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 26.84589857328683
+        },
+        "1099-INT": {
+          "accuracy": 1.0,
+          "correct_fields": 8,
+          "expected_fields": 8,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 27.479105887003243
+        },
+        "1099-DIV": {
+          "accuracy": 1.0,
+          "correct_fields": 21,
+          "expected_fields": 21,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 59.36059291660786
+        },
+        "consolidated-1099": {
+          "accuracy": 1.0,
+          "correct_fields": 20,
+          "expected_fields": 20,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 47.7317095734179
+        },
+        "1099-B": {
+          "accuracy": 1.0,
+          "correct_fields": 14,
+          "expected_fields": 14,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 35.64257880020887
+        },
+        "1099-MISC": {
+          "accuracy": 1.0,
+          "correct_fields": 17,
+          "expected_fields": 17,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 40.75706715229899
+        },
+        "1099-OID": {
+          "accuracy": 1.0,
+          "correct_fields": 12,
+          "expected_fields": 12,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 63.51190875098109
+        },
+        "K-1": {
+          "accuracy": 0.8275862068965517,
+          "correct_fields": 24,
+          "expected_fields": 29,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 73.8639664533548
+        },
+        "1099-DA": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 61,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 41.28381429379806
+        },
+        "1099-R": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 16,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 67.64253574889153
+        },
+        "1040": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 19,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 45.55821566004306
+        }
+      }
+    },
+    "glm-ocr:latest": {
+      "documents_finished": 12,
+      "correct_fields": 0,
+      "expected_fields": 233,
+      "field_accuracy": 0.0,
+      "populated_accuracy": 0.0,
+      "exact_documents": 0,
+      "error_documents": 12,
+      "classification_correct": 11,
+      "extra_field_count": 0,
+      "wall_seconds_per_page": 24.70731375226751,
+      "forms": {
+        "W-2": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 10,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 28.927421589381993
+        },
+        "1099-NEC": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 6,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 29.763528077863157
+        },
+        "1099-INT": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 8,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 29.317489448934793
+        },
+        "1099-DIV": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 21,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 27.854397132061422
+        },
+        "consolidated-1099": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 20,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 29.463164725340903
+        },
+        "1099-B": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 14,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 30.105892691761255
+        },
+        "1099-MISC": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 17,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 29.460596535354853
+        },
+        "1099-OID": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 12,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 28.9633274031803
+        },
+        "K-1": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 29,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 8.710087665356696
+        },
+        "1099-DA": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 61,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 16.665258810389787
+        },
+        "1099-R": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 16,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 30.966728857718408
+        },
+        "1040": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 19,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 30.329153118655086
+        }
+      }
+    },
+    "gemma4:latest": {
+      "documents_finished": 12,
+      "correct_fields": 183,
+      "expected_fields": 233,
+      "field_accuracy": 0.7854077253218884,
+      "populated_accuracy": 0.7832512315270936,
+      "exact_documents": 7,
+      "error_documents": 0,
+      "classification_correct": 12,
+      "extra_field_count": 48,
+      "wall_seconds_per_page": 52.0114924257089,
+      "forms": {
+        "W-2": {
+          "accuracy": 0.8,
+          "correct_fields": 8,
+          "expected_fields": 10,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 125.31079423986375
+        },
+        "1099-NEC": {
+          "accuracy": 1.0,
+          "correct_fields": 6,
+          "expected_fields": 6,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 28.473096104338765
+        },
+        "1099-INT": {
+          "accuracy": 1.0,
+          "correct_fields": 8,
+          "expected_fields": 8,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 24.381423552520573
+        },
+        "1099-DIV": {
+          "accuracy": 1.0,
+          "correct_fields": 21,
+          "expected_fields": 21,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 51.45858689118177
+        },
+        "consolidated-1099": {
+          "accuracy": 1.0,
+          "correct_fields": 20,
+          "expected_fields": 20,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 64.43219964299351
+        },
+        "1099-B": {
+          "accuracy": 1.0,
+          "correct_fields": 14,
+          "expected_fields": 14,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 32.546003894880414
+        },
+        "1099-MISC": {
+          "accuracy": 1.0,
+          "correct_fields": 17,
+          "expected_fields": 17,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 36.654567507095635
+        },
+        "1099-OID": {
+          "accuracy": 1.0,
+          "correct_fields": 12,
+          "expected_fields": 12,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 30.18236563913524
+        },
+        "K-1": {
+          "accuracy": 0.7931034482758621,
+          "correct_fields": 23,
+          "expected_fields": 29,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 66.18452200200409
+        },
+        "1099-DA": {
+          "accuracy": 0.8852459016393442,
+          "correct_fields": 54,
+          "expected_fields": 61,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 69.22065758844838
+        },
+        "1099-R": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 16,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 29.09362089447677
+        },
+        "1040": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 19,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 34.817876412533224
+        }
+      }
+    }
+  }
+}

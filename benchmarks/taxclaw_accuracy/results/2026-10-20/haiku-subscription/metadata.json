@@ -1,0 +1,44 @@
+{
+  "created_utc": "2026-10-20T13:09:05.103047+00:00",
+  "signature": {
+    "git_revision": "c3d9bb24182f9a43b27d14696693f4af885962d4",
+    "transport": "claude-subscription",
+    "models": [
+      "claude-haiku-5-5"
+    ],
+    "timeout_seconds": 90.0,
+    "manifest_sha256": "041fdbd2a9a2064c6ce636e33065de9658439c15aff023119f5a1384766ae62a",
+    "types": null,
+    "source_sha256": {
+      "src/ai.py": "b99e3d6d8f8beda33c44ac1b2e907b454bd6b0f8491048022dca419a2e99208b",
+      "src/extract.py": "aba5979f0ca2bd75ebb336c7e47d5694bff87e4328d207ca1070be7812df95f7",
+      "src/classify.py": "1e3e3c0e4f51074b9223215ca27def4dbeb80f6c385f45443cc29504eb63d2be"
+    },
+    "python": "3.12.3",
+    "packages": {
+      "pymupdf": "2.0",
+      "ollama": "0.6.3",
+      "anthropic": "1.15.0",
+      "pyyaml": "6.0.3"
+    },
+    "renderer_scale": 2.0,
+    "classification": "scored separately; extraction uses answer-key document type",
+    "structured_format": null,
+    "max_tokens_override": null,
+    "fixture_hashes": {
+      "w_2_clean": "32bbc59c4ea080ebeaf5ad6937c7921a8ad08b49d8908d2150e3c3d2dce4dbdd",
+      "1099_nec_clean": "64345840df7e1a228a0d51874f0c8d1549efc436b88572697335e2adb1c47bf5",
+      "1099_int_clean": "cdf27abdc1ae9e9a00bcabc89106a4890d0b400e41ef174b0f4b2774c0db81a5",
+      "1099_div_clean": "12502a0f43eb257313601a4d3a250c64c0f3a8f9fb261ea3f380aad154848260",
+      "consolidated_1099_clean": "8ef38d061e0baa4e50cbf2c305ece1bf810e0fb784e74b8faec3343939e249fb",
+      "1099_b_clean": "0d1defdf309d9c911972b86aa708397a1710bfeb712785c0e4a95af0600242c5",
+      "1099_misc_clean": "a5ad3df1ac0c717eb08b40c9224843c17ba36aa3ee49ffd2bc243c54367ab341",
+      "1099_oid_clean": "51bf53eb9dae3c958e09c3841f128c9ba93f362fa09abe65fe354bc7b989ecea",
+      "k_1_clean": "b807c601588437c1adf2eeb8e40c9e3dbb299b84dfd8783ef5270b94790a1fe2",
+      "1099_da_clean": "9a776ffff0164823fbc17278436b17fd731cd795fdadb18af8baee1f6ce08ce5",
+      "1099_r_clean": "5709391c765bed34ab7e9e268e83b14262f4b71a9954480f624fd11feefabff1",
+      "1040_clean": "9bb1fffaa077507948c4bb52adf6067173c4b299698c6667fbf75e4421c5d1ed"
+    }
+  },
+  "ollama_inventory": null
+}

@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "scope": "synthetic clean-form smoke benchmark, not real-world accuracy",
+  "grader_sha256": "39227b5ccffac57639e110a3e6d9502803af444d88336780ac5c8ebab7e6b28b",
+  "models": {
+    "claude-haiku-5-5": {
+      "documents_finished": 12,
+      "correct_fields": 190,
+      "expected_fields": 233,
+      "field_accuracy": 0.8154506437768241,
+      "populated_accuracy": 0.7980295566502463,
+      "exact_documents": 6,
+      "error_documents": 0,
+      "classification_correct": 12,
+      "extra_field_count": 40,
+      "wall_seconds_per_page": 4.273558089709176,
+      "forms": {
+        "W-2": {
+          "accuracy": 1.0,
+          "correct_fields": 10,
+          "expected_fields": 10,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 3.2289839070290327
+        },
+        "1099-NEC": {
+          "accuracy": 1.0,
+          "correct_fields": 6,
+          "expected_fields": 6,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 2.7353129321709275
+        },
+        "1099-INT": {
+          "accuracy": 1.0,
+          "correct_fields": 8,
+          "expected_fields": 8,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 4.169285669922829
+        },
+        "1099-DIV": {
+          "accuracy": 1.0,
+          "correct_fields": 21,
+          "expected_fields": 21,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 4.922029033303261
+        },
+        "consolidated-1099": {
+          "accuracy": 1.0,
+          "correct_fields": 20,
+          "expected_fields": 20,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 4.306325566023588
+        },
+        "1099-B": {
+          "accuracy": 0.9285714285714286,
+          "correct_fields": 13,
+          "expected_fields": 14,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 2.6640715915709734
+        },
+        "1099-MISC": {
+          "accuracy": 0.9411764705882353,
+          "correct_fields": 16,
+          "expected_fields": 17,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 4.758094038814306
+        },
+        "1099-OID": {
+          "accuracy": 0.9166666666666666,
+          "correct_fields": 11,
+          "expected_fields": 12,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 3.5968323396518826
+        },
+        "K-1": {
+          "accuracy": 0.8275862068965517,
+          "correct_fields": 24,
+          "expected_fields": 29,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 5.78149342816323
+        },
+        "1099-DA": {
+          "accuracy": 1.0,
+          "correct_fields": 61,
+          "expected_fields": 61,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 4.617917808238417
+        },
+        "1099-R": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 16,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 5.3435205379500985
+        },
+        "1040": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 19,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 3.3065351666882634
+        }
+      }
+    }
+  }
+}

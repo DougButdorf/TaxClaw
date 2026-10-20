@@ -1,0 +1,302 @@
+{
+  "scope": "Observed correct-value/noncanonical serialization cases; no scores adjusted. Other mismatches are not all necessarily OCR errors.",
+  "cases": [
+    {
+      "run": "app-baseline",
+      "model": "gemma3:12b",
+      "doc_type": "W-2",
+      "path": "box_codes.D",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "6500.00",
+      "actual_key": "box_codes.12a",
+      "actual": "6500.00"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma3:12b",
+      "doc_type": "W-2",
+      "path": "box_codes.DD",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "9840.25",
+      "actual_key": "box_codes.12b",
+      "actual": "9840.25"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma3:12b",
+      "doc_type": "K-1",
+      "path": "other_deductions.W",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "87.65",
+      "actual_key": "other_deductions.13 Code W",
+      "actual": "87.65"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma3:12b",
+      "doc_type": "K-1",
+      "path": "other_credits.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "0.00",
+      "actual_key": "other_credits.15 Code A",
+      "actual": "0.00"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma3:12b",
+      "doc_type": "K-1",
+      "path": "foreign_transactions.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "Canada",
+      "actual_key": "foreign_transactions.16 Code A",
+      "actual": "Canada"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma3:4b",
+      "doc_type": "W-2",
+      "path": "box_codes.D",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "6500.00",
+      "actual_key": "box_codes.12a",
+      "actual": "6500.00"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma3:4b",
+      "doc_type": "W-2",
+      "path": "box_codes.DD",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "9840.25",
+      "actual_key": "box_codes.12b",
+      "actual": "9840.25"
+    },
+    {
+      "run": "app-baseline",
+      "model": "qwen3.5:4b",
+      "doc_type": "K-1",
+      "path": "other_deductions.W",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "87.65",
+      "actual_key": "other_deductions.Code W - Other deductions",
+      "actual": "87.65"
+    },
+    {
+      "run": "app-baseline",
+      "model": "qwen3.5:4b",
+      "doc_type": "K-1",
+      "path": "other_credits.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "0.00",
+      "actual_key": "other_credits.Code A - Low-income housing credit",
+      "actual": "0.00"
+    },
+    {
+      "run": "app-baseline",
+      "model": "qwen3.5:4b",
+      "doc_type": "K-1",
+      "path": "foreign_transactions.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "Canada",
+      "actual_key": "foreign_transactions.Code A - Name of country",
+      "actual": "Canada"
+    },
+    {
+      "run": "app-baseline",
+      "model": "qwen3.5:4b",
+      "doc_type": "K-1",
+      "path": "other_information.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "127.90",
+      "actual_key": "other_information.Code A - Investment income",
+      "actual": "127.90"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma4:latest",
+      "doc_type": "W-2",
+      "path": "box_codes.D",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "6500.00",
+      "actual_key": "box_codes.elective_retirement_deferrals",
+      "actual": "6500.00"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma4:latest",
+      "doc_type": "W-2",
+      "path": "box_codes.DD",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "9840.25",
+      "actual_key": "box_codes.employer_health_coverage",
+      "actual": "9840.25"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma4:latest",
+      "doc_type": "K-1",
+      "path": "other_credits.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "0.00",
+      "actual_key": "other_credits.15 Code A - Low-income housing credit",
+      "actual": "0.00"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma4:latest",
+      "doc_type": "K-1",
+      "path": "foreign_transactions.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "Canada",
+      "actual_key": "foreign_transactions.16 Code A - Name of country",
+      "actual": "Canada"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma4:latest",
+      "doc_type": "K-1",
+      "path": "amt_items.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "-32.10",
+      "actual_key": "amt_items.17 Code A - Post-1986 depreciation adjustment",
+      "actual": "-32.10"
+    },
+    {
+      "run": "app-baseline",
+      "model": "gemma4:latest",
+      "doc_type": "K-1",
+      "path": "other_information.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "127.90",
+      "actual_key": "other_information.20 Code A - Investment income",
+      "actual": "127.90"
+    },
+    {
+      "run": "haiku-frozen",
+      "model": "claude-haiku-5-5",
+      "doc_type": "1099-B",
+      "path": "tax_year",
+      "kind": "year_integer_vs_canonical_string",
+      "expected": "2025",
+      "actual": 2025
+    },
+    {
+      "run": "haiku-frozen",
+      "model": "claude-haiku-5-5",
+      "doc_type": "1099-MISC",
+      "path": "tax_year",
+      "kind": "year_integer_vs_canonical_string",
+      "expected": "2025",
+      "actual": 2025
+    },
+    {
+      "run": "haiku-frozen",
+      "model": "claude-haiku-5-5",
+      "doc_type": "1099-OID",
+      "path": "tax_year",
+      "kind": "year_integer_vs_canonical_string",
+      "expected": "2025",
+      "actual": 2025
+    },
+    {
+      "run": "haiku-frozen",
+      "model": "claude-haiku-5-5",
+      "doc_type": "K-1",
+      "path": "other_deductions.W",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "87.65",
+      "actual_key": "other_deductions.13 Code W - Other deductions",
+      "actual": "87.65"
+    },
+    {
+      "run": "haiku-frozen",
+      "model": "claude-haiku-5-5",
+      "doc_type": "K-1",
+      "path": "other_credits.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "0.00",
+      "actual_key": "other_credits.15 Code A - Low-income housing credit",
+      "actual": "0.00"
+    },
+    {
+      "run": "haiku-frozen",
+      "model": "claude-haiku-5-5",
+      "doc_type": "K-1",
+      "path": "foreign_transactions.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "Canada",
+      "actual_key": "foreign_transactions.16 Code A - Name of country",
+      "actual": "Canada"
+    },
+    {
+      "run": "haiku-frozen",
+      "model": "claude-haiku-5-5",
+      "doc_type": "K-1",
+      "path": "amt_items.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "-32.10",
+      "actual_key": "amt_items.17 Code A - Post-1986 depreciation adjustment",
+      "actual": "-32.10"
+    },
+    {
+      "run": "haiku-frozen",
+      "model": "claude-haiku-5-5",
+      "doc_type": "K-1",
+      "path": "other_information.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "127.90",
+      "actual_key": "other_information.20 Code A - Investment income",
+      "actual": "127.90"
+    },
+    {
+      "run": "haiku-subscription",
+      "model": "claude-haiku-5-5",
+      "doc_type": "K-1",
+      "path": "other_deductions.W",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "87.65",
+      "actual_key": "other_deductions.13W",
+      "actual": "87.65"
+    },
+    {
+      "run": "haiku-subscription",
+      "model": "claude-haiku-5-5",
+      "doc_type": "K-1",
+      "path": "other_credits.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "0.00",
+      "actual_key": "other_credits.15A",
+      "actual": "0.00"
+    },
+    {
+      "run": "haiku-subscription",
+      "model": "claude-haiku-5-5",
+      "doc_type": "K-1",
+      "path": "foreign_transactions.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "Canada",
+      "actual_key": "foreign_transactions.16A_country",
+      "actual": "Canada"
+    },
+    {
+      "run": "haiku-subscription",
+      "model": "claude-haiku-5-5",
+      "doc_type": "K-1",
+      "path": "amt_items.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "-32.10",
+      "actual_key": "amt_items.17A",
+      "actual": "-32.10"
+    },
+    {
+      "run": "haiku-subscription",
+      "model": "claude-haiku-5-5",
+      "doc_type": "K-1",
+      "path": "other_information.A",
+      "kind": "correct_value_noncanonical_code_key",
+      "expected": "127.90",
+      "actual_key": "other_information.20A",
+      "actual": "127.90"
+    }
+  ]
+}

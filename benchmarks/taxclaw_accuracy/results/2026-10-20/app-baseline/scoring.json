@@ -1,0 +1,8 @@
+{
+  "raw_results_sha256": "c2cbfb9bbd8e1c8db31583ec1674501f4f15602d430083cfc930be04695399c1",
+  "manifest_sha256": "041fdbd2a9a2064c6ce636e33065de9658439c15aff023119f5a1384766ae62a",
+  "grader_sha256": "39227b5ccffac57639e110a3e6d9502803af444d88336780ac5c8ebab7e6b28b",
+  "regraded_utc": "2026-10-20T13:52:15.839615+00:00",
+  "records": 60,
+  "model_identity_checked": true
+}
