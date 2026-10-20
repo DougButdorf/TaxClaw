@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Setup (isolated HOME)
+        env:
+          TAXCLAW_PYTHON: python
+        run: HOME="$(mktemp -d)" bash setup.sh
+
+      - name: Smoke test
+        env:
+          TAXCLAW_PYTHON: python
+        run: bash scripts/smoke.sh
+
+      - name: Compile sources
+        run: venv/bin/python -m compileall -q src
