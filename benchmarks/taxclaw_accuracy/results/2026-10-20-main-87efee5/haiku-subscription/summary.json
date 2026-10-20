@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "scope": "synthetic clean-form smoke benchmark, not real-world accuracy",
+  "grader_sha256": "39227b5ccffac57639e110a3e6d9502803af444d88336780ac5c8ebab7e6b28b",
+  "models": {
+    "claude-haiku-5-5": {
+      "documents_finished": 8,
+      "correct_fields": 224,
+      "expected_fields": 224,
+      "field_accuracy": 1.0,
+      "populated_accuracy": 1.0,
+      "exact_documents": 8,
+      "error_documents": 0,
+      "classification_correct": 8,
+      "extra_field_count": 0,
+      "wall_seconds_per_page": 5.214615879673511,
+      "forms": {
+        "1099-R": {
+          "accuracy": 1.0,
+          "correct_fields": 30,
+          "expected_fields": 30,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 5.91367563046515
+        },
+        "1099-R:degraded_scan": {
+          "accuracy": 1.0,
+          "correct_fields": 30,
+          "expected_fields": 30,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 3.603786788880825
+        },
+        "1099-G": {
+          "accuracy": 1.0,
+          "correct_fields": 18,
+          "expected_fields": 18,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 4.038396316580474
+        },
+        "1099-G:degraded_scan": {
+          "accuracy": 1.0,
+          "correct_fields": 18,
+          "expected_fields": 18,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 4.829728001728654
+        },
+        "1099-K": {
+          "accuracy": 1.0,
+          "correct_fields": 26,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 3.050919810310006
+        },
+        "1099-K:degraded_scan": {
+          "accuracy": 1.0,
+          "correct_fields": 26,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 4.906433121301234
+        },
+        "K-1": {
+          "accuracy": 1.0,
+          "correct_fields": 38,
+          "expected_fields": 38,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 6.549338629934937
+        },
+        "K-1:degraded_scan": {
+          "accuracy": 1.0,
+          "correct_fields": 38,
+          "expected_fields": 38,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 6.352270933799446
+        }
+      }
+    }
+  }
+}

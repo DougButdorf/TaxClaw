@@ -1,0 +1,22 @@
+{
+  "measured_application_revision": "87efee5",
+  "later_main_revision": "a47c572abc7a2c2dfd4a00e2d8e6c2727a0af936",
+  "rerun_on_later_main": false,
+  "existing_extract_functions_compared": 12,
+  "all_existing_extract_functions_ast_identical": true,
+  "added_extract_functions": [
+    "capital_lots_schema",
+    "extract_capital_lots",
+    "page_may_have_lots"
+  ],
+  "identical_blobs": {
+    "src/ai.py": true,
+    "src/backends.py": true,
+    "src/classify.py": true,
+    "src/config.py": true,
+    "src/ollama_local.py": true,
+    "src/clairic.py": true,
+    "requirements.txt": true
+  },
+  "interpretation": "Static compatibility comparison supports an unchanged four-form extraction contract; these measurements remain on 87efee5. The added capital-lot/export path is out of WP-F scope and unverified by this benchmark."
+}

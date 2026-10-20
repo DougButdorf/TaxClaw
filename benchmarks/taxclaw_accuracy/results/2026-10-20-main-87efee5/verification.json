@@ -1,0 +1,464 @@
+{
+  "verified_utc": "2026-10-20T15:20:10.453392+00:00",
+  "frozen_revision": "800b761f2d09898d10f85ae18f5b7eda8d5273a4",
+  "current_main_under_test": "87efee5",
+  "scope": "Four changed form types, one synthetic grid case per type, paired clean and image-only moderate degraded scan; not real-world accuracy or release approval.",
+  "manifest_sha256": "ade9b967e0adeeeb97a6fbdc1335881e81b4cde16eb10a3d49acb30be758c328",
+  "fixture_count": 8,
+  "pages_per_model": 10,
+  "expected_total_records": 48,
+  "runs": {
+    "app-local": {
+      "records": 40,
+      "per_model_documents": {
+        "gemma3:4b": 8,
+        "gemma3:12b": 8,
+        "gemma4:latest": 8,
+        "qwen3.5:4b": 8,
+        "glm-ocr:latest": 8
+      },
+      "raw_results_sha256": "53cf1b066a0b305cee597369b2b5f52ab8251b97d8a06c9e3cabb087cdc2339c",
+      "raw_unchanged_by_regrading": true,
+      "scoring_receipt_valid": true,
+      "source_hashes_match_frozen_revision_and_current_files": {
+        "src/__init__.py": true,
+        "src/ai.py": true,
+        "src/backends.py": true,
+        "src/clairic.py": true,
+        "src/classify.py": true,
+        "src/cli.py": true,
+        "src/config.py": true,
+        "src/db.py": true,
+        "src/exporter.py": true,
+        "src/extract.py": true,
+        "src/main.py": true,
+        "src/mcp_server.py": true,
+        "src/models.py": true,
+        "src/ollama_local.py": true,
+        "src/pipeline.py": true,
+        "src/review.py": true,
+        "src/store.py": true,
+        "requirements.txt": true,
+        "benchmarks/taxclaw_accuracy/runner.py": true,
+        "benchmarks/taxclaw_accuracy/grader.py": true,
+        "benchmarks/taxclaw_accuracy/fixtures.py": true,
+        "benchmarks/taxclaw_accuracy/followup_fixtures.py": true
+      },
+      "application_source_hashes_also_match_main_87efee5": {
+        "src/__init__.py": true,
+        "src/ai.py": true,
+        "src/backends.py": true,
+        "src/clairic.py": true,
+        "src/classify.py": true,
+        "src/cli.py": true,
+        "src/config.py": true,
+        "src/db.py": true,
+        "src/exporter.py": true,
+        "src/extract.py": true,
+        "src/main.py": true,
+        "src/mcp_server.py": true,
+        "src/models.py": true,
+        "src/ollama_local.py": true,
+        "src/pipeline.py": true,
+        "src/review.py": true,
+        "src/store.py": true
+      },
+      "all_pdf_and_manifest_hashes_match_launch": true,
+      "all_observed_response_model_identities_match_requested": true,
+      "checked_attempt_counts": {
+        "pages": 47,
+        "classification_pages": 25
+      },
+      "attempts_without_observed_provider_response_identity": {
+        "pages": 1
+      },
+      "raw_record_hashes": [
+        {
+          "model": "gemma3:4b",
+          "fixture_id": "wp_f_changed_1099_r_clean",
+          "raw_record_sha256": "184ad7131cceab4ebd7adbe45a6dd431b979602122a997e391c60f3c7dcc1e32"
+        },
+        {
+          "model": "gemma3:4b",
+          "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+          "raw_record_sha256": "30e73f52ea93fd311bbed23ff74336101778ea6d4f78a888cdeeeeed247a36bc"
+        },
+        {
+          "model": "gemma3:4b",
+          "fixture_id": "wp_f_changed_1099_g_clean",
+          "raw_record_sha256": "7cf45b30ae2003af384d7680e93fb701153c880f92abd865cf0f0f610368c1b7"
+        },
+        {
+          "model": "gemma3:4b",
+          "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+          "raw_record_sha256": "9cf4dfd830c9ef9e4071db22eb726b5664454cf23dc19c2cc3cbb2d730149afe"
+        },
+        {
+          "model": "gemma3:4b",
+          "fixture_id": "wp_f_changed_1099_k_clean",
+          "raw_record_sha256": "478e74b84a8b4c3a061d0cb7a3fa492d18aa7703f9afb3dafee72a4bcd6a98ac"
+        },
+        {
+          "model": "gemma3:4b",
+          "fixture_id": "wp_f_changed_1099_k_degraded_scan",
+          "raw_record_sha256": "716f1c8df6d01940a713705402f3bc6119e79e24ed84c36971bfd95b1c778585"
+        },
+        {
+          "model": "gemma3:4b",
+          "fixture_id": "wp_f_changed_k_1_clean",
+          "raw_record_sha256": "0e2f03cd4f9ac16f8f008a8c4f8d815858a7c69a4d30999cd2324c6555fe1cee"
+        },
+        {
+          "model": "gemma3:4b",
+          "fixture_id": "wp_f_changed_k_1_degraded_scan",
+          "raw_record_sha256": "c89992fcf6d195f30ee04fb2457fd7bf328e7455f6887c06209047eb2e2db4fa"
+        },
+        {
+          "model": "gemma3:12b",
+          "fixture_id": "wp_f_changed_1099_r_clean",
+          "raw_record_sha256": "06c95a03f0f8e1dfc96c383d5d2aa195cc71634fd8a24fad0d9879f366b01be4"
+        },
+        {
+          "model": "gemma3:12b",
+          "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+          "raw_record_sha256": "ad89b3b98ee3618ae1f8fe6a6c79cc081f86fbea9189f93bb2be0d1cce41fe2c"
+        },
+        {
+          "model": "gemma3:12b",
+          "fixture_id": "wp_f_changed_1099_g_clean",
+          "raw_record_sha256": "43ce1d4d0f4e4993ffbbf3553f02c898461e9af728c71fe9ae4c65346e7c708b"
+        },
+        {
+          "model": "gemma3:12b",
+          "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+          "raw_record_sha256": "18b625c2088a5ab983752808974b7e2afdea75cc4109aff79823d875c3285adc"
+        },
+        {
+          "model": "gemma3:12b",
+          "fixture_id": "wp_f_changed_1099_k_clean",
+          "raw_record_sha256": "6016952d2c8a2684d985aaf1725c5e4e6019af7ff39dbf679da241aaaefd8ae8"
+        },
+        {
+          "model": "gemma3:12b",
+          "fixture_id": "wp_f_changed_1099_k_degraded_scan",
+          "raw_record_sha256": "0c975a8897476f1cc5e30a19029b9781a569899b6f1d7fc9304b94160552cac2"
+        },
+        {
+          "model": "gemma3:12b",
+          "fixture_id": "wp_f_changed_k_1_clean",
+          "raw_record_sha256": "2485789b1b09edeb3eb13006de9c3109a17a31cc99c9d0c0d0077d4a20f7f643"
+        },
+        {
+          "model": "gemma3:12b",
+          "fixture_id": "wp_f_changed_k_1_degraded_scan",
+          "raw_record_sha256": "7d09afab7302023d6995adcaa8bf154cf6d0e760b4727c9ac1d54a1331b36c95"
+        },
+        {
+          "model": "gemma4:latest",
+          "fixture_id": "wp_f_changed_1099_r_clean",
+          "raw_record_sha256": "7723f355778da57658f607765fb25d78984596dedce5d8f23b789047d9cfd345"
+        },
+        {
+          "model": "gemma4:latest",
+          "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+          "raw_record_sha256": "5d0e308dd93bd4e3a7ec8beb7138c186364fbc70fe9b4ded1623287eef57f072"
+        },
+        {
+          "model": "gemma4:latest",
+          "fixture_id": "wp_f_changed_1099_g_clean",
+          "raw_record_sha256": "7ee265140fabe989f5408b168c5c02a38244a8bcdd5caeefda63bff61df9814c"
+        },
+        {
+          "model": "gemma4:latest",
+          "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+          "raw_record_sha256": "f683d33024d7df6406be4b1d9fbad720657b2f638edfef4c66b0873ddedd003a"
+        },
+        {
+          "model": "gemma4:latest",
+          "fixture_id": "wp_f_changed_1099_k_clean",
+          "raw_record_sha256": "af11929d1c4046a7c93c383aa3e82ef6ed53f9221c71fbe0f005f28fc224f6e3"
+        },
+        {
+          "model": "gemma4:latest",
+          "fixture_id": "wp_f_changed_1099_k_degraded_scan",
+          "raw_record_sha256": "3ac18d189195d9e08b463843d687c8aa7858c478fb48a522f2edd4406c794667"
+        },
+        {
+          "model": "gemma4:latest",
+          "fixture_id": "wp_f_changed_k_1_clean",
+          "raw_record_sha256": "75d3a706205b4f3706dd8fc2a7b5f9bbcf105edf2c6403473c2866538ccf6897"
+        },
+        {
+          "model": "gemma4:latest",
+          "fixture_id": "wp_f_changed_k_1_degraded_scan",
+          "raw_record_sha256": "078d8c7c271d9a79cf5f960d2cda830753146c4e6e1b57721d5e54e2c038a874"
+        },
+        {
+          "model": "qwen3.5:4b",
+          "fixture_id": "wp_f_changed_1099_r_clean",
+          "raw_record_sha256": "718f22ecef8ee93976e78efd172745718bdb52aa67c79e2bda4ea0449a0b5d26"
+        },
+        {
+          "model": "qwen3.5:4b",
+          "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+          "raw_record_sha256": "70e67ebc92029099f780eeeb568557955cf62e9bc21fdc218a1cc605ec08b55f"
+        },
+        {
+          "model": "qwen3.5:4b",
+          "fixture_id": "wp_f_changed_1099_g_clean",
+          "raw_record_sha256": "81ed654d2b9e5fe9572cc1e2cef7e4127bc037fb9c8327b792f3a5187c9b01a0"
+        },
+        {
+          "model": "qwen3.5:4b",
+          "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+          "raw_record_sha256": "1513ce612c5d4ac8dff6ec4e1089116d0cec233d6b787b84e6ba6003285ce0d8"
+        },
+        {
+          "model": "qwen3.5:4b",
+          "fixture_id": "wp_f_changed_1099_k_clean",
+          "raw_record_sha256": "a73dbad473379185aaa54d23effdd04e80a7075de7c9bc5b30d8607df03c1274"
+        },
+        {
+          "model": "qwen3.5:4b",
+          "fixture_id": "wp_f_changed_1099_k_degraded_scan",
+          "raw_record_sha256": "376977fd26ae40ad1b7a1d1dc987c6b9a54e81a03f5f52c7d64d7fe15fbbb2c0"
+        },
+        {
+          "model": "qwen3.5:4b",
+          "fixture_id": "wp_f_changed_k_1_clean",
+          "raw_record_sha256": "b6dedeeaa8bf7d96f91ce19303adb5ba187f20eb623a3543d70c599de587dbc8"
+        },
+        {
+          "model": "qwen3.5:4b",
+          "fixture_id": "wp_f_changed_k_1_degraded_scan",
+          "raw_record_sha256": "7634c2220bd135a9a228e26358a1caa2b2fa8803f24f27ae6d98af32454ec617"
+        },
+        {
+          "model": "glm-ocr:latest",
+          "fixture_id": "wp_f_changed_1099_r_clean",
+          "raw_record_sha256": "cf92d97ba1402507859d34b9de9cda782c2c20813e7ca8bc9386e3f4bc17063c"
+        },
+        {
+          "model": "glm-ocr:latest",
+          "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+          "raw_record_sha256": "afe5256702c7d2865affdfa9406d22e46d8fbc788d7ac33b121f0b2ff2083cce"
+        },
+        {
+          "model": "glm-ocr:latest",
+          "fixture_id": "wp_f_changed_1099_g_clean",
+          "raw_record_sha256": "b86629e7d31cc706ea75df8686f77b858ffd2b3bf038cd678325173a1b43b3b2"
+        },
+        {
+          "model": "glm-ocr:latest",
+          "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+          "raw_record_sha256": "3aad03de195579d2f49e92357b7192f9beccec0794a5a675ea9fc98f4fde8b20"
+        },
+        {
+          "model": "glm-ocr:latest",
+          "fixture_id": "wp_f_changed_1099_k_clean",
+          "raw_record_sha256": "276c6f362f04249413601b48b589a4a482d6a9e023cd746ef1c213dd63ff36ae"
+        },
+        {
+          "model": "glm-ocr:latest",
+          "fixture_id": "wp_f_changed_1099_k_degraded_scan",
+          "raw_record_sha256": "1170a19a10d08f0ac0b64ad2bf06d68ce2483211378d8ba02e940e43608d5c54"
+        },
+        {
+          "model": "glm-ocr:latest",
+          "fixture_id": "wp_f_changed_k_1_clean",
+          "raw_record_sha256": "d391495e32279b9f825c33ad5d9a03f85153f8f6bb84bcfb1fba79af9785e432"
+        },
+        {
+          "model": "glm-ocr:latest",
+          "fixture_id": "wp_f_changed_k_1_degraded_scan",
+          "raw_record_sha256": "4304d8749a3c0f281375a83850cb4fe547ca48a1241d8b32a743299d46c52bcd"
+        }
+      ],
+      "identity_check_limitation": "Frozen regrader labels a no-response attempt as model mismatch; raw error is separately preserved. An absent response does not demonstrate model substitution.",
+      "launch_inventory_digest_sets": {
+        "gemma3:4b": [
+          "aa1cd77181b3d06872a952dfcbe9cef96531ff900afe1be19539b6ecd7b0061c",
+          "c30276f7dffec93a536d283e15088990454b8d21cf180a3d6eea4959e4147291"
+        ],
+        "gemma3:12b": [
+          "33649e288d58b4d1cd9ff279e8f3301117e88b215ead3d93b42cbcc88801b10a",
+          "478f8be57615673547aeecd8f9245b058721001417ca67740d4c1ec5519500f0"
+        ],
+        "gemma4:latest": [
+          "537f7e16a1bb3870ba57e328fd60ca1ea28a0c35002c788a7d5845efa865cd86",
+          "9ec987e7d0683d0f26056754a4e7c8dfec07f443f1b16b4cc70ebc676466aed5"
+        ],
+        "qwen3.5:4b": [
+          "3c3adf637187c95955232acd3ed05b9ea45aeb2a5f953e631c38174a46b5b56a",
+          "96f38c742e0a10e194b237d2ffb8b55925ebfeed9d27df72688f565e773569e7"
+        ],
+        "glm-ocr:latest": [
+          "6d2d9e1ee6b06943dd1770f5d92a03b5fe830ba35c6542d43b737f05fa8b1966",
+          "f31c7d1afe19dd6142e65f4d83149c75303cb596b95d26f97b8af03b223745b1"
+        ]
+      },
+      "resident_digest_sets": {
+        "gemma3:4b": [
+          "c30276f7dffec93a536d283e15088990454b8d21cf180a3d6eea4959e4147291"
+        ],
+        "gemma3:12b": [
+          "478f8be57615673547aeecd8f9245b058721001417ca67740d4c1ec5519500f0"
+        ],
+        "gemma4:latest": [
+          "9ec987e7d0683d0f26056754a4e7c8dfec07f443f1b16b4cc70ebc676466aed5"
+        ],
+        "qwen3.5:4b": [
+          "96f38c742e0a10e194b237d2ffb8b55925ebfeed9d27df72688f565e773569e7"
+        ],
+        "glm-ocr:latest": [
+          "f31c7d1afe19dd6142e65f4d83149c75303cb596b95d26f97b8af03b223745b1"
+        ]
+      },
+      "single_immutable_checkpoint_per_local_tag_verified": false
+    },
+    "haiku-subscription": {
+      "records": 8,
+      "per_model_documents": {
+        "claude-haiku-5-5": 8
+      },
+      "raw_results_sha256": "7ff1e825e1a3f64f6b8a2ab34d437aafae80143ac2f63988252aee22a034b017",
+      "raw_unchanged_by_regrading": true,
+      "scoring_receipt_valid": true,
+      "source_hashes_match_frozen_revision_and_current_files": {
+        "src/__init__.py": true,
+        "src/ai.py": true,
+        "src/backends.py": true,
+        "src/clairic.py": true,
+        "src/classify.py": true,
+        "src/cli.py": true,
+        "src/config.py": true,
+        "src/db.py": true,
+        "src/exporter.py": true,
+        "src/extract.py": true,
+        "src/main.py": true,
+        "src/mcp_server.py": true,
+        "src/models.py": true,
+        "src/ollama_local.py": true,
+        "src/pipeline.py": true,
+        "src/review.py": true,
+        "src/store.py": true,
+        "requirements.txt": true,
+        "benchmarks/taxclaw_accuracy/runner.py": true,
+        "benchmarks/taxclaw_accuracy/grader.py": true,
+        "benchmarks/taxclaw_accuracy/fixtures.py": true,
+        "benchmarks/taxclaw_accuracy/followup_fixtures.py": true
+      },
+      "application_source_hashes_also_match_main_87efee5": {
+        "src/__init__.py": true,
+        "src/ai.py": true,
+        "src/backends.py": true,
+        "src/clairic.py": true,
+        "src/classify.py": true,
+        "src/cli.py": true,
+        "src/config.py": true,
+        "src/db.py": true,
+        "src/exporter.py": true,
+        "src/extract.py": true,
+        "src/main.py": true,
+        "src/mcp_server.py": true,
+        "src/models.py": true,
+        "src/ollama_local.py": true,
+        "src/pipeline.py": true,
+        "src/review.py": true,
+        "src/store.py": true
+      },
+      "all_pdf_and_manifest_hashes_match_launch": true,
+      "all_observed_response_model_identities_match_requested": true,
+      "checked_attempt_counts": {
+        "pages": 10,
+        "classification_pages": 5
+      },
+      "attempts_without_observed_provider_response_identity": {},
+      "raw_record_hashes": [
+        {
+          "model": "claude-haiku-5-5",
+          "fixture_id": "wp_f_changed_1099_r_clean",
+          "raw_record_sha256": "dd42e29daa903990f783cfd7804c0dc8567cb93d19a1bcc379dda8fa9288d304"
+        },
+        {
+          "model": "claude-haiku-5-5",
+          "fixture_id": "wp_f_changed_1099_r_degraded_scan",
+          "raw_record_sha256": "603b7b07a48a62cc990d12cd1749f2e8a7a8d5fa108387c57d464ea8cc5b3979"
+        },
+        {
+          "model": "claude-haiku-5-5",
+          "fixture_id": "wp_f_changed_1099_g_clean",
+          "raw_record_sha256": "7ad65c0e83a2a6ccdfeea1dee53358c3cf406c2025cc2f181f5b3c7bbe612cfa"
+        },
+        {
+          "model": "claude-haiku-5-5",
+          "fixture_id": "wp_f_changed_1099_g_degraded_scan",
+          "raw_record_sha256": "feb804faeb556ec43e9834d5d43c96749cafdaf861c5f8607545d80ba2f0ba5a"
+        },
+        {
+          "model": "claude-haiku-5-5",
+          "fixture_id": "wp_f_changed_1099_k_clean",
+          "raw_record_sha256": "fcbe832309631546d3dc7ef4f5c1b8f1eed0db9e262dfeb0598163bdd8b69f72"
+        },
+        {
+          "model": "claude-haiku-5-5",
+          "fixture_id": "wp_f_changed_1099_k_degraded_scan",
+          "raw_record_sha256": "c2e4e74aec8793f02b4ab000b7160352211c97f15e4ecbbe9c5e42036eb41834"
+        },
+        {
+          "model": "claude-haiku-5-5",
+          "fixture_id": "wp_f_changed_k_1_clean",
+          "raw_record_sha256": "de2f862499ace5675a54c1b7861e10ebaf67bf61891e695d8447d84e217b04c6"
+        },
+        {
+          "model": "claude-haiku-5-5",
+          "fixture_id": "wp_f_changed_k_1_degraded_scan",
+          "raw_record_sha256": "bffe6de777e02d5f22e7c18ea7d2f7a5a7e93cbd7795dc26300680603b97babf"
+        }
+      ],
+      "identity_check_limitation": "Frozen regrader labels a no-response attempt as model mismatch; raw error is separately preserved. An absent response does not demonstrate model substitution.",
+      "launch_inventory_digest_sets": null,
+      "resident_digest_sets": {},
+      "single_immutable_checkpoint_per_local_tag_verified": null
+    }
+  },
+  "fixture_sha256": {
+    "wp_f_changed_1099_r_clean": "cf09f77ad867ef96d1a962367a972fbe65bc56eb6e63867eb04ac4f56e03e89a",
+    "wp_f_changed_1099_r_degraded_scan": "4ec26b5c64d186d76f333931c27b139ff7c9cab13982dc7c706141af0c836b78",
+    "wp_f_changed_1099_g_clean": "7abc80a63cbcdddf19b0582fbc8526539451dc970f41451f7c3628842a951bd9",
+    "wp_f_changed_1099_g_degraded_scan": "d62c2487e34741975aaf6fa9bfe52f01ac7628f5e97f15cb230562c7c1178929",
+    "wp_f_changed_1099_k_clean": "ea3bd0a80da072cb5656b1b8aa89d707f2372e0fa588d23b3ae1ee0f14c04196",
+    "wp_f_changed_1099_k_degraded_scan": "59e2a7760b463c167444e1cc7d6446f10d988b0146ee1749428f8cf1d4543b63",
+    "wp_f_changed_k_1_clean": "013bf3c06c99d3fbeef48b87c7721bb484e2f032a39953f1e29274cf733717a9",
+    "wp_f_changed_k_1_degraded_scan": "349b8ed9b347d3bcf939e751e771a0bfc2ba8f41bc3e81cfea827dfb7d7df8d4"
+  },
+  "deterministic_fixture_rebuild_matches_manifest_and_all_pdfs": true,
+  "actual_total_records": 48,
+  "original_baseline_all_archived_files_unchanged": true,
+  "original_baseline_raw_records_unchanged": 84,
+  "parent_reported_tests": {
+    "application": 28,
+    "benchmark": 14,
+    "status": "all passed per parent; not rerun by evidence worker",
+    "initial_discovery_invocation": "Corrected package invocation after an unsuitable unittest discover invocation; not a code failure."
+  },
+  "evidence_sha256": {
+    "RESULTS.md": "2d27cb695690e7e9c291491694cbad6fd6c0792b0e2fdba978d201ea959ab180",
+    "app-local/metadata.json": "17a1171f57b8d43ccbe421837903ebe5c3d784997c1fd7932a4996d38f7ad5e6",
+    "app-local/results.jsonl": "53cf1b066a0b305cee597369b2b5f52ab8251b97d8a06c9e3cabb087cdc2339c",
+    "app-local/scored-results.jsonl": "eb87e24ccac6b72f10cda55dbe6db7c68571cd77f362db0a7bd0765248f8a87c",
+    "app-local/scoring.json": "172698cfcb66077a50866750859579f48a1134014a317cc8ff3197fb95b07504",
+    "app-local/summary.json": "02fa0fc12bd3a75840edfd8a2734dd2c75225f4a0ac89de64e32f749cb826d12",
+    "compatibility-note.json": "b8737859349e6f06fe1a35ab11bf0c6fc2622ac73a8f373ba917d2223f19d982",
+    "errors.json": "f2d57766566d37fd57e3dd7d04ad73ce4054801751ae1cc8db790bd30a1bd822",
+    "field-errors.json": "d75495c8e648dc55e99890763fb306fd7a8c99305cb53a91fb2ee8074823d138",
+    "haiku-subscription/metadata.json": "0f923d99d50c99eb2a5c83130c3e457af79d4cc408f07a17ff7afe69abbc0222",
+    "haiku-subscription/results.jsonl": "7ff1e825e1a3f64f6b8a2ab34d437aafae80143ac2f63988252aee22a034b017",
+    "haiku-subscription/scored-results.jsonl": "7ff1e825e1a3f64f6b8a2ab34d437aafae80143ac2f63988252aee22a034b017",
+    "haiku-subscription/scoring.json": "6701e60a62e9bd6f67d9dfa9f66eaf4c53a3deebeff6f0726f481c54434c4326",
+    "haiku-subscription/summary.json": "274e0b3ef1b99396e0a317c3483f563fce93b3d6762950a9dd017444687e0f46",
+    "manifest.json": "ade9b967e0adeeeb97a6fbdc1335881e81b4cde16eb10a3d49acb30be758c328",
+    "recommendation.json": "887a535993247e39ce48566eb426fec476ac2ef632fd5baaeb345cc27ab9784c",
+    "scope-and-aggregates.json": "8075b44874836b5d768441f36d3fac32e7a0ea881a78da7936932abb0b1d8c3b"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "status": "exploratory_pre_freeze_harness",
+  "note": "Inference began before independent-review hardening of the harness. Launch-time runner/grader hashes and digest-bound resume signatures were not yet recorded. Application extraction/classification source hashes, fixture manifest/PDF hashes, package versions, model inventory and raw model responses are retained. Regrade with final scorer and verify recorded model identities before using results. No release qualification is inferred."
+}

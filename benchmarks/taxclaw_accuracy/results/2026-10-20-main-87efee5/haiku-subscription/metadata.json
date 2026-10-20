@@ -1,0 +1,68 @@
+{
+  "created_utc": "2026-10-20T14:31:50.427987+00:00",
+  "signature": {
+    "git_revision": "800b761f2d09898d10f85ae18f5b7eda8d5273a4",
+    "transport": "claude-subscription",
+    "models": [
+      "claude-haiku-5-5"
+    ],
+    "timeout_seconds": 90.0,
+    "manifest_sha256": "ade9b967e0adeeeb97a6fbdc1335881e81b4cde16eb10a3d49acb30be758c328",
+    "types": [
+      "1099-R",
+      "1099-G",
+      "1099-K",
+      "K-1"
+    ],
+    "variants": null,
+    "source_sha256": {
+      "src/__init__.py": "08e361a6835000d45dbe24bf3e8d88a1df076703524332d97537951b58e74549",
+      "src/ai.py": "b4a0791ae14f6bc0accbe6e8848ea8adc976be3aefed657e33b625d156485253",
+      "src/backends.py": "1cfc1b4672bc8c7a7a01beb235033043a71602d6dff9422c862ea874999c7c69",
+      "src/clairic.py": "7587b25f0114e79f11208b60b0d75f56969b48b2c7be20ce7293cd7c7da7b002",
+      "src/classify.py": "a8c9e3174d825b65c354a91f4c2b6fb012656650641a0514bf1a00d7ed94be76",
+      "src/cli.py": "4c2d90d68586c18269a217e3dc61d18ab26c1cff395e94acee05e6abb714503e",
+      "src/config.py": "8313806c10a06d572fcdc8545dbc5e8eec0f1f5d8def6e1d5b4ceb9274a371e2",
+      "src/db.py": "2af45a1177ac72a32c7de420ac5578983354bd93015159c1d776943ea49f87f4",
+      "src/exporter.py": "e63e80f6d4d47910b6c874aed4380c1c487e37630a51a2f3907cd30b06d6ef7a",
+      "src/extract.py": "683b2287d228d55351198cc352ac74ce60e18d14e414c69afa7e48127866c354",
+      "src/main.py": "42e03bb99d3a825daa916936b741cfe0b367f220cbc90ba14f67257c3a442911",
+      "src/mcp_server.py": "184f3ba795a154e582fd7e0ddc95e3bd025a2b27a9902b69c726ade60281ff18",
+      "src/models.py": "fb47616d0c8ef42b0e0c245d61eb16d52f3729291e9bbeeb04ca7e7198857ced",
+      "src/ollama_local.py": "f23af2996dd0aa238cfb65d1b7ed193d71be4e4876353abe6835ad3a0d321169",
+      "src/pipeline.py": "f11b1267f6fac3b1f06838764b56b1a00225e671093359c293c9871a6da7cd2b",
+      "src/review.py": "13042285af2fb39463de875ffdda51f295aa3b69b8d6ce4dc594d4e422731d31",
+      "src/store.py": "52214276f83b4165d11a217119717348b1e3edf0e3163b722c99a0e78f6c21bb",
+      "requirements.txt": "07ee9156139a3b29447cf54404f2e3ef59af3f008d7481ca3f9101a57685d18d",
+      "benchmarks/taxclaw_accuracy/runner.py": "3158859483590adbd993dc41349de65f81689891429096563030aad3fc2734c7",
+      "benchmarks/taxclaw_accuracy/grader.py": "39227b5ccffac57639e110a3e6d9502803af444d88336780ac5c8ebab7e6b28b",
+      "benchmarks/taxclaw_accuracy/fixtures.py": "fc0b18872d24ab412ef298d8344a5099ab4b865881e1de81198a632373014d48",
+      "benchmarks/taxclaw_accuracy/followup_fixtures.py": "22b64ce9c334eb03b71680d13c1d29578fda3f0e3a94638e9399c9cbd61636e6"
+    },
+    "ollama_host": null,
+    "requested_model_digests": null,
+    "claude_wrapper_sha256": "a47bc8ebb817bc01318aea24aeea46220d441f160e634c7d070d1f363dceb622",
+    "python": "3.12.3",
+    "packages": {
+      "pymupdf": "2.0",
+      "ollama": "0.6.3",
+      "anthropic": "1.15.0",
+      "pyyaml": "6.0.3"
+    },
+    "renderer_scale": 2.0,
+    "classification": "scored separately; extraction uses answer-key document type",
+    "structured_format": null,
+    "max_tokens_override": null,
+    "fixture_hashes": {
+      "wp_f_changed_1099_r_clean": "cf09f77ad867ef96d1a962367a972fbe65bc56eb6e63867eb04ac4f56e03e89a",
+      "wp_f_changed_1099_r_degraded_scan": "4ec26b5c64d186d76f333931c27b139ff7c9cab13982dc7c706141af0c836b78",
+      "wp_f_changed_1099_g_clean": "7abc80a63cbcdddf19b0582fbc8526539451dc970f41451f7c3628842a951bd9",
+      "wp_f_changed_1099_g_degraded_scan": "d62c2487e34741975aaf6fa9bfe52f01ac7628f5e97f15cb230562c7c1178929",
+      "wp_f_changed_1099_k_clean": "ea3bd0a80da072cb5656b1b8aa89d707f2372e0fa588d23b3ae1ee0f14c04196",
+      "wp_f_changed_1099_k_degraded_scan": "59e2a7760b463c167444e1cc7d6446f10d988b0146ee1749428f8cf1d4543b63",
+      "wp_f_changed_k_1_clean": "013bf3c06c99d3fbeef48b87c7721bb484e2f032a39953f1e29274cf733717a9",
+      "wp_f_changed_k_1_degraded_scan": "349b8ed9b347d3bcf939e751e771a0bfc2ba8f41bc3e81cfea827dfb7d7df8d4"
+    }
+  },
+  "ollama_inventory": null
+}

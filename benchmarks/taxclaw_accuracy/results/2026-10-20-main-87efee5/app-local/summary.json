@@ -1,0 +1,397 @@
+{
+  "schema_version": 1,
+  "scope": "synthetic clean-form smoke benchmark, not real-world accuracy",
+  "grader_sha256": "39227b5ccffac57639e110a3e6d9502803af444d88336780ac5c8ebab7e6b28b",
+  "models": {
+    "gemma3:4b": {
+      "documents_finished": 8,
+      "correct_fields": 158,
+      "expected_fields": 224,
+      "field_accuracy": 0.7053571428571429,
+      "populated_accuracy": 0.7378640776699029,
+      "exact_documents": 0,
+      "error_documents": 0,
+      "classification_correct": 8,
+      "extra_field_count": 16,
+      "wall_seconds_per_page": 18.87548371050507,
+      "forms": {
+        "1099-R": {
+          "accuracy": 0.7666666666666667,
+          "correct_fields": 23,
+          "expected_fields": 30,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 21.705416398122907
+        },
+        "1099-R:degraded_scan": {
+          "accuracy": 0.8666666666666667,
+          "correct_fields": 26,
+          "expected_fields": 30,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 22.933535897172987
+        },
+        "1099-G": {
+          "accuracy": 0.6111111111111112,
+          "correct_fields": 11,
+          "expected_fields": 18,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 11.78849765472114
+        },
+        "1099-G:degraded_scan": {
+          "accuracy": 0.6666666666666666,
+          "correct_fields": 12,
+          "expected_fields": 18,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 12.242650149390101
+        },
+        "1099-K": {
+          "accuracy": 0.8076923076923077,
+          "correct_fields": 21,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 15.327750254422426
+        },
+        "1099-K:degraded_scan": {
+          "accuracy": 0.8846153846153846,
+          "correct_fields": 23,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 15.67126982100308
+        },
+        "K-1": {
+          "accuracy": 0.5263157894736842,
+          "correct_fields": 20,
+          "expected_fields": 38,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 18.61323449574411
+        },
+        "K-1:degraded_scan": {
+          "accuracy": 0.5789473684210527,
+          "correct_fields": 22,
+          "expected_fields": 38,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 25.92962396936491
+        }
+      }
+    },
+    "gemma3:12b": {
+      "documents_finished": 8,
+      "correct_fields": 176,
+      "expected_fields": 224,
+      "field_accuracy": 0.7857142857142857,
+      "populated_accuracy": 0.7961165048543689,
+      "exact_documents": 0,
+      "error_documents": 0,
+      "classification_correct": 8,
+      "extra_field_count": 23,
+      "wall_seconds_per_page": 65.95293471077457,
+      "forms": {
+        "1099-R": {
+          "accuracy": 0.8,
+          "correct_fields": 24,
+          "expected_fields": 30,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 67.75304953381419
+        },
+        "1099-R:degraded_scan": {
+          "accuracy": 0.8,
+          "correct_fields": 24,
+          "expected_fields": 30,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 71.23619464971125
+        },
+        "1099-G": {
+          "accuracy": 0.9444444444444444,
+          "correct_fields": 17,
+          "expected_fields": 18,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 54.23082132730633
+        },
+        "1099-G:degraded_scan": {
+          "accuracy": 0.7777777777777778,
+          "correct_fields": 14,
+          "expected_fields": 18,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 73.12463888619095
+        },
+        "1099-K": {
+          "accuracy": 0.9615384615384616,
+          "correct_fields": 25,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 71.01460883952677
+        },
+        "1099-K:degraded_scan": {
+          "accuracy": 0.9230769230769231,
+          "correct_fields": 24,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 62.6292221006006
+        },
+        "K-1": {
+          "accuracy": 0.631578947368421,
+          "correct_fields": 24,
+          "expected_fields": 38,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 75.81674328865483
+        },
+        "K-1:degraded_scan": {
+          "accuracy": 0.631578947368421,
+          "correct_fields": 24,
+          "expected_fields": 38,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 53.95366259664297
+        }
+      }
+    },
+    "gemma4:latest": {
+      "documents_finished": 8,
+      "correct_fields": 156,
+      "expected_fields": 224,
+      "field_accuracy": 0.6964285714285714,
+      "populated_accuracy": 0.7184466019417476,
+      "exact_documents": 0,
+      "error_documents": 1,
+      "classification_correct": 8,
+      "extra_field_count": 6,
+      "wall_seconds_per_page": 75.42390234516934,
+      "forms": {
+        "1099-R": {
+          "accuracy": 0.8333333333333334,
+          "correct_fields": 25,
+          "expected_fields": 30,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 87.70822614897043
+        },
+        "1099-R:degraded_scan": {
+          "accuracy": 0.8666666666666667,
+          "correct_fields": 26,
+          "expected_fields": 30,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 70.53533620852977
+        },
+        "1099-G": {
+          "accuracy": 0.8333333333333334,
+          "correct_fields": 15,
+          "expected_fields": 18,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 43.29071772377938
+        },
+        "1099-G:degraded_scan": {
+          "accuracy": 0.8333333333333334,
+          "correct_fields": 15,
+          "expected_fields": 18,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 50.302017224021256
+        },
+        "1099-K": {
+          "accuracy": 0.7307692307692307,
+          "correct_fields": 19,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 94.54133282601833
+        },
+        "1099-K:degraded_scan": {
+          "accuracy": 0.9615384615384616,
+          "correct_fields": 25,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 59.94303378928453
+        },
+        "K-1": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 38,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 90.08629109058529
+        },
+        "K-1:degraded_scan": {
+          "accuracy": 0.8157894736842105,
+          "correct_fields": 31,
+          "expected_fields": 38,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 83.87288867495954
+        }
+      }
+    },
+    "qwen3.5:4b": {
+      "documents_finished": 8,
+      "correct_fields": 70,
+      "expected_fields": 224,
+      "field_accuracy": 0.3125,
+      "populated_accuracy": 0.32038834951456313,
+      "exact_documents": 3,
+      "error_documents": 5,
+      "classification_correct": 8,
+      "extra_field_count": 0,
+      "wall_seconds_per_page": 48.40783181488514,
+      "forms": {
+        "1099-R": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 30,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 74.8192176008597
+        },
+        "1099-R:degraded_scan": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 30,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 68.67088585160673
+        },
+        "1099-G": {
+          "accuracy": 1.0,
+          "correct_fields": 18,
+          "expected_fields": 18,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 40.74841516558081
+        },
+        "1099-G:degraded_scan": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 18,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 75.25840598437935
+        },
+        "1099-K": {
+          "accuracy": 1.0,
+          "correct_fields": 26,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 49.68851071130484
+        },
+        "1099-K:degraded_scan": {
+          "accuracy": 1.0,
+          "correct_fields": 26,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": true,
+          "seconds_per_page": 50.19831015076488
+        },
+        "K-1": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 38,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 30.79529923852533
+        },
+        "K-1:degraded_scan": {
+          "accuracy": 0.0,
+          "correct_fields": 0,
+          "expected_fields": 38,
+          "status": "error",
+          "exact": false,
+          "seconds_per_page": 31.55198710365221
+        }
+      }
+    },
+    "glm-ocr:latest": {
+      "documents_finished": 8,
+      "correct_fields": 158,
+      "expected_fields": 224,
+      "field_accuracy": 0.7053571428571429,
+      "populated_accuracy": 0.7087378640776699,
+      "exact_documents": 0,
+      "error_documents": 0,
+      "classification_correct": 6,
+      "extra_field_count": 16,
+      "wall_seconds_per_page": 11.753164877835662,
+      "forms": {
+        "1099-R": {
+          "accuracy": 0.9,
+          "correct_fields": 27,
+          "expected_fields": 30,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 20.483179034665227
+        },
+        "1099-R:degraded_scan": {
+          "accuracy": 0.9,
+          "correct_fields": 27,
+          "expected_fields": 30,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 8.444251596927643
+        },
+        "1099-G": {
+          "accuracy": 0.9444444444444444,
+          "correct_fields": 17,
+          "expected_fields": 18,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 13.104515003971756
+        },
+        "1099-G:degraded_scan": {
+          "accuracy": 0.9444444444444444,
+          "correct_fields": 17,
+          "expected_fields": 18,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 4.634195131249726
+        },
+        "1099-K": {
+          "accuracy": 0.8076923076923077,
+          "correct_fields": 21,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 15.009140676818788
+        },
+        "1099-K:degraded_scan": {
+          "accuracy": 0.7307692307692307,
+          "correct_fields": 19,
+          "expected_fields": 26,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 6.510805707424879
+        },
+        "K-1": {
+          "accuracy": 0.39473684210526316,
+          "correct_fields": 15,
+          "expected_fields": 38,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 10.559624888002872
+        },
+        "K-1:degraded_scan": {
+          "accuracy": 0.39473684210526316,
+          "correct_fields": 15,
+          "expected_fields": 38,
+          "status": "ok",
+          "exact": false,
+          "seconds_per_page": 14.113155925646424
+        }
+      }
+    }
+  }
+}
