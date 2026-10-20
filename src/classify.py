@@ -35,6 +35,10 @@ TEXT_SIGNALS: list[tuple[str, str]] = [
     ("1099-MISC", "1099-MISC"),
     ("OMB No. 1545-0115", "1099-MISC"),
     ("1099-OID", "1099-OID"),
+    ("1099-G", "1099-G"),
+    ("OMB No. 1545-0120", "1099-G"),
+    ("1099-K", "1099-K"),
+    ("OMB No. 1545-2205", "1099-K"),
     ("Schedule K-1", "K-1"),
     ("Form 1040", "1040"),
 ]
@@ -63,7 +67,7 @@ Return JSON only.
 
 Return:
 {
-  "doc_type": string,   // one of: "W-2", "1099-DA", "1099-NEC", "1099-INT", "1099-DIV", "1099-R", "1099-B", "1099-MISC", "1099-OID", "K-1", "1040", "consolidated-1099", "unknown"
+  "doc_type": string,   // one of: "W-2", "1099-DA", "1099-NEC", "1099-INT", "1099-DIV", "1099-R", "1099-B", "1099-MISC", "1099-OID", "1099-G", "1099-K", "K-1", "1040", "consolidated-1099", "unknown"
   "confidence": number, // 0 to 1
   "method": "vision"
 }
@@ -73,6 +77,22 @@ Rules:
 - A standard 1099-DIV that mentions other form types in blank sections is still a "1099-DIV".
 - If unsure, return doc_type "unknown" with confidence <= 0.5.
 """
+
+
+DOC_TYPES: list[str] = [
+    "W-2", "1099-DA", "1099-NEC", "1099-INT", "1099-DIV", "1099-R", "1099-B", "1099-MISC",
+    "1099-OID", "1099-G", "1099-K", "K-1", "1040", "consolidated-1099", "unknown",
+]
+
+CLASSIFY_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "doc_type": {"type": "string", "enum": DOC_TYPES},
+        "confidence": {"type": "number"},
+        "method": {"type": "string"},
+    },
+    "required": ["doc_type", "confidence"],
+}
 
 
 def classify_document(file_path: str, cfg: Config) -> dict[str, Any]:
@@ -112,7 +132,9 @@ def classify_document(file_path: str, cfg: Config) -> dict[str, Any]:
         mat = pymupdf.Matrix(2.0, 2.0)
         pix = page.get_pixmap(matrix=mat)
         img = pix.tobytes("png")
-        out = chat_json_from_image(cfg=cfg, prompt=CLASSIFY_PROMPT, image_bytes=img)
+        out = chat_json_from_image(cfg=cfg, prompt=CLASSIFY_PROMPT, image_bytes=img, schema=CLASSIFY_SCHEMA)
+        if not isinstance(out, dict):
+            out = {}
         out.setdefault("method", "vision")
         out.setdefault("confidence", 0.5)
         out.setdefault("doc_type", "unknown")

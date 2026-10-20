@@ -6,6 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from .ai import ensure_backend_ready
 from .classify import classify_document
 from .config import load_config
 from .db import init_db
@@ -33,9 +34,25 @@ from .store import (
 )
 
 
+def _err(msg: str) -> None:
+    print(f"taxclaw: {msg}", file=sys.stderr)
+
+
 def cmd_ingest(args: argparse.Namespace) -> int:
     cfg = load_config()
     init_db()
+
+    if not Path(args.path).is_file():
+        _err(f"file not found: {args.path}")
+        return 2
+
+    # Fail fast before copying/recording anything if the model backend can't run
+    # (Ollama down, text-only local model, cloud privacy not acknowledged, ...).
+    try:
+        ensure_backend_ready(cfg)
+    except Exception as e:  # noqa: BLE001
+        _err(str(e))
+        return 3
 
     dest_path, file_hash, original_filename, mime_type = ingest_file(args.path, cfg)
     existing = get_document_by_hash(file_hash)
@@ -45,7 +62,11 @@ def cmd_ingest(args: argparse.Namespace) -> int:
 
     page_count = page_count_for_pdf(dest_path) if dest_path.lower().endswith(".pdf") else 1
 
-    cls = classify_document(dest_path, cfg)
+    try:
+        cls = classify_document(dest_path, cfg)
+    except Exception as e:  # noqa: BLE001
+        _err(f"classification failed: {e}")
+        cls = {"doc_type": "unknown", "confidence": 0.0}
     doc_type = cls.get("doc_type") or "unknown"
     classification_confidence = float(cls.get("confidence") or 0.0)
 
@@ -76,8 +97,11 @@ def cmd_ingest(args: argparse.Namespace) -> int:
         if nr and missing:
             mark_needs_review(doc_id=doc_id, notes=f"missing required fields: {', '.join(missing)}")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         mark_needs_review(doc_id=doc_id, notes=str(e))
+        print(doc_id)
+        _err(f"extraction failed for {doc_id} ({doc_type}): {e}")
+        return 1
 
     print(doc_id)
     return 0

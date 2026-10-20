@@ -62,10 +62,11 @@ else
 fi
 
 # init db
-PYTHONPATH="$SKILL_DIR" "$VENV_DIR/bin/python" -c "from src.db import init_db; init_db()"
+PYTHONPATH="$SKILL_DIR" "$VENV_DIR/bin/python" -P -c "from src.db import init_db; init_db()"
 
 echo
 echo "✅ taxclaw setup complete"
 echo "Next steps:"
-echo "  1) Edit config: $CONFIG_PATH"
-echo "  2) Start UI: bash $SKILL_DIR/start.sh"
+echo "  1) Local mode needs Ollama with a vision model: ollama pull gemma3:4b"
+echo "  2) Edit config: $CONFIG_PATH"
+echo "  3) Start UI: bash $SKILL_DIR/start.sh"

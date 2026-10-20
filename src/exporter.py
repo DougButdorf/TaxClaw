@@ -73,38 +73,54 @@ def _doc_row(doc: Any) -> dict[str, Any]:
     }
 
 
-def export_doc_json(doc_id: str) -> str:
-    with db() as con:
-        doc = con.execute("SELECT * FROM documents WHERE id=?", (doc_id,)).fetchone()
-        if not doc:
-            raise ValueError("document not found")
-        ext = con.execute(
-            "SELECT raw_json FROM form_extractions WHERE document_id=? ORDER BY created_at DESC LIMIT 1",
-            (doc_id,),
-        ).fetchone()
-        extraction = json.loads(ext[0]) if ext and ext[0] else None
-        fields = con.execute(
-            "SELECT field_path, field_value, confidence FROM extracted_fields WHERE document_id=? ORDER BY field_path ASC",
-            (doc_id,),
-        ).fetchall()
-
-    payload = {
-        "_taxclaw_notice": _json_notice_obj(),
+def _doc_json_payload(con: Any, doc: Any) -> dict[str, Any]:
+    """Document row + latest raw extraction + extracted field values."""
+    doc_id = doc["id"]
+    ext = con.execute(
+        "SELECT raw_json FROM form_extractions WHERE document_id=? ORDER BY created_at DESC LIMIT 1",
+        (doc_id,),
+    ).fetchone()
+    extraction = json.loads(ext[0]) if ext and ext[0] else None
+    fields = con.execute(
+        "SELECT field_path, field_value, confidence FROM extracted_fields WHERE document_id=? ORDER BY field_path ASC",
+        (doc_id,),
+    ).fetchall()
+    return {
         "document": dict(doc),
         "extraction": extraction,
         "extracted_fields": [
             {"field_path": r[0], "field_value": r[1], "confidence": r[2]} for r in fields
         ],
     }
+
+
+def export_doc_json(doc_id: str) -> str:
+    with db() as con:
+        doc = con.execute("SELECT * FROM documents WHERE id=?", (doc_id,)).fetchone()
+        if not doc:
+            raise ValueError("document not found")
+        body = _doc_json_payload(con, doc)
+
+    payload = {"_taxclaw_notice": _json_notice_obj(), **body}
     return json.dumps(payload, ensure_ascii=False, indent=2)
 
 
 def export_all_json() -> str:
+    """All documents, each with its extraction and extracted field values.
+
+    Each entry in ``documents`` keeps the document row's columns at the top level
+    (backward compatible with the previous export) and adds ``extraction`` and
+    ``extracted_fields`` exactly as the single-document JSON export does.
+    """
     with db() as con:
         docs = con.execute("SELECT * FROM documents ORDER BY created_at DESC").fetchall()
+        entries: list[dict[str, Any]] = []
+        for d in docs:
+            body = _doc_json_payload(con, d)
+            entries.append({**body["document"], "extraction": body["extraction"], "extracted_fields": body["extracted_fields"]})
         payload = {
             "_taxclaw_notice": _json_notice_obj(),
-            "documents": [dict(d) for d in docs],
+            "documents": entries,
         }
     return json.dumps(payload, ensure_ascii=False, indent=2)
 

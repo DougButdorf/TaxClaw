@@ -42,7 +42,7 @@
 
     <div style="margin-bottom: 12px;">
       <div style="font-weight:700;">What's the difference between Local and Cloud mode?</div>
-      <div class="muted" style="margin-top:4px;">Local mode uses Ollama (recommended: <code>glm-ocr</code>) and keeps data fully private, but accuracy can vary by scan quality. Cloud mode is typically more accurate, but requires an API key and a privacy acknowledgment.</div>
+      <div class="muted" style="margin-top:4px;">Local mode uses Ollama (recommended: <code>gemma3:4b</code>) and keeps data fully private, but accuracy can vary by scan quality. Cloud mode is typically more accurate, but requires an API key and a privacy acknowledgment.</div>
     </div>
 
     <div>
@@ -56,12 +56,12 @@
 
     <div style="margin-bottom: 12px;">
       <div style="font-weight:700;">Why are all my fields empty after uploading?</div>
-      <div class="muted" style="margin-top:4px;">Most often the OCR model isn't running/selected, or the document is a low-quality scan (blurry, skewed, tiny text). Switch to <code>glm-ocr</code>, re-run extraction, and try a cleaner PDF/image if you can.</div>
+      <div class="muted" style="margin-top:4px;">Most often the OCR model isn't running/selected, or the document is a low-quality scan (blurry, skewed, tiny text). Make sure Ollama is running and a vision model such as <code>gemma3:4b</code> is selected, re-run extraction, and try a cleaner PDF/image if you can.</div>
     </div>
 
     <div style="margin-bottom: 12px;">
       <div style="font-weight:700;">What's the best local model to use?</div>
-      <div class="muted" style="margin-top:4px;">Use <code>glm-ocr</code> in Ollama-it's the best default balance of OCR + form understanding for TaxClaw. If you're not getting text, confirm Ollama is running and the model is actually installed.</div>
+      <div class="muted" style="margin-top:4px;">Use <code>gemma3:4b</code> in Ollama (<code>ollama pull gemma3:4b</code>) — it's the default and reads standard forms well on a 16 GB machine. <code>glm-ocr</code> is a smaller OCR-focused option. The model must support vision; text-only models such as <code>llama3.2</code> cannot read documents. If you're not getting text, confirm Ollama is running and the model is actually installed.</div>
     </div>
 
     <div style="margin-bottom: 12px;">

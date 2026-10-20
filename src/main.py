@@ -11,7 +11,6 @@ import zipfile
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
-from urllib.request import urlopen
 
 import pymupdf
 from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
@@ -19,11 +18,13 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from .ai import ensure_backend_ready
 from .classify import classify_document
 from .config import CONFIG_PATH, load_config, save_config
 from .db import db, init_db
 from .exporter import export_all_csv_long, export_all_csv_wide, export_all_json, export_doc_csv_long, export_doc_csv_wide, export_doc_json
 from .extract import extract_document, pretty_json
+from .ollama_local import list_models_with_vision, ollama_host
 from .review import compute_needs_review, compute_overall_confidence, missing_required_fields
 from .store import (
     create_document_record,
@@ -144,27 +145,18 @@ def _render(request: Request, name: str, context: dict[str, Any]) -> Response:
 
 
 def _ollama_model_info() -> list[dict]:
-    """Return installed Ollama models with vision capability flag.
+    """Return installed Ollama models with a vision capability flag (vision models first).
 
-    Vision models have 'clip' in their families list (e.g. llava, moondream).
-    Text-only models silently ignore images and will return all-null extractions.
+    Vision is read from Ollama's /api/show ``capabilities`` (contains "vision");
+    a model-family allowlist is only a fallback for old Ollama builds. Text-only
+    models cannot read document images, so extraction with them fails.
     """
-    try:
-        with urlopen("http://localhost:11434/api/tags", timeout=1.5) as r:
-            data = json.loads(r.read().decode("utf-8"))
-        models = data.get("models") or []
-        out: list[dict] = []
-        for m in models:
-            name = m.get("name")
-            if not isinstance(name, str) or not name:
-                continue
-            families = m.get("details", {}).get("families") or []
-            # 'clip' = llava/moondream style; 'glmocr' = GLM-OCR; expand as new models arrive
-            vision = any(f in families for f in ("clip", "glmocr", "qwen2vl", "internvl"))
-            out.append({"name": name, "vision": vision})
-        return sorted(out, key=lambda x: (not x["vision"], x["name"]))  # vision models first
-    except Exception:
-        return []
+    return list_models_with_vision(timeout=1.5)
+
+
+def _with_tag(name: str) -> str:
+    """Ollama treats "glm-ocr" and "glm-ocr:latest" as the same model."""
+    return name if ":" in name else f"{name}:latest"
 
 
 # ---------------------------------------------------------------------------
@@ -422,7 +414,7 @@ def settings(request: Request):
     local_models_info = _ollama_model_info()
     local_models = [m["name"] for m in local_models_info]
     vision_models = {m["name"] for m in local_models_info if m["vision"]}
-    selected_is_vision = cfg_now.local_model in vision_models
+    selected_is_vision = _with_tag(cfg_now.local_model) in {_with_tag(n) for n in vision_models}
 
     status_level = "full_local" if cfg_now.model_backend == "local" else "partial_local"
     needs_privacy_ack = bool(cfg_now.model_backend == "cloud" and not cfg_now.privacy_acknowledged)
@@ -442,6 +434,7 @@ def settings(request: Request):
             "status_level": status_level,
             "needs_privacy_ack": needs_privacy_ack,
             "config_path": str(CONFIG_PATH),
+            "ollama_host": ollama_host(),
             "error": None,
         },
     )
@@ -483,12 +476,13 @@ async def settings_save(
                 "local_models": [m["name"] for m in _lmi],
                 "local_models_info": _lmi,
                 "vision_models": _vm,
-                "selected_is_vision": cfg_now.local_model in _vm,
+                "selected_is_vision": _with_tag(cfg_now.local_model) in {_with_tag(n) for n in _vm},
                 "cloud_models": _cloud_models(),
                 "cloud_model": cfg_now.cloud_model,
                 "status_level": "partial_local",
                 "needs_privacy_ack": True,
                 "config_path": str(CONFIG_PATH),
+                "ollama_host": ollama_host(),
                 "error": "Cloud mode requires privacy confirmation.",
             },
         )
@@ -516,6 +510,23 @@ async def upload(
 
     if cfg.model_backend == "cloud" and not cfg.privacy_acknowledged:
         return RedirectResponse(url="/settings", status_code=303)
+
+    # Fail fast with a clear message (Ollama not running, text-only model, ...)
+    # before anything is written to disk.
+    try:
+        ensure_backend_ready(cfg)
+    except Exception as e:  # noqa: BLE001
+        return _render(
+            request,
+            "upload.html",
+            {
+                "request": request,
+                "model_backend": cfg.model_backend,
+                "cloud_model": cfg.cloud_model,
+                "local_model": cfg.local_model,
+                "error": str(e),
+            },
+        )
 
     incoming = cfg.data_path / "incoming"
     incoming.mkdir(parents=True, exist_ok=True)

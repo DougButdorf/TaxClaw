@@ -1,3 +1,15 @@
 #!/usr/bin/env bash
 # Back-compat alias for earlier scaffolds.
-exec "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/taxclaw" "$@"
+set -euo pipefail
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  SOURCE_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  case "$SOURCE" in
+    /*) ;;
+    *) SOURCE="$SOURCE_DIR/$SOURCE" ;;
+  esac
+done
+
+exec "$(cd -P "$(dirname "$SOURCE")" && pwd)/taxclaw" "$@"
