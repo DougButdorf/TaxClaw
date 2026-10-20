@@ -513,5 +513,99 @@ def extract_document(file_path: str, doc_type: str, cfg: Config) -> dict[str, An
     return extract_document_with_meta(file_path, doc_type, cfg).data
 
 
+# ---------------------------------------------------------------------------
+# Per-lot capital-gain detail for 1099-B and consolidated 1099s
+# ---------------------------------------------------------------------------
+#
+# The main 1099-B / consolidated-1099 prompts above return one flat object per
+# document (summary boxes). Form 8949 / TXF exports need one row per sale, so a
+# separate pass reads the transaction-detail tables. It is kept out of
+# ``extract_document`` on purpose: that function's output shape is what the
+# accuracy benchmark grades, and lots are stored in their own table.
+
+CAPITAL_LOT_DOC_TYPES = frozenset({"1099-B", "consolidated-1099"})
+
+CAPITAL_LOTS_PROMPT = """You are reading ONE page of a US broker tax statement: Form 1099-B, or the 1099-B section of a consolidated 1099.
+List every individual sale (lot) shown in the transaction detail table(s) on THIS page.
+Return JSON only. Do not hallucinate. Use null for blank cells.
+If this page has no 1099-B transaction rows (cover page, summary page, 1099-DIV/INT/OID page), return {"lots": []}.
+Do NOT include subtotal, total or summary rows.
+
+Return object:
+{
+  "lots": [
+    {
+      "description": string|null,                // box 1a Description of property, e.g. "100 SH ACME CORP"
+      "cusip": string|null,
+      "quantity": string|null,
+      "date_acquired": string|null,              // box 1b, as printed (e.g. "03/15/2024" or "VARIOUS")
+      "date_sold": string|null,                  // box 1c, as printed
+      "proceeds": string|null,                   // box 1d
+      "cost_basis": string|null,                 // box 1e; null if blank, "missing" or "not reported"
+      "accrued_market_discount": string|null,    // box 1f
+      "wash_sale_loss_disallowed": string|null,  // box 1g Wash sale loss disallowed (often printed with a "W" next to it)
+      "gain_loss": string|null,                  // realized gain or (loss) as printed on the statement, if shown
+      "term": string|null,                       // "short" or "long", from box 2 or the section heading
+      "basis_reported_to_irs": boolean|null,     // true if the section says covered / basis reported to the IRS, false if noncovered / basis not reported
+      "form_8949_box": string|null               // the Form 8949 box letter the statement says to check for this section (e.g. "A"), else null
+    }
+  ]
+}
+
+Formatting rules:
+- Dollar amounts: string with digits, commas optional, no $. Losses/negatives with a leading minus.
+- Copy dates exactly as printed.
+"""
+
+# Pages with a text layer are only sent for lot extraction if they look like
+# 1099-B detail; image-only pages (scans) are always sent.
+_LOT_PAGE_SIGNALS = ("1099-b", "8949", "date sold", "date acquired", "proceeds", "cost basis", "cost or other basis")
+
+
+def capital_lots_schema() -> dict[str, Any]:
+    body = CAPITAL_LOTS_PROMPT[CAPITAL_LOTS_PROMPT.index("Return object:") :]
+    lot = _object_schema_from_text(_block(body, '"lots": [', "]"))
+    return {
+        "type": "object",
+        "properties": {"lots": {"type": "array", "items": lot}},
+        "required": ["lots"],
+    }
+
+
+def page_may_have_lots(page_text: str) -> bool:
+    t = (page_text or "").strip().lower()
+    if not t:
+        return True
+    return any(sig in t for sig in _LOT_PAGE_SIGNALS)
+
+
+def extract_capital_lots(file_path: str, cfg: Config) -> list[dict[str, Any]]:
+    """Return the per-sale rows of a 1099-B / consolidated 1099 (one model call per candidate page).
+
+    Each lot gets ``page`` (1-based). Empty/non-dict items are dropped. Raises on
+    model/parse errors; callers treat this pass as best-effort.
+    """
+
+    prompt = f"{UNTRUSTED_DOCUMENT_NOTE}\n\n{CAPITAL_LOTS_PROMPT}"
+    schema = capital_lots_schema()
+    lots: list[dict[str, Any]] = []
+    doc = pymupdf.open(file_path)  # images open as one-page documents, as in extract_document
+    try:
+        for i in range(doc.page_count):
+            if not page_may_have_lots(doc[i].get_text("text") or ""):
+                continue
+            img = _render_page_png(doc, i)
+            out = clean_null_strings(chat_json_from_image(cfg=cfg, prompt=prompt, image_bytes=img, schema=schema))
+            page_lots = out.get("lots") if isinstance(out, dict) else None
+            if not isinstance(page_lots, list):
+                continue
+            for lot in page_lots:
+                if isinstance(lot, dict) and any(v not in (None, "") for v in lot.values()):
+                    lots.append({**lot, "page": i + 1})
+    finally:
+        doc.close()
+    return lots
+
+
 def pretty_json(data: Any) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False)

@@ -373,6 +373,75 @@ def store_1099da_transactions(*, doc_id: str, extraction: dict[str, Any]) -> Non
             )
 
 
+def store_1099b_lots(*, doc_id: str, lots: list[dict[str, Any]]) -> None:
+    """Replace the stored per-sale rows of a 1099-B / consolidated 1099."""
+
+    with db() as con:
+        con.execute("DELETE FROM transactions_1099b WHERE document_id=?", (doc_id,))
+        for i, t in enumerate(lots):
+            if not isinstance(t, dict):
+                continue
+            con.execute(
+                """INSERT INTO transactions_1099b (
+                    id, document_id, lot_index, page, description, cusip, quantity, date_acquired, date_sold,
+                    proceeds, cost_basis, accrued_market_discount, wash_sale_loss_disallowed, gain_loss, term,
+                    basis_reported_to_irs, form_8949_box, raw_json
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    str(uuid.uuid4()),
+                    doc_id,
+                    i,
+                    t.get("page"),
+                    _text_or_none(t.get("description")),
+                    _text_or_none(t.get("cusip")),
+                    _text_or_none(t.get("quantity")),
+                    _text_or_none(t.get("date_acquired")),
+                    _text_or_none(t.get("date_sold")),
+                    _text_or_none(t.get("proceeds")),
+                    _text_or_none(t.get("cost_basis")),
+                    _text_or_none(t.get("accrued_market_discount")),
+                    _text_or_none(t.get("wash_sale_loss_disallowed")),
+                    _text_or_none(t.get("gain_loss")),
+                    _text_or_none(t.get("term")),
+                    _bool_to_int(t.get("basis_reported_to_irs")),
+                    _text_or_none(t.get("form_8949_box")),
+                    json_dumps(t),
+                ),
+            )
+
+
+def extract_and_store_1099b_lots(
+    *, doc_id: str, file_path: str, doc_type: str, cfg: Config
+) -> tuple[int | None, str | None]:
+    """Best-effort per-lot pass for 1099-B / consolidated 1099s.
+
+    Returns (lot_count, note). lot_count is None when the type has no lots or
+    the pass failed; note is a short message for the document's review notes.
+    Never raises: the main extraction is already stored and must not be lost
+    because the lot table failed.
+    """
+
+    from .extract import CAPITAL_LOT_DOC_TYPES, extract_capital_lots
+
+    if doc_type not in CAPITAL_LOT_DOC_TYPES:
+        return None, None
+    try:
+        lots = extract_capital_lots(file_path, cfg)
+    except Exception as e:  # noqa: BLE001
+        return None, f"1099-B lot extraction failed: {' '.join(str(e).split())[:200]}"
+    store_1099b_lots(doc_id=doc_id, lots=lots)
+    return len(lots), None
+
+
+def _text_or_none(v: Any) -> str | None:
+    if v is None:
+        return None
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    s = str(v).strip()
+    return s or None
+
+
 def mark_processed(
     *,
     doc_id: str,

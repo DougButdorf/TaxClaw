@@ -69,7 +69,7 @@ set `TAXCLAW_PYTHON=/path/to/python3.11+`.
 2) 🏷️ **Classify** the form type (W-2, 1099-DA, etc.)
 3) 🤖 **Extract** fields into structured data
 4) ✅ **Review** anything flagged as low-confidence
-5) 📤 **Export** (CSV/JSON)
+5) 📤 **Export** (CSV/JSON, plus Form 8949-ready CSV and TXF for capital-gain sales)
 
 ## 🔒 Privacy & Model Settings
 
@@ -210,6 +210,81 @@ Codex commands were run.
 | K-1 (Form 1065) | ✅ | Partner's share; coded boxes keyed as box + code (e.g. `13W`, `20Z`) |
 | Consolidated 1099 | ✅ | Brokerage “mega-PDFs” (1099-INT/DIV/B bundled) |
 | Form 1040 | ⚠️ best-effort | Generic label/value extraction only; no form-specific schema |
+
+## 🧾 Exports for accountants and tax software
+
+TaxClaw can export capital-gain sales from 1099-B, consolidated 1099 and
+1099-DA documents in two extra formats. Both formats are built from the same
+normalized sales: 1099-DA transactions, plus the per-sale rows that a separate
+extraction pass reads from 1099-B detail tables. They are not a tax return,
+and TaxClaw does not decide how anything should be reported.
+
+```bash
+bin/taxclaw export --format 8949 --all > form8949.csv        # or --id DOC [--id DOC2 ...]
+bin/taxclaw export --format txf  --all > capital-gains.txf
+```
+
+The same exports are on the dashboard ("Form 8949 CSV", "TXF") and on each
+1099-B/1099-DA/consolidated document page. The MCP `export_documents` tool also
+offers them as `format: "8949_csv"` and `format: "txf"`, and returns `warnings`
+and `notice` alongside the content.
+
+**Form 8949 CSV.** The file has one row per sale, in the 2025 Form 8949 layout:
+- `a_description`, `b_date_acquired`, `c_date_sold`, `d_proceeds`, `e_cost_basis`, `f_adjustment_codes`, `g_adjustment_amount`, `h_gain_or_loss`;
+- `category`, the box to check;
+- `part` (I = short-term, II = long-term) and `term`;
+- `source_document_id`, `source_form`, `payer` and `confidence`;
+- `needs_review` and `review_reasons`.
+
+| Reported on | Basis reported to IRS | Short-term (Part I) | Long-term (Part II) |
+|---|---|---|---|
+| Form 1099-B | yes | A | D |
+| Form 1099-B | no | B | E |
+| Form 1099-DA | yes | G | J |
+| Form 1099-DA | no | H | K |
+
+Boxes C/F/I/L cover sales that weren't reported on a 1099-B or 1099-DA. TaxClaw
+never assigns them, because every sale it exports comes from a broker form.
+
+Rules the CSV follows:
+- **Column (h).** It is (d) − (e) + (g), computed with `Decimal` and rounded half-up to cents. It is filled in only when proceeds and basis are both present. Otherwise (h) is blank and the row is flagged; a common example is "basis missing — common for 1099-DA". Basis is never guessed.
+- **Holding period.** TaxClaw uses the form's short/long flag, or a Form 8949 box letter printed on the statement. If neither is there, it uses the dates: more than one year is long-term, counting from the day after acquisition. If none of these work, the term and category are blank and the row is flagged. "INHERITED" counts as long-term. When the form's flag and the dates disagree, the flag is used and the row is flagged.
+- **Basis reporting.** This decides between A/D and B/E (or G/J and H/K). TaxClaw reads it from the form's "basis reported to IRS" or "noncovered" checkbox. If neither is visible, the category is left blank and the row is flagged. A box letter printed on the statement is only a cross-check, and a mismatch is flagged.
+- **Adjustments.**
+  - A wash-sale loss disallowed on the form becomes code `W`, with the amount as a positive number in (g).
+  - Accrued market discount becomes code `D`. The amount comes from the IRS worksheet: minus the smaller of the gain and the discount. That figure is 0 if you elected to include market discount in income currently, so these rows are always flagged.
+  - Multiple codes are written in alphabetical order (e.g. `DW`), with the net amount in (g).
+  - A row is flagged when the gain or loss printed on the statement differs from the computed (h). This usually means a wash sale or basis value was misread.
+- **Review flags.** Every row from a document flagged for review is also flagged.
+
+**TXF (Tax Exchange Format) v042.** TXF records are written in Format 4, or in Format 5 when there is a wash-sale amount:
+- Each record has a `TD` type, a refnum, `C1`, `L1`, `P` for the description, two `D` lines (date acquired, date sold), `$` cost, `$` sales net and an optional `$` for the disallowed wash sale.
+- Refnums are 321/711 (short-term, 8949 box A/B) and 323/713 (long-term, box D/E). The file uses ASCII with CR+LF line endings.
+- TXF has no comment lines, so the AI-extraction/not-tax-advice notice is printed on stderr by the CLI, returned as `notice` by MCP and sent as an `X-TaxClaw-Notice` header by the web app.
+
+TaxClaw skips the following rows rather than writing a partial or guessed record, and lists each one as a warning:
+- **1099-DA sales (boxes G–L).** TXF v042 was last revised in 2011 and has no reference numbers for these boxes; use the 8949 CSV for them.
+- **Rows missing basis or dates, or with an unknown box.**
+- **Rows with adjustment codes other than W.**
+- **Rows whose extracted values contradict each other.** Examples: the computed (h) differs from the statement's printed gain/loss, the form's flag and the dates disagree on the term, or the printed box letter doesn't match the form's checkboxes.
+
+Which software imports TXF, as of October 2026:
+- **TurboTax Desktop: yes.** Intuit documents File → Import → From Accounting Software (Windows) / From TXF Files (Mac).
+- **TurboTax Online: no.** Intuit has no page that says so directly. Its TXF help article covers Desktop only, [Quicken](https://www.quicken.com/support/quicken-windows-how-transfer-tax-information-quicken-turbotax) says TurboTax Online no longer supports Quicken import, and [Tax Data Exchange](https://taxdataexchange.org/docs/txf/v042/index.html) knows of no web-based software that imports TXF.
+- **H&R Block Desktop: probably.** Only third-party guides document importing TXF through File → Import Financial Information; we found no H&R Block page that mentions TXF.
+- **H&R Block Online: no evidence of TXF import.**
+- **TaxAct: no evidence.** Its current help pages describe CSV import of 1099-B/8949 data. TaxAct also limits descriptions to 34 characters and doesn't accept "various" as a date sold.
+- **FreeTaxUSA: no evidence.** Its import page offers PDF and stock/crypto form uploads.
+
+Whether TurboTax Desktop maps imported TXF rows to the new 2025 boxes has not been verified. If in doubt, give your preparer the 8949 CSV.
+
+Sources:
+- [Form 8949 (2025)](https://www.irs.gov/pub/irs-pdf/f8949.pdf) and its [instructions](https://www.irs.gov/pub/irs-pdf/i8949.pdf). The [2026 draft form](https://www.irs.gov/pub/irs-dft/f8949--dft.pdf) has the same boxes and columns.
+- The [TXF v042 spec](https://taxdataexchange.org/docs/txf/v042/txf-spec.html) and its [overview](https://taxdataexchange.org/docs/txf/v042/index.html), as published by Tax Data Exchange.
+- Intuit, [Import a TXF file](https://ttlc.intuit.com/turbotax-support/en-us/help-article/import-export-data-files/import-txf-file/L47YK56cd_US_en_US).
+- TaxAct, [Form 8949 and Form 1099-B](https://support.taxact.com/support/22389/form-8949-and-form-1099-b-enter-stock-transactions).
+
+> AI-extracted data may contain errors. Check every row against the broker statement, especially rows with `needs_review=true`. This is not tax advice.
 
 ## 📁 Where your data lives
 

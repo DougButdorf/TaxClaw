@@ -70,8 +70,43 @@ def cmd_list(args: argparse.Namespace) -> int:
     return 0
 
 
+def _export_accountant(args: argparse.Namespace) -> int:
+    """Form 8949 CSV / TXF: content on stdout, notice and warnings on stderr."""
+
+    from .accountant_exports import NOTICE_TEXT, build_8949, export_txf
+
+    doc_ids = None if args.all else list(dict.fromkeys(args.id))
+    try:
+        if args.format == "8949":
+            res = build_8949(doc_ids)
+            sys.stdout.write(res.content)
+            summary = f"{res.rows} row(s), {res.needs_review} need review"
+        else:
+            res = export_txf(doc_ids)
+            sys.stdout.flush()
+            sys.stdout.buffer.write(res.content.encode("ascii"))  # keep the spec's CR+LF as-is
+            sys.stdout.buffer.flush()
+            summary = f"{res.records} TXF record(s)"
+    except ValueError as e:
+        _err(str(e))
+        return 2
+    _err(f"{args.format}: {summary}. {NOTICE_TEXT}")
+    for w in res.warnings:
+        _err(f"warning: {w}")
+    return 0
+
+
 def cmd_export(args: argparse.Namespace) -> int:
     init_db()
+
+    if not args.all and not args.id:
+        raise SystemExit("--id required unless --all")
+    if args.format in ("8949", "txf"):
+        return _export_accountant(args)
+    if args.id and len(args.id) > 1:
+        raise SystemExit(f"--format {args.format} takes one --id (or --all)")
+    if args.id:
+        args.id = args.id[0]
 
     if args.all:
         if args.format == "wide":
@@ -84,9 +119,6 @@ def cmd_export(args: argparse.Namespace) -> int:
             sys.stdout.write(export_all_json())
             return 0
         raise SystemExit("unknown format")
-
-    if not args.id:
-        raise SystemExit("--id required unless --all")
 
     if args.format == "wide":
         sys.stdout.write(export_doc_csv_wide(args.id))
@@ -155,10 +187,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_ls.add_argument("--json", action="store_true", help="print JSON")
     p_ls.set_defaults(func=cmd_list)
 
-    p_ex = sp.add_parser("export", help="export wide/long CSV or JSON")
-    p_ex.add_argument("--id", default=None)
+    p_ex = sp.add_parser(
+        "export",
+        help="export wide/long CSV, JSON, Form 8949 CSV or TXF",
+        description=(
+            "Export extracted data. wide/long/json export any document. 8949 (Form 8949-ready CSV, one row per "
+            "sale) and txf (TXF v042 for TurboTax Desktop-style import) cover 1099-B, consolidated 1099 and "
+            "1099-DA sales; their notice and warnings go to stderr. AI-extracted data: verify before use; "
+            "not tax advice."
+        ),
+    )
+    p_ex.add_argument("--id", action="append", default=None, help="document id (repeatable for --format 8949/txf)")
     p_ex.add_argument("--all", action="store_true")
-    p_ex.add_argument("--format", choices=["wide", "long", "json"], default="wide")
+    p_ex.add_argument("--format", choices=["wide", "long", "json", "8949", "txf"], default="wide")
     p_ex.set_defaults(func=cmd_export)
 
     p_md = sp.add_parser("models", help="show model choices: local, configured cloud, strongest with setup")
