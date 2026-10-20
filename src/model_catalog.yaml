@@ -122,3 +122,62 @@ tier3_setup:
         - "Export both in the environment TaxClaw runs in: CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN (do not put the token in config.yaml)."
         - "Set model_backend: cloudflare_clairic in ~/.config/taxclaw/config.yaml (or pick it in Settings) and acknowledge the privacy warning."
         - "Run `taxclaw models` to confirm tier 3 shows configured: true, then ingest a test document."
+
+# ---------------------------------------------------------------------------
+# First-run doctor: `taxclaw doctor`, the Settings page and the MCP setup_status
+# tool. Data only; the checks live in src/doctor.py.
+# ---------------------------------------------------------------------------
+doctor:
+  install:
+    url: "https://ollama.com/download"
+    macos: ["Install the Ollama app from https://ollama.com/download", "or run: brew install ollama"]
+    linux: "curl -fsSL https://ollama.com/install.sh | sh"
+    path_note: "After installing, open a new terminal (or restart your agent) so PATH picks up `ollama`, then run `taxclaw doctor` again."
+  # Approximate figures for the models the buckets above recommend. Download sizes are from
+  # Ollama's library page (https://ollama.com/library/gemma3/tags, 2026-10-20) and are shown
+  # labelled "approx."; min_ram_gb is a rule of thumb (model size plus room for the OS and the
+  # page images), not a measurement. Add a row when a bucket recommends another model.
+  model_requirements:
+    "gemma3:4b": { approx_download_gb: 3.4, min_ram_gb: 6 }
+    "gemma3:12b": { approx_download_gb: 8.2, min_ram_gb: 12 }
+  disk_headroom_gb: 2   # free space wanted on top of the download
+  # Cloud providers with your own keys, best to worst. Measured providers come first;
+  # the rest follow in a fixed order and are labelled "not benchmarked". Provider ids match
+  # tier2_cloud.providers. Source of the measured row:
+  # benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md
+  cloud_order:
+    - provider: "anthropic"
+      terms_url: "https://www.anthropic.com/legal/commercial-terms"
+      measured:
+        model: "claude-haiku-5-5"
+        fields: "224/224"
+        exact_documents: "8/8"
+        seconds_per_page: 5.21
+        basis: "8 invented documents, run through a subscription CLI wrapper rather than TaxClaw's API path; not real-world accuracy"
+    - provider: "openai"
+      terms_url: "https://openai.com/policies/"
+      measured: null
+    - provider: "gemini"
+      terms_url: "https://ai.google.dev/gemini-api/terms"
+      measured: null
+    - provider: "openrouter"
+      terms_url: "https://openrouter.ai/terms"
+      measured: null
+    - provider: "cloudflare"
+      terms_url: "https://www.cloudflare.com/terms/"
+      measured: null
+
+# TaxClaw Cloud (hosted). Not available yet: while `enabled` is false, every surface shows
+# only `coming_soon` and NO pricing. The pricing text is ready for launch; flip `enabled`
+# when the service exists. Using it will need the same explicit, recorded consent as any
+# other cloud path.
+hosted:
+  enabled: false
+  name: "TaxClaw Cloud"
+  coming_soon: "TaxClaw Cloud (hosted) is coming soon. Nothing to set up yet."
+  pricing:
+    free_pages: 10
+    price_per_page_usd: 0.10
+    payment: "paid by your agent via x402"
+    retention: "documents processed and not stored"
+    text: "10 free pages, then $0.10 per page, paid by your agent via x402. Documents are processed and not stored."

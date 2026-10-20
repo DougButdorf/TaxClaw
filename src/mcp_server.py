@@ -8,6 +8,7 @@ Run with ``taxclaw mcp`` (or ``bin/taxclaw mcp``). Uses whatever backend
 - get_document(document_id)
 - export_documents(document_id? | all, format)
 - list_models()
+- setup_status()   (the `taxclaw doctor` report: read-only)
 
 Safety:
 - ingest reads only the explicit absolute path it is given, which must be an
@@ -16,7 +17,9 @@ Safety:
 - tools never return original file bytes (only extracted data and metadata);
 - nothing but protocol messages is written to stdout (the SDK diverts fd 1 to
   stderr while serving; this module never prints);
-- cloud backends still require ``privacy_acknowledged: true``.
+- cloud backends still require ``privacy_acknowledged: true``;
+- no tool can switch to cloud or record cloud consent: that is the human's job, via
+  ``taxclaw use-cloud ... --accept-privacy`` or the Settings page.
 
 Not tax advice: TaxClaw extracts data from documents; it does not prepare or
 file returns. Verify extracted values against the original documents.
@@ -37,13 +40,16 @@ from mcp.server.mcpserver.exceptions import ToolError
 
 from .config import load_config
 from .db import init_db
+from .provenance import notice_line, parse_processed_by, processed_by_for_documents
 
 SERVER_INSTRUCTIONS = (
     "TaxClaw turns tax documents (W-2, 1099 variants, 1099-DA, K-1, consolidated 1099s) into structured data "
-    "stored locally. Typical flow: list_models (check the backend is ready) -> ingest_document(path) -> "
+    "stored locally. Typical flow: setup_status (is a backend ready? if not, tell the user the three paths in plain "
+    "words and let them choose) -> ingest_document(path) -> "
     "list_documents(needs_review=true) to find items a human should check -> get_document for fields and "
     "confidence -> export_documents. Extraction is local by default; cloud backends only run after the user "
-    "has acknowledged the privacy warning in TaxClaw settings. TaxClaw does not prepare or file returns and "
+    "has acknowledged the privacy warning themselves (CLI or Settings; no tool here can do it). Every result "
+    "carries processed_by (backend, model, documents_left_machine). TaxClaw does not prepare or file returns and "
     "is not tax advice; always verify values against the original document."
 )
 
@@ -59,6 +65,7 @@ _DOC_KEYS = (
 def _doc_public(d: dict[str, Any]) -> dict[str, Any]:
     out = {k: d.get(k) for k in _DOC_KEYS}
     out["needs_review"] = bool(out.get("needs_review"))
+    out["processed_by"] = parse_processed_by(d.get("processed_by"))
     return out
 
 
@@ -88,7 +95,16 @@ def ingest_document(
     except IngestError as e:
         prefix = {"validate": "invalid file", "backend": "backend not ready", "extract": "extraction failed"}[e.stage]
         suffix = f" (document_id={e.document_id}, flagged for review)" if e.document_id else ""
-        raise ToolError(f"{prefix}: {e}{suffix}") from None
+        hint = ""
+        if e.stage == "backend":
+            from .doctor import backend_next_step
+
+            hint = (
+                f"\nNext step: {backend_next_step(cfg)}"
+                "\nCall setup_status for the full report. Do not switch the user to cloud yourself: only the user can, "
+                "with `taxclaw use-cloud <backend> --accept-privacy` or in Settings."
+            )
+        raise ToolError(f"{prefix}: {e}{suffix}{hint}") from None
 
 
 @mcp.tool(
@@ -196,6 +212,8 @@ def export_documents(
             **extra,
             "warnings": res.warnings,
             "notice": NOTICE_TEXT,
+            "processed_by": res.processed_by,
+            "processed_by_notice": res.processed_by_line,
             "content": res.content,
         }
     fn = {
@@ -207,10 +225,13 @@ def export_documents(
         ("long_csv", True): exporter.export_all_csv_long,
     }[(format, bool(all))]
     content = fn() if all else fn(document_id)
+    pb = processed_by_for_documents(None if all else [document_id])
     return {
         "format": format,
         "scope": "all" if all else document_id,
         "content_type": "application/json" if format == "json" else "text/csv",
+        "processed_by": pb,
+        "processed_by_notice": notice_line(pb),
         "content": content,
     }
 
@@ -228,6 +249,25 @@ def list_models() -> dict[str, Any]:
     from .models import build_report
 
     return build_report(load_config(), live=True)
+
+
+@mcp.tool(
+    title="Setup status (first-run doctor)",
+    description=(
+        "Read-only first-run check: the same report as `taxclaw doctor --json`. Says whether TaxClaw can ingest right "
+        "now (ready), the one next step, and three explicit paths: (1) local Ollama on this machine with its exact "
+        "state (ollama_missing, server_unreachable, no_vision_model, model_not_selected, ready) and the command to "
+        "fix it, (2) cloud with the user's own API keys (key presence only; documents would leave the machine), "
+        "(3) hosted TaxClaw Cloud (coming soon). It installs nothing, downloads nothing and changes no settings. "
+        "If local is not ready, show the user the paths in plain words and ask which they want; never choose cloud "
+        "for them and never run install or pull commands without their OK. Switching to cloud is not possible from "
+        "this server: the user does it with `taxclaw use-cloud <backend> --accept-privacy`."
+    ),
+)
+def setup_status() -> dict[str, Any]:
+    from .doctor import build_report
+
+    return build_report(load_config(create_dirs=False))
 
 
 def main() -> None:

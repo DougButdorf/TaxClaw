@@ -139,17 +139,17 @@ def ensure_vision_model(model: str) -> None:
     _check_model_cached(ollama_host(), model)
 
 
-def list_models_with_vision(*, timeout: float = 1.5) -> list[dict[str, Any]]:
-    """Return installed models as ``[{"name", "vision"}]``, vision models first.
+def probe_models(*, timeout: float = 1.5) -> list[dict[str, Any]] | None:
+    """Installed models as ``[{"name", "vision"}]`` (vision models first), or None if the server is unreachable.
 
-    Best-effort: returns [] when Ollama is unreachable.
+    Unlike :func:`list_models_with_vision`, an empty list means "reachable, nothing installed".
     """
 
     try:
         c = client(timeout=timeout)
         listed = c.list()
     except Exception:  # noqa: BLE001
-        return []
+        return None
 
     out: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -170,3 +170,12 @@ def list_models_with_vision(*, timeout: float = 1.5) -> list[dict[str, Any]]:
             vision = any(f in _VISION_FAMILIES for f in families)
         out.append({"name": name, "vision": vision})
     return sorted(out, key=lambda x: (not x["vision"], x["name"]))
+
+
+def list_models_with_vision(*, timeout: float = 1.5) -> list[dict[str, Any]]:
+    """Return installed models as ``[{"name", "vision"}]``, vision models first.
+
+    Best-effort: returns [] when Ollama is unreachable.
+    """
+
+    return probe_models(timeout=timeout) or []

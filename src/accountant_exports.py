@@ -36,6 +36,7 @@ from typing import Any, Iterable, Sequence
 
 from .db import db
 from .exporter import TAXCLAW_VERSION, _csv_generated_human, _csv_notice_block
+from .provenance import notice_line, processed_by_for_documents
 
 CAPITAL_DOC_TYPES = ("1099-B", "1099-DA", "consolidated-1099")
 
@@ -448,9 +449,9 @@ def _sorted(rows: Sequence[Form8949Row]) -> list[Form8949Row]:
     return sorted(rows, key=lambda r: (_CATEGORY_ORDER.get(r.category, 99), r.source_document_id))
 
 
-def render_8949_csv(rows: Sequence[Form8949Row], *, generated: str | None = None) -> str:
+def render_8949_csv(rows: Sequence[Form8949Row], *, generated: str | None = None, processed_by: dict[str, Any] | None = None) -> str:
     buf = io.StringIO()
-    buf.write(_csv_notice_block(generated or _csv_generated_human()))
+    buf.write(_csv_notice_block(generated or _csv_generated_human(), processed_by))
     buf.write(
         "# Form 8949 layout (2025): one row per sale; category = the box to check (A/B/D/E for 1099-B, G/H/J/K for 1099-DA).\n"
         "# Rows with needs_review=true are incomplete (e.g. missing basis): column (h) is blank rather than guessed.\n"
@@ -468,6 +469,10 @@ class TxfExport:
     records: int
     warnings: list[str]
     notice: str = NOTICE_TEXT
+    # Where the exported documents were read (the TXF file itself stays spec-plain; this rides
+    # with the notice on stderr, the web header and MCP).
+    processed_by: dict[str, Any] | None = None
+    processed_by_line: str = ""
 
 
 _TXF_SAFE = re.compile(r"[^\x20-\x7e]")
@@ -719,17 +724,22 @@ class Export8949:
     needs_review: int
     warnings: list[str]
     notice: str = NOTICE_TEXT
+    processed_by: dict[str, Any] | None = None
+    processed_by_line: str = ""
 
 
 def build_8949(doc_ids: Sequence[str] | None = None, *, generated: str | None = None) -> Export8949:
     with db() as con:
         txns, warnings = load_transactions(con, doc_ids)
     rows = rows_for(txns)
+    pb = processed_by_for_documents(sorted({r.source_document_id for r in rows}))
     return Export8949(
-        content=render_8949_csv(rows, generated=generated),
+        content=render_8949_csv(rows, generated=generated, processed_by=pb),
         rows=len(rows),
         needs_review=sum(r.needs_review for r in rows),
         warnings=warnings,
+        processed_by=pb,
+        processed_by_line=notice_line(pb),
     )
 
 
@@ -744,6 +754,9 @@ def export_txf(doc_ids: Sequence[str] | None = None, *, export_date: date | None
 
     with db() as con:
         txns, warnings = load_transactions(con, doc_ids)
-    result = render_txf(rows_for(txns), export_date=export_date)
+    rows = rows_for(txns)
+    result = render_txf(rows, export_date=export_date)
     result.warnings = warnings + result.warnings
+    result.processed_by = processed_by_for_documents(sorted({r.source_document_id for r in rows}))
+    result.processed_by_line = notice_line(result.processed_by)
     return result

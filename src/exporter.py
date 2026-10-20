@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .db import db
+from .provenance import notice_line, parse_processed_by, processed_by_for_documents
 
 
 TAXCLAW_VERSION = "0.1.2"
@@ -21,21 +22,36 @@ def _csv_generated_human() -> str:
     return datetime.now().isoformat(sep=" ", timespec="seconds")
 
 
-def _csv_notice_block(generated: str) -> str:
-    return (
+def _csv_notice_block(generated: str, processed_by: dict[str, Any] | None = None) -> str:
+    block = (
         f"# TaxClaw Data Export | Generated: {generated}\n"
         "# NOTICE: This data was extracted by AI from tax documents. Values may contain errors.\n"
         "# Verify all figures against your original source documents before use. Not tax advice.\n"
         "# Outbranch Network LLC makes no warranty as to accuracy. Use at your own risk.\n"
     )
+    if processed_by is not None:
+        block += f"# {notice_line(processed_by)}\n"
+    return block
 
 
-def _json_notice_obj() -> dict[str, Any]:
-    return {
+def _json_notice_obj(processed_by: dict[str, Any] | None = None) -> dict[str, Any]:
+    out: dict[str, Any] = {
         "generated": _notice_generated_iso(),
         "disclaimer": "AI-extracted data. May contain errors. Verify against source documents before use. Not tax advice. Outbranch Network LLC makes no warranty of accuracy.",
         "taxclaw_version": TAXCLAW_VERSION,
     }
+    if processed_by is not None:
+        out["processed_by"] = processed_by
+        out["processed_by_notice"] = notice_line(processed_by)
+    return out
+
+
+def _doc_dict(doc: Any) -> dict[str, Any]:
+    """A document row as a plain dict with ``processed_by`` parsed from its stored JSON."""
+
+    d = dict(doc)
+    d["processed_by"] = parse_processed_by(d.get("processed_by"))
+    return d
 
 
 DOC_BASE_COLS = [
@@ -86,7 +102,7 @@ def _doc_json_payload(con: Any, doc: Any) -> dict[str, Any]:
         (doc_id,),
     ).fetchall()
     return {
-        "document": dict(doc),
+        "document": _doc_dict(doc),
         "extraction": extraction,
         "extracted_fields": [
             {"field_path": r[0], "field_value": r[1], "confidence": r[2]} for r in fields
@@ -101,7 +117,7 @@ def export_doc_json(doc_id: str) -> str:
             raise ValueError("document not found")
         body = _doc_json_payload(con, doc)
 
-    payload = {"_taxclaw_notice": _json_notice_obj(), **body}
+    payload = {"_taxclaw_notice": _json_notice_obj(processed_by_for_documents([doc_id])), **body}
     return json.dumps(payload, ensure_ascii=False, indent=2)
 
 
@@ -119,7 +135,7 @@ def export_all_json() -> str:
             body = _doc_json_payload(con, d)
             entries.append({**body["document"], "extraction": body["extraction"], "extracted_fields": body["extracted_fields"]})
         payload = {
-            "_taxclaw_notice": _json_notice_obj(),
+            "_taxclaw_notice": _json_notice_obj(processed_by_for_documents(None)),
             "documents": entries,
         }
     return json.dumps(payload, ensure_ascii=False, indent=2)
@@ -136,7 +152,7 @@ def export_doc_csv_long(doc_id: str) -> str:
         ).fetchall()
 
     buf = io.StringIO()
-    buf.write(_csv_notice_block(_csv_generated_human()))
+    buf.write(_csv_notice_block(_csv_generated_human(), processed_by_for_documents([doc_id])))
     headers = DOC_BASE_COLS + ["field_path", "field_value", "confidence"]
     w = csv.DictWriter(buf, fieldnames=headers)
     w.writeheader()
@@ -151,7 +167,7 @@ def export_doc_csv_long(doc_id: str) -> str:
 
 def export_all_csv_long() -> str:
     buf = io.StringIO()
-    buf.write(_csv_notice_block(_csv_generated_human()))
+    buf.write(_csv_notice_block(_csv_generated_human(), processed_by_for_documents(None)))
     headers = DOC_BASE_COLS + ["field_path", "field_value", "confidence"]
     w = csv.DictWriter(buf, fieldnames=headers)
     w.writeheader()
@@ -189,7 +205,7 @@ def export_doc_csv_wide(doc_id: str) -> str:
 
     headers = list(flat.keys())
     buf = io.StringIO()
-    buf.write(_csv_notice_block(_csv_generated_human()))
+    buf.write(_csv_notice_block(_csv_generated_human(), processed_by_for_documents([doc_id])))
     w = csv.DictWriter(buf, fieldnames=headers)
     w.writeheader()
     w.writerow(flat)
@@ -211,7 +227,7 @@ def export_all_csv_wide() -> str:
 
     headers = DOC_BASE_COLS + sorted(all_paths)
     buf = io.StringIO()
-    buf.write(_csv_notice_block(_csv_generated_human()))
+    buf.write(_csv_notice_block(_csv_generated_human(), processed_by_for_documents(None)))
     w = csv.DictWriter(buf, fieldnames=headers)
     w.writeheader()
 

@@ -45,7 +45,7 @@ TaxClaw does not require user accounts, email addresses, or registration of any 
 If you choose to enable **Cloud Mode** in TaxClaw Settings, excerpts of your tax document data are transmitted to a third-party AI provider (currently Anthropic, Inc.) for processing via their API.
 
 **Before enabling Cloud Mode, you must:**
-- Affirmatively acknowledge the Cloud Mode privacy notice in TaxClaw Settings
+- Affirmatively acknowledge the Cloud Mode privacy notice in TaxClaw Settings, or with `taxclaw use-cloud <provider> --accept-privacy` (TaxClaw records the time and the provider name in your config; switching back to local clears the record)
 - Confirm you understand that document data will leave your device
 
 **What leaves your device when Cloud Mode is enabled:**

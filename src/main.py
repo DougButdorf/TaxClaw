@@ -421,6 +421,9 @@ def _settings_context(request: Request, cfg_now: Any, *, error: str | None = Non
     selected_is_vision = _with_tag(cfg_now.local_model) in {_with_tag(n) for n in vision_models}
     report = build_report(cfg_now, live=True, ollama_models=local_models_info)
     tier1, tier2, tier3 = report["tiers"]
+    from .doctor import build_report as doctor_report
+
+    doctor = doctor_report(cfg_now)  # the same three paths as `taxclaw doctor`
 
     # Model suggestions for the OpenAI-compatible picker: live vision lists per preset.
     compat_models: dict[str, list[str]] = {}
@@ -447,6 +450,7 @@ def _settings_context(request: Request, cfg_now: Any, *, error: str | None = Non
         "needs_privacy_ack": bool(cfg_now.is_cloud and not cfg_now.privacy_acknowledged),
         "config_path": str(CONFIG_PATH),
         "ollama_host": ollama_host(),
+        "doctor": doctor,
         "tier1": tier1,
         "tier2": tier2,
         "tier3": tier3,
@@ -477,7 +481,7 @@ async def settings_save(
     openai_compat_api_key_env: str = Form(default=""),
     privacy_acknowledged: str | None = Form(default=None),
 ):
-    from .config import OPENAI_COMPAT_PRESETS, is_cloud_backend, normalize_backend
+    from .config import OPENAI_COMPAT_PRESETS, clear_cloud_consent, is_cloud_backend, normalize_backend, record_cloud_consent
 
     cfg_now = load_config()
 
@@ -499,7 +503,16 @@ async def settings_save(
     cfg_now.openai_compat_base_url = openai_compat_base_url.strip()
     cfg_now.openai_compat_api_key_env = openai_compat_api_key_env.strip()
     cloud = is_cloud_backend(cfg_now.model_backend)
-    cfg_now.privacy_acknowledged = bool(privacy_acknowledged) if cloud else False
+    if cloud and privacy_acknowledged:
+        # Consent is recorded with a time and the provider; saving again for the same provider keeps the original time.
+        record_cloud_consent(cfg_now, keep_existing=True)
+    else:
+        cfg_now.privacy_acknowledged = False
+        if not cloud:
+            clear_cloud_consent(cfg_now)
+        else:
+            cfg_now.privacy_acknowledged_at = ""
+            cfg_now.cloud_provider = ""
 
     error = None
     if cfg_now.openai_compat_api_key_env and not _ENV_NAME_RE.match(cfg_now.openai_compat_api_key_env):
@@ -1062,10 +1075,12 @@ def _accountant_export_response(request: Request, csrf: str, kind: str, doc_id: 
     headers = {"X-TaxClaw-Notice": NOTICE_TEXT}
     if kind == "8949":
         res = build_8949(ids)
+        headers["X-TaxClaw-Processed-By"] = res.processed_by_line
         headers["Content-Disposition"] = f"attachment; filename={stem}-form8949.csv"
         headers["X-TaxClaw-Rows-Needing-Review"] = str(res.needs_review)
         return Response(res.content, media_type="text/csv", headers=headers)
     txf = export_txf(ids)
+    headers["X-TaxClaw-Processed-By"] = txf.processed_by_line
     headers["Content-Disposition"] = f"attachment; filename={stem}.txf"
     headers["X-TaxClaw-Warnings"] = str(len(txf.warnings))
     return Response(txf.content.encode("ascii"), media_type="text/plain; charset=us-ascii", headers=headers)
