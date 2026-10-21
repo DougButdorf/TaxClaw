@@ -37,12 +37,22 @@ def cmd_ingest(args: argparse.Namespace) -> int:
     try:
         result = ingest_path(args.path, cfg, filer=args.filer, tax_year=args.year)
     except IngestError as e:
+        next_step = None
+        if e.stage == "backend":
+            from .doctor import backend_next_step
+
+            next_step = backend_next_step(cfg)
         if args.json:
-            _print_json({"ok": False, "stage": e.stage, "error": str(e), "document_id": e.document_id})
+            out = {"ok": False, "stage": e.stage, "error": str(e), "document_id": e.document_id}
+            if next_step:
+                out["next_step"] = next_step
+            _print_json(out)
         else:
             if e.document_id:
                 print(e.document_id)
             _err(str(e))
+            if next_step:
+                _err(f"next step: {next_step}")
         return e.exit_code
 
     if args.json:
@@ -58,11 +68,19 @@ _LIST_KEYS = (
 )
 
 
+def _list_entry(d: dict[str, Any]) -> dict[str, Any]:
+    from .provenance import parse_processed_by
+
+    out = {k: d.get(k) for k in _LIST_KEYS}
+    out["processed_by"] = parse_processed_by(d.get("processed_by"))
+    return out
+
+
 def cmd_list(args: argparse.Namespace) -> int:
     init_db()
     docs = list_documents(filer=args.filer, year=args.year, doc_type=args.type, needs_review=args.needs_review)
     if args.json:
-        _print_json({"documents": [{k: d.get(k) for k in _LIST_KEYS} for d in docs], "count": len(docs)})
+        _print_json({"documents": [_list_entry(d) for d in docs], "count": len(docs)})
         return 0
     for d in docs:
         print(
@@ -92,6 +110,7 @@ def _export_accountant(args: argparse.Namespace) -> int:
         _err(str(e))
         return 2
     _err(f"{args.format}: {summary}. {NOTICE_TEXT}")
+    _err(res.processed_by_line)
     for w in res.warnings:
         _err(f"warning: {w}")
     return 0
@@ -143,6 +162,112 @@ def cmd_models(args: argparse.Namespace) -> int:
         _print_json(report)
     else:
         sys.stdout.write(format_report(report, short=args.short))
+    return 0
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    from .doctor import build_report, format_report
+
+    report = build_report(load_config(create_dirs=False))
+    if args.json:
+        _print_json(report)
+    else:
+        sys.stdout.write(format_report(report))
+    return 0  # a report, not a test: "not ready" is information, not a failure
+
+
+def cmd_use_cloud(args: argparse.Namespace) -> int:
+    from .config import CONFIG_PATH, save_config
+    from .doctor import cloud_choice, privacy_text, switch_to_cloud
+
+    try:
+        name, _backend, _preset = cloud_choice(args.backend)
+    except ValueError as e:
+        _err(str(e))
+        return 2
+
+    cfg = load_config()
+    if not args.accept_privacy:
+        retry = f"taxclaw use-cloud {name}" + (f" --model {args.model}" if args.model else "") + " --accept-privacy"
+        text = privacy_text(name, args.model)
+        msg = "Refused: nothing was changed. Cloud needs your explicit consent. If you accept the notice above, run: " + retry
+        if args.json:
+            _print_json({"ok": False, "changed": False, "error": msg, "privacy_text": text, "retry_command": retry})
+        else:
+            print(text)
+            print()
+            _err(msg)
+        return 2
+
+    try:
+        switch_to_cloud(cfg, name, args.model)
+    except ValueError as e:
+        _err(str(e))
+        if args.json:
+            _print_json({"ok": False, "changed": False, "error": str(e)})
+        return 2
+    save_config(cfg=cfg)
+
+    warn = None
+    try:
+        from .ai import ensure_backend_ready
+
+        ensure_backend_ready(cfg)
+    except Exception as e:  # noqa: BLE001
+        warn = f"saved, but not ready yet: {e}"
+    if args.json:
+        out = {
+            "ok": True,
+            "changed": True,
+            "model_backend": cfg.backend,
+            "model": cfg.model_name(),
+            "provider": cfg.cloud_provider,
+            "privacy_acknowledged": True,
+            "privacy_acknowledged_at": cfg.privacy_acknowledged_at,
+            "documents_left_machine": True,
+            "config_path": str(CONFIG_PATH),
+        }
+        if warn:
+            out["warning"] = warn
+        _print_json(out)
+    else:
+        print(f"Switched to cloud: {cfg.cloud_provider} / {cfg.model_name()}.")
+        print(f"Consent recorded {cfg.privacy_acknowledged_at} in {CONFIG_PATH}.")
+        print(f"Documents you ingest from now on are sent to {cfg.cloud_provider}. Go back any time: taxclaw use-local")
+        if warn:
+            _err(f"warning: {warn}")
+    return 0
+
+
+def cmd_use_local(args: argparse.Namespace) -> int:
+    from .config import CONFIG_PATH, save_config
+    from .doctor import local_status, switch_to_local
+
+    cfg = load_config()
+    was_cloud = cfg.is_cloud
+    switch_to_local(cfg, args.model)
+    save_config(cfg=cfg)
+    status = local_status(cfg)
+    if args.json:
+        _print_json(
+            {
+                "ok": True,
+                "changed": True,
+                "model_backend": "local",
+                "model": cfg.local_model,
+                "documents_left_machine": False,
+                "was_cloud": was_cloud,
+                "local_ready": status["ready"],
+                "next_step": status["next_step"],
+                "config_path": str(CONFIG_PATH),
+            }
+        )
+        return 0
+    print(f"Switched to local: {cfg.local_model} via Ollama. Documents stay on this machine.")
+    if was_cloud:
+        print("Cloud consent cleared.")
+    if not status["ready"]:
+        _err(f"local is not ready yet: {status['next_step']}")
     return 0
 
 
@@ -209,6 +334,39 @@ def build_parser() -> argparse.ArgumentParser:
     p_md.add_argument("--offline", action="store_true", help="skip live provider model lists (no network)")
     p_md.add_argument("--short", action="store_true", help="short summary")
     p_md.set_defaults(func=cmd_models)
+
+    p_doc = sp.add_parser(
+        "doctor",
+        aliases=["setup"],
+        help="first-run check: local status, cloud with your own keys, hosted (read-only)",
+        description=(
+            "Read-only checks and three explicit paths: (1) local Ollama on this machine, (2) cloud with your own "
+            "keys, (3) TaxClaw Cloud (hosted, coming soon). Installs and downloads nothing, writes nothing, and "
+            "never switches to cloud."
+        ),
+    )
+    p_doc.add_argument("--json", action="store_true", help="print the report as JSON (for agents)")
+    p_doc.set_defaults(func=cmd_doctor)
+
+    p_uc = sp.add_parser(
+        "use-cloud",
+        help="switch to a cloud provider (needs --accept-privacy; records your consent)",
+        description=(
+            "Switch extraction to a cloud provider. Without --accept-privacy this prints the privacy text and "
+            "refuses. With it, writes model_backend, the model, privacy_acknowledged, privacy_acknowledged_at and "
+            "the provider name to config."
+        ),
+    )
+    p_uc.add_argument("backend", help="anthropic | openai | gemini | openrouter | cloudflare_clairic")
+    p_uc.add_argument("--model", default=None, help="vision-capable model id (default: the catalog's pick where one is confirmed)")
+    p_uc.add_argument("--accept-privacy", action="store_true", help="I understand my documents are sent to this provider")
+    p_uc.add_argument("--json", action="store_true", help="print JSON")
+    p_uc.set_defaults(func=cmd_use_cloud)
+
+    p_ul = sp.add_parser("use-local", help="switch back to local Ollama (no consent needed)")
+    p_ul.add_argument("--model", default=None, help="local vision model, e.g. gemma3:4b")
+    p_ul.add_argument("--json", action="store_true", help="print JSON")
+    p_ul.set_defaults(func=cmd_use_local)
 
     p_mcp = sp.add_parser("mcp", help="run the local MCP server over stdio")
     p_mcp.set_defaults(func=cmd_mcp)

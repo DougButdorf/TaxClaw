@@ -36,6 +36,49 @@ CLI, Hermes, ...) require the directory name to match (the repo itself is
 git clone https://github.com/DougButdorf/TaxClaw.git taxclaw && cd taxclaw
 ```
 
+### First run
+
+Run the doctor first. It is read-only: it installs nothing, downloads nothing,
+writes nothing and never switches to cloud.
+
+```bash
+taxclaw doctor           # alias: taxclaw setup;  add --json for agents
+```
+
+It reports three explicit paths, and you choose:
+
+1. **Local, on this machine (private).** One of four states, each with the exact next step:
+   - *Ollama not installed*: get it from <https://ollama.com/download> (macOS app or
+     `brew install ollama`; Linux `curl -fsSL https://ollama.com/install.sh | sh`).
+     Open a new terminal, or restart your agent, so PATH picks it up.
+   - *Installed, server not reachable*: open the Ollama app or run `ollama serve`
+     (`OLLAMA_HOST` is respected).
+   - *Running, no vision model*: it recommends the model for this machine's RAM from
+     `src/model_catalog.yaml` (`gemma3:4b` by default) with its approx. download size
+     and the command `ollama pull gemma3:4b`. TaxClaw never downloads models for you.
+     It also warns when RAM or free disk looks too low for that model.
+   - *Ready*: it shows the model.
+2. **Cloud with your own API keys (documents leave this machine).** Providers whose key
+   is present (presence only), best to worst by the catalog's measured data, with what
+   would be sent (full page images) and the note that the provider's terms apply.
+   Switching is explicit and recorded:
+   ```bash
+   taxclaw use-cloud anthropic --model claude-haiku-5-5 --accept-privacy
+   ```
+   Without `--accept-privacy` it prints the privacy text and refuses. With it, config
+   gets `model_backend`, the model, `privacy_acknowledged: true`,
+   `privacy_acknowledged_at` (UTC time) and `cloud_provider`. Go back any time, with no
+   consent needed and the consent record cleared: `taxclaw use-local [--model gemma3:4b]`.
+3. **TaxClaw Cloud (hosted).** Coming soon. Nothing to set up yet.
+
+TaxClaw never silently switches from local to cloud, and no MCP tool can: only you
+switch, with the command above or the Settings page (which needs the privacy
+checkbox and shows the consent time).
+
+Every extraction result (CLI `--json`, MCP, export metadata) carries
+`processed_by: {backend, model, provider, documents_left_machine}`, and exports say so in
+their notice. `setup.sh` ends by running `taxclaw doctor`.
+
 ### Local model (Ollama)
 Local mode needs [Ollama](https://ollama.com) running with a **vision** model.
 The default is `gemma3:4b`:
@@ -135,6 +178,10 @@ stay on your machine unless you chose a cloud backend in TaxClaw.
 | `get_document(document_id)` | Fields with per-field confidence (when the backend provides it) |
 | `export_documents(document_id? \| all, format)` | `json`, `wide_csv` or `long_csv` content as a string |
 | `list_models()` | The three model tiers above |
+| `setup_status()` | The `taxclaw doctor` report (read-only): is a backend ready, the next step, the three paths |
+
+If `ingest_document` finds the backend not ready, its error carries the doctor's next step.
+No tool can switch to cloud or record cloud consent; that is the human's step.
 
 The server only reads the exact file path it is given (an existing regular PDF,
 PNG, JPEG, TIFF or WebP within the upload size limit), never returns original

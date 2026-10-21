@@ -19,7 +19,7 @@ from typing import Any
 
 from mcp import ClientSession, StdioServerParameters, stdio_client
 
-EXPECTED_TOOLS = {"ingest_document", "list_documents", "get_document", "export_documents", "list_models"}
+EXPECTED_TOOLS = {"ingest_document", "list_documents", "get_document", "export_documents", "list_models", "setup_status"}
 
 
 def _package_version() -> str:
@@ -71,6 +71,17 @@ async def run(server: str, ingest: str | None, expect: dict[str, str]) -> int:
                 f"tier3 configured={[o['id'] for o in t3['options'] if o.get('configured')]}"
             )
 
+            # First-run doctor over MCP: read-only report; no tool can switch to cloud.
+            r = await session.call_tool("setup_status", {})
+            assert not r.is_error, r
+            st = _payload(r)
+            assert st["read_only"] is True and st["local"]["state"] in (
+                "ollama_missing", "server_unreachable", "no_vision_model", "model_not_selected", "ready"), st
+            assert st["hosted"]["status"] == "coming_soon" and "pricing" not in st["hosted"], st["hosted"]
+            assert st["current"]["documents_left_machine"] is False and st["current"]["backend"] == "local", st["current"]
+            assert not any(set(t.input_schema.get("properties", {})) & {"accept_privacy", "privacy_acknowledged", "model_backend"} for t in tools.tools)
+            log(f"setup_status ok: local={st['local']['state']} ready={st['ready']} hosted={st['hosted']['status']}")
+
             r = await session.call_tool("list_documents", {})
             assert not r.is_error, r
             docs = _payload(r)
@@ -97,6 +108,24 @@ async def run(server: str, ingest: str | None, expect: dict[str, str]) -> int:
             r = await session.call_tool("ingest_document", {"path": "/nonexistent/taxclaw-mcp-check.pdf"})
             assert r.is_error, "missing file should be rejected"
             log("ingest_document rejects relative and missing paths ok")
+
+            # A valid file but a backend that is not ready: the error carries the doctor's next step, not a generic one.
+            import tempfile
+
+            import pymupdf
+
+            if not ingest:
+                with tempfile.TemporaryDirectory() as td:
+                    pdf = os.path.join(td, "blank.pdf")
+                    d = pymupdf.open()
+                    d.new_page()
+                    d.save(pdf)
+                    r = await session.call_tool("ingest_document", {"path": pdf})
+                    assert r.is_error, "ingest with no ready backend should be an error"
+                    text = "".join(c.text for c in r.content if getattr(c, "type", None) == "text")
+                    assert "backend not ready" in text and "Next step:" in text and "setup_status" in text, text
+                    assert "Do not switch the user to cloud yourself" in text, text
+                log("ingest_document (backend not ready) error includes the doctor's next step ok")
 
             if not ingest:
                 return 0

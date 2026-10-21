@@ -67,11 +67,13 @@ PYTHONPATH="$SKILL_DIR" "$VENV_DIR/bin/python" -P -c "from src.db import init_db
 echo
 echo "✅ $("$SKILL_DIR/bin/taxclaw" --version 2>/dev/null || echo taxclaw) setup complete"
 echo
-echo "Model choices (full list, live cloud model lists: $SKILL_DIR/bin/taxclaw models):"
-"$SKILL_DIR/bin/taxclaw" models --short --offline 2>/dev/null | sed 's/^/  /' || echo "  (could not list models; run: $SKILL_DIR/bin/taxclaw models)"
+echo "First-run check (read-only; it installs and downloads nothing):"
 echo
-echo "Next steps:"
-echo "  1) Local mode needs Ollama with a vision model, e.g.: ollama pull gemma3:4b"
-echo "  2) Edit config: $CONFIG_PATH (or use Settings in the web UI)"
-echo "  3) Start UI: bash $SKILL_DIR/start.sh"
-echo "  4) Use from any MCP client: $SKILL_DIR/bin/taxclaw mcp"
+# `taxclaw doctor` reports and always exits 0; never let it fail setup.
+"$SKILL_DIR/bin/taxclaw" doctor || echo "  (could not run the doctor; run: $SKILL_DIR/bin/taxclaw doctor)"
+echo
+echo "More:"
+echo "  Full model list (live cloud model lists): $SKILL_DIR/bin/taxclaw models"
+echo "  Edit config: $CONFIG_PATH (or use Settings in the web UI)"
+echo "  Start UI: bash $SKILL_DIR/start.sh"
+echo "  Use from any MCP client: $SKILL_DIR/bin/taxclaw mcp"

@@ -1,5 +1,5 @@
 # TaxClaw config (copied to ~/.config/taxclaw/config.yaml by setup.sh).
-# Run `bin/taxclaw models` to see the model choices for this machine.
+# Run `bin/taxclaw doctor` for a first-run check, and `bin/taxclaw models` for the model choices.
 
 # Backend: local (default, nothing leaves this machine) | anthropic | openai_compat | cloudflare_clairic
 # ("cloud" is accepted as an alias for anthropic). Every non-local backend sends
@@ -7,6 +7,10 @@
 model_backend: local
 local_model: gemma3:4b  # Ollama model name; must support vision (ollama pull gemma3:4b)
 privacy_acknowledged: false
+# Consent record, written by `taxclaw use-cloud <backend> --accept-privacy` or the Settings page and
+# cleared by `taxclaw use-local`. Do not set these by hand to enable cloud; use the command.
+privacy_acknowledged_at: ""   # UTC time of the consent
+cloud_provider: ""            # who the documents are sent to
 
 # anthropic: key from the ANTHROPIC_API_KEY env var
 cloud_model: claude-haiku-5-5

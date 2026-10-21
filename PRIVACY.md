@@ -47,7 +47,7 @@ TaxClaw does not require user accounts, email addresses, or registration of any 
 "Cloud Mode" means choosing any extraction backend other than `local` in TaxClaw Settings or `config.yaml` (`anthropic`, `openai_compat` or `cloudflare_clairic`). In Cloud Mode, **complete pages of your tax documents** are sent to the third-party AI provider you chose, directly from your machine through that provider's API.
 
 **Before enabling Cloud Mode, you must:**
-- Affirmatively acknowledge the Cloud Mode privacy notice in TaxClaw Settings (or set `privacy_acknowledged: true` in `config.yaml`)
+- Affirmatively acknowledge the Cloud Mode privacy notice in TaxClaw Settings, with `taxclaw use-cloud <provider> --accept-privacy`, or by setting `privacy_acknowledged: true` in `config.yaml` (TaxClaw records the time and the provider name in your config; switching back to local clears the record)
 - Confirm you understand that document data will leave your device
 
 Every cloud backend checks this acknowledgment itself before sending anything, whether you use the web UI, the CLI or the MCP server.

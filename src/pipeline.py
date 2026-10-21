@@ -13,6 +13,7 @@ from .ai import ensure_backend_ready
 from .classify import classify_document
 from .config import Config
 from .db import init_db
+from .provenance import parse_processed_by
 from .extract import extract_document_with_meta
 from .review import compute_needs_review, compute_overall_confidence, missing_required_fields
 from .store import (
@@ -54,6 +55,8 @@ def document_summary(doc_id: str) -> dict[str, Any]:
         "classification_confidence": d.get("classification_confidence"),
         "original_filename": d.get("original_filename"),
         "notes": d.get("notes"),
+        # Where the document was read. null only for documents stored before this was recorded.
+        "processed_by": parse_processed_by(d.get("processed_by")),
     }
 
 

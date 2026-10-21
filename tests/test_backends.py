@@ -10,6 +10,7 @@ import json
 import os
 import tempfile
 import unittest
+from pathlib import Path
 
 import httpx
 
@@ -132,10 +133,15 @@ class McpSafetyTest(CleanEnv):
 
     def setUp(self):
         super().setUp()
-        from src.config import CONFIG_PATH
+        from unittest import mock
 
-        self.config_path = CONFIG_PATH
-        self.config_path.parent.mkdir(parents=True, exist_ok=True)
+        from src import config as _config
+
+        # Never touch the real (or the caller's) config.yaml: CONFIG_PATH is bound at import time.
+        self.config_path = Path(tempfile.mkdtemp(prefix="taxclaw-test-config-")) / "config.yaml"
+        patcher = mock.patch.object(_config, "CONFIG_PATH", self.config_path)
+        patcher.start()
+        self.addCleanup(patcher.stop)
         self.pdf = os.path.join(tempfile.mkdtemp(), "doc.pdf")
         import pymupdf
 
