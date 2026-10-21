@@ -143,7 +143,7 @@ You can configure the backend + model via the settings UI:
    ([results](benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md)),
    not real-world accuracy; Clairic is unbenchmarked:
    - `gemma3:4b` 158/224 fields (70.5%), 0/8 exact documents, 18.88 s/page; `gemma3:12b` 176/224 (78.6%), 0/8 exact, 65.95 s/page. Assisted extraction only: review every value.
-   - `claude-haiku-5-5` 224/224 fields, 8/8 exact documents, 5.21 s/page (highest measured; run via a subscription CLI wrapper, not the production API path).
+   - `claude-haiku-5-5` passed the 26-document release gate (13 form types, clean and degraded scan): 562/562 fields, 26/26 exact documents, 26/26 classifications (2026-10-21; via a subscription CLI adapter, not the production API backends). Through the `openai_compat` OpenRouter backend the same documents scored 561/562 fields and 25/26 exact documents in each of two runs, so review every value. Earlier 8-document run: 224/224 fields, 8/8 exact, 5.21 s/page.
    - `glm-ocr` misclassified the K-1s; `qwen3.5:4b` had 5 failed extractions; `gemma4:latest` had 1.
 2. **Cloud you already have configured**: detected by the *presence* of
    `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`/`GOOGLE_API_KEY`,

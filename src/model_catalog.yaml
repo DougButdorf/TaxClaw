@@ -8,11 +8,12 @@
 # (TaxClaw issue #3, WP-F): eight invented PDFs (clean + degraded scan of
 # 1099-R, 1099-G, 1099-K and K-1), 224 graded fields per model. They are not
 # real-world accuracy and not tax-preparation accuracy. Clairic is unbenchmarked.
+# The claude-haiku-5-5 row is the later 26-document release gate (2026-10-21).
 # Refresh `source`/`as_of` and the figures when the benchmark is rerun.
 
 catalog_version: 1
-source: "benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md (synthetic benchmark, 8 documents per model; not real-world accuracy; Clairic unbenchmarked)"
-as_of: "2026-10-20"
+source: "Local-model figures: benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md (synthetic benchmark, 8 documents per model). claude-haiku-5-5 gate: benchmarks/taxclaw_accuracy/results/2026-10-21-main-b2c4f4c/RESULTS.md (synthetic, 26 documents; on the benchmark branch, commit 3dcc5a1, until merged). Not real-world accuracy; Clairic unbenchmarked"
+as_of: "2026-10-21"
 
 tier1_local:
   title: "Local-first (default): Ollama on this machine"
@@ -67,7 +68,7 @@ tier2_cloud:
       confirmed:
         balance: "claude-haiku-5-5"
         strongest: "claude-sonnet-5-5"
-      confirmed_note: "confirmed current Anthropic model IDs; all current Claude models accept images. claude-haiku-5-5: highest measured accuracy on the synthetic benchmark (224/224 fields, 8/8 exact documents, 5.21 s/page), measured through a subscription CLI wrapper, not the production API path or its privacy controls. Synthetic benchmark, not real-world accuracy."
+      confirmed_note: "confirmed current Anthropic model IDs; all current Claude models accept images. claude-haiku-5-5: release gate on 13 supported form types, clean and degraded scan (synthetic): 562/562 fields, 26/26 exact documents, 26/26 classifications, zero runtime failures (2026-10-21). Measured through a subscription CLI adapter, not the production Anthropic API backend. Assisted extraction: review every value. Synthetic benchmark, not real-world accuracy."
     openai:
       label: "OpenAI"
       env: ["OPENAI_API_KEY"]
@@ -157,10 +158,10 @@ doctor:
       terms_url: "https://www.anthropic.com/legal/commercial-terms"
       measured:
         model: "claude-haiku-5-5"
-        fields: "224/224"
-        exact_documents: "8/8"
-        seconds_per_page: 5.21
-        basis: "8 invented documents, run through a subscription CLI wrapper rather than TaxClaw's API path; not real-world accuracy"
+        fields: "562/562"
+        exact_documents: "26/26"
+        seconds_per_page: 4.79
+        basis: "release gate, 13 supported form types clean and degraded scan (26 invented documents), run through a subscription CLI adapter rather than TaxClaw's API backends; not real-world accuracy"
     - provider: "openai"
       terms_url: "https://openai.com/policies/"
       measured: null

@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 - TBD
+## 1.0.0 - 2026-10-21
 
 TaxClaw turns tax documents into structured data for accountants and tax software. It is local-first, and 1.0 is the first release built for agents as well as people. It is not tax preparation and not tax advice.
 
@@ -24,7 +24,13 @@ TaxClaw turns tax documents into structured data for accountants and tax softwar
   - GitHub Sponsors links are removed. CI runs the smoke test and unit tests on Python 3.11 and 3.13.
 
 ### Measured accuracy (synthetic benchmark)
-Source: [`benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md`](benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md). Eight invented documents per model (1099-R, 1099-G, 1099-K and K-1, each clean and as a degraded scan), 224 graded fields. This is not real-world accuracy or tax-preparation accuracy; Clairic was not benchmarked.
+All figures are on invented documents. They are not real-world accuracy or tax-preparation accuracy, and TaxClaw remains assisted extraction: verify every value against the original document. Clairic was not benchmarked.
+
+**Release gate, 13 supported form types (2026-10-21, application `b2c4f4c`).** Each type as a clean PDF and as an image-only degraded scan: 26 documents, 562 graded fields. Best-effort Form 1040 is not part of this gate. Evidence: [`RESULTS.md`](https://github.com/DougButdorf/TaxClaw/blob/3dcc5a1390961708d94ebfb556dc26e23c87476c/benchmarks/taxclaw_accuracy/results/2026-10-21-main-b2c4f4c/RESULTS.md) (kept on the benchmark branch, commit `3dcc5a1`, until it is merged), PR #10 comment 6310221862.
+- Via the subscription CLI adapter (`claude-haiku-5-5`, not TaxClaw's production API backends): clean 281/281 fields and 13/13 exact documents; degraded scans 281/281 and 13/13 exact; 26/26 classifications correct; zero runtime failures. This is the gate result.
+- Via the production `openai_compat` backend (OpenRouter preset, `anthropic/claude-haiku-5.5`, TaxClaw's own `extract_document_with_meta` code, same 26 fixtures, two runs on 2026-10-21): 26/26 classifications and zero runtime failures both times, but each run missed one field in one clean document. Run 1: clean 280/281 fields, 12/13 exact (1099-DA `aggregate_flag` returned `1` where the form is blank); degraded 281/281, 13/13. Run 2: clean 280/281, 12/13 exact (K-1 `other_deductions.13A` returned null instead of 125.00); degraded 281/281, 13/13. Each run cost about $0.02 on OpenRouter. So the production path scores 561/562 fields and 25/26 exact documents per run, and does not meet the strict all-exact gate; the subscription-adapter result is not a verification of this path.
+
+**Earlier changed-form run (2026-10-20, application `87efee5`).** Source: [`benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md`](benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md). Eight invented documents per model (1099-R, 1099-G, 1099-K and K-1, each clean and as a degraded scan), 224 graded fields. Local-model numbers come only from this run; the gate above did not include local models.
 - `claude-haiku-5-5`: 224/224 fields, 8/8 exact documents, 5.21 s/page. Run through a subscription CLI wrapper, not the production API path or its privacy controls.
 - `gemma3:12b`: 176/224 fields (78.6%), 0/8 exact documents, 65.95 s/page.
 - `gemma3:4b`: 158/224 fields (70.5%), 0/8 exact documents, 18.88 s/page.
@@ -35,7 +41,7 @@ Source: [`benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md
 - **Local models are for assisted extraction, not unattended use.** In the synthetic benchmark no local model produced an exact document (0/8 for `gemma3:4b` and `gemma3:12b`). Small local models such as `gemma3:4b` can misread checkboxes and miss values such as wash-sale adjustments. A human must verify every value against the original document, whether or not it is flagged. The local default is `gemma3:4b` for speed; `gemma3:12b` is more accurate but slower.
 - **The Form 8949 CSV is a review worksheet** when produced with a small local model, not a filing-ready schedule. Check every row, especially those with `needs_review=true`.
 - **TXF can't carry 1099-DA boxes G–L.** TXF v042 has no codes for them, so those sales are skipped with a warning and appear only in the 8949 CSV.
-- **Clairic and `openai_compat` aren't live-tested.** Both are covered by unit tests with mocked responses only.
+- **Clairic isn't live-tested, and `openai_compat` is only lightly live-tested.** Clairic is covered by unit tests with mocked responses only. `openai_compat` has two full 26-document runs through OpenRouter (see Measured accuracy); the other presets (OpenAI, Gemini, custom URLs) are mocked-response tests only. The Anthropic API backend itself has not been run against the benchmark.
 
 <details>
 <summary>Detailed change list</summary>
@@ -65,9 +71,6 @@ Source: [`benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md
 - `scripts/smoke.sh` is now a real test (isolated HOME, CLI from a foreign cwd, Ollama-down error, offline parser/schema/classification checks, export with fields, every HTML route 200, compileall) and fails on any error.
 - GitHub Actions CI (`.github/workflows/ci.yml`): Python 3.11 and 3.13, setup + smoke + compileall.
 
-### Fixed
-- `tax_year` output contract: every top-level `tax_year` is a 4-digit string or null (the compact 1099-DIV/consolidated/B/MISC/OID prompts now declare it, and the structured-output schema pins it), and the 1099-DA `header.tax_year` is an integer or null. `extract_document_with_meta` (CLI, MCP, web upload and every backend) normalizes `2025`/`2025.0`/`" 2025 "` to the contract type; an implausible value (not a year in 1990-2100) is kept as returned and added to the document's review fields.
-
 ### Changed
 - SKILL.md rewritten as a short agent-first procedure that follows the Agent Skills spec (validates with `skills-ref`): frontmatter is `name`, `description`, `license`, `compatibility`, `metadata` (version, homepage, `metadata.openclaw` gating); dropped `version`, `argument-hint`, `requires`, `optional` and `allowed-tools`; hardcoded `~/.openclaw/workspace/skills/taxclaw` paths replaced with `{baseDir}`; documents that installs must land in a directory named `taxclaw`.
 - `model_backend: cloud` is now an alias for `anthropic`; any non-local backend requires `privacy_acknowledged: true` (CLI, web upload, MCP).
@@ -79,6 +82,7 @@ Source: [`benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md
 - Privacy docs disclose that the optional in-app contact form sends what you type to Formspree (never documents or tax data).
 
 ### Fixed
+- `tax_year` output contract: every top-level `tax_year` is a 4-digit string or null (the compact 1099-DIV/consolidated/B/MISC/OID prompts now declare it, and the structured-output schema pins it), and the 1099-DA `header.tax_year` is an integer or null. `extract_document_with_meta` (CLI, MCP, web upload and every backend) normalizes `2025`/`2025.0`/`" 2025 "` to the contract type; an implausible value (not a year in 1990-2100) is kept as returned and added to the document's review fields.
 - `config.yaml.example` was renamed to `config.example.yaml`: ClawHub only publishes files with known text extensions, so the old name was dropped from the published bundle and `setup.sh` could not create a config.
 - `bin/taxclaw` and `bin/tax-extract` now work from any working directory (and through symlinks); previously they failed with `ModuleNotFoundError: No module named 'src'` unless run from the skill directory. Relative file arguments still resolve against the caller's cwd.
 - Default `local_model` is now `gemma3:4b` (vision-capable). The old default `llama3.2` is text-only, so every extraction failed with "model does not support multimodal requests".
