@@ -163,3 +163,13 @@ Two reporting defects found during the run are fixed for future executions: summ
 ## Full current-main gate (533760d)
 
 [Full clean/degraded current-main evidence](results/2026-10-20-main-533760d/RESULTS.md) includes all 13 README-supported information-form types plus best-effort 1040. The clarified release gate covers the supported 13 only; 1040 is reported separately, with an original-12 comparison retained. The strict scorer is unchanged. Haiku subscription inference is complete; local-model inference is pending in that evidence directory.
+
+## Fresh tax-year-fix gate (b2c4f4c)
+
+[Fresh Haiku supported-13 evidence](results/2026-10-21-main-b2c4f4c/RESULTS.md):
+clean **281/281 fields, 13/13 exact**; degraded **281/281, 13/13 exact**.
+All 26 classifications correct; zero runtime failures. Same strict scorer and
+fixtures; new subscription Haiku inference against exactly b2c4f4c, independently
+replayed and rescored. This supersedes the prior Haiku gate outcome for that
+revision only. No fresh 1040 or local-model result, production API verification,
+or release authorization is implied.

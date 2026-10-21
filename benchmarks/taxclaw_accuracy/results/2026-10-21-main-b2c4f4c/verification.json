@@ -1,0 +1,16 @@
+{
+  "application_revision": "b2c4f4ca95946178f2805bec915e549020f0336b",
+  "records_verified": 26,
+  "raw_response_replay_through_application": true,
+  "prompt_and_image_hashes_verified": true,
+  "all_scores_independently_recomputed": true,
+  "model_identities_verified": true,
+  "year_type_normalizations_observed": [],
+  "bindings": {
+    "results.jsonl": "e96202e425549cd144d5c893a731785db0380b70c34d1287527bdfca33ee012d",
+    "scored-results.jsonl": "e96202e425549cd144d5c893a731785db0380b70c34d1287527bdfca33ee012d",
+    "scoring.json": "d69fb4f03a39542e75c30b004fef0be4e9ff05f37da1f7cca20c18547d6ed808",
+    "metadata.json": "548be4fd99cb80fe55cfaa93678550161a684cf202b0f3d5536699df13b2b09a"
+  },
+  "verifier_sha256": "6fd0a6b3a0bd882eceef2d3346410ef21ffe05f60f1c29129b750e2ab287dac9"
+}

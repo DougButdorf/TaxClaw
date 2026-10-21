@@ -1,0 +1,47 @@
+{
+  "application_revision": "b2c4f4ca95946178f2805bec915e549020f0336b",
+  "scope": "13 supported information-form types, clean and degraded; best-effort 1040 not rerun",
+  "transport": "Haiku subscription CLI image adapter, not production API verification",
+  "strict_scorer_sha256": "39227b5ccffac57639e110a3e6d9502803af444d88336780ac5c8ebab7e6b28b",
+  "variants": {
+    "clean": {
+      "documents": 13,
+      "pages": 15,
+      "correct_fields": 281,
+      "expected_fields": 281,
+      "exact_documents": 13,
+      "classifications_correct": 13,
+      "runtime_errors": 0,
+      "dedicated_schemas": 13,
+      "extraction_seconds_per_page": 4.765449161765476,
+      "release_gate_passed": true,
+      "failed_documents": []
+    },
+    "degraded_scan": {
+      "documents": 13,
+      "pages": 15,
+      "correct_fields": 281,
+      "expected_fields": 281,
+      "exact_documents": 13,
+      "classifications_correct": 13,
+      "runtime_errors": 0,
+      "dedicated_schemas": 13,
+      "extraction_seconds_per_page": 4.823087862506509,
+      "release_gate_passed": true,
+      "failed_documents": []
+    },
+    "both": {
+      "documents": 26,
+      "pages": 30,
+      "correct_fields": 562,
+      "expected_fields": 562,
+      "exact_documents": 26,
+      "classifications_correct": 26,
+      "runtime_errors": 0,
+      "dedicated_schemas": 26,
+      "extraction_seconds_per_page": 4.794268512135992,
+      "release_gate_passed": true,
+      "failed_documents": []
+    }
+  }
+}
