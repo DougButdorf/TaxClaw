@@ -16,6 +16,20 @@ TaxClaw turns messy tax PDFs into clean, reviewable structured data — **locall
 - 🧾 **Tax-form aware**: W-2, 1099s (incl. **1099-DA**), K-1, consolidated brokerage statements; Form 1040 best-effort
 - 📤 **Export-ready**: wide/long CSV and JSON
 
+## 🆕 What's new in 1.0.0
+
+TaxClaw 1.0 is the first release built for agents as well as people. Full notes: [CHANGELOG.md](CHANGELOG.md) and the [v1.0.0 release](https://github.com/DougButdorf/TaxClaw/releases/tag/v1.0.0).
+
+- **Local MCP server** (`taxclaw mcp`) so Claude Code, Claude Desktop, Codex, Cursor, Gemini CLI, Hermes and OpenClaw agents can ingest documents, read fields and export, all on your machine.
+- **Exports for accountants and tax software**: Form 8949 CSV (one row per sale from 1099-B, consolidated 1099 and 1099-DA) and TXF for TurboTax Desktop-style import.
+- **Three model tiers**: local Ollama vision models (default `gemma3:4b`), your own cloud keys (`anthropic`, `openai_compat`, `cloudflare_clairic`), with an explicit privacy acknowledgment before anything leaves the machine.
+- **First-run doctor** (`taxclaw doctor`) that tells you exactly what's missing and the next step.
+- **New forms**: 1099-R, 1099-G and 1099-K; K-1 coded boxes use canonical keys.
+- **Upgraded and pinned dependencies**, security hardening for the local web UI, and CI on Python 3.11 and 3.13.
+- **Measured accuracy** on a published synthetic benchmark (13 form types, clean and degraded scans). See [CHANGELOG.md](CHANGELOG.md#measured-accuracy-synthetic-benchmark). TaxClaw is assisted extraction: always verify values against the original document.
+
+> Upgrading from 0.1.x? Python 3.11+ is required, re-run `bash setup.sh`, and change `local_model: llama3.2` to a vision model such as `gemma3:4b`.
+
 ## 🚀 Quick Start
 
 ### Install (OpenClaw)
@@ -264,6 +278,20 @@ variable explicitly in that server's `env` block (e.g. `"OPENAI_API_KEY": "$OPEN
 Claude Desktop, Cursor and Gemini CLI snippets were checked against each
 product's current documentation but not run on this machine; the Claude Code and
 Codex commands were run.
+
+## ☁️ TaxClaw Cloud: hosted MCP for personal agents (coming soon)
+
+The local MCP server above is free and stays free. **TaxClaw Cloud** is a hosted version for people whose agents don't run on a machine with a local model, or who don't want to set one up.
+
+What's planned:
+
+- **A remote MCP server** your personal agent connects to over HTTPS, with sign-in (OAuth) or an API key. No install, no Ollama, no GPU.
+- **The same TaxClaw 1.0 extraction core** and output formats: structured fields with confidence, review flags, Form 8949 CSV and TXF, plus a multi-document tax packet for your accountant.
+- **Pay per page**, with a free starter allowance. Payment by card, or directly by your agent over x402. Pricing will be published before launch.
+- **Explicit data handling**: every response says which AI provider saw what. Documents are deleted after processing, and we keep only billing metadata. The full provider data map will be in the privacy policy before launch.
+- **Directory listings** for agent platforms once the service is live.
+
+It isn't available yet. `taxclaw doctor` will show the hosted option when it is. Questions: lando@outbranch.net.
 
 ## 🤖 Supported Forms
 
