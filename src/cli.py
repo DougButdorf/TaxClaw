@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from . import __version__
 from .config import load_config
 from .db import init_db
 from .exporter import (
@@ -295,6 +296,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="taxclaw", description="Turn tax documents into structured data (local-first).")
+    p.add_argument("--version", action="version", version=f"taxclaw {__version__}")
     sp = p.add_subparsers(dest="cmd", required=True)
 
     p_ing = sp.add_parser("ingest", help="ingest + classify + extract")

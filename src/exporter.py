@@ -6,11 +6,12 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from . import __version__
 from .db import db
 from .provenance import notice_line, parse_processed_by, processed_by_for_documents
 
 
-TAXCLAW_VERSION = "0.1.2"
+TAXCLAW_VERSION = __version__
 
 
 def _notice_generated_iso() -> str:

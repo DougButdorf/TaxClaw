@@ -65,7 +65,7 @@ fi
 PYTHONPATH="$SKILL_DIR" "$VENV_DIR/bin/python" -P -c "from src.db import init_db; init_db()"
 
 echo
-echo "✅ taxclaw setup complete"
+echo "✅ $("$SKILL_DIR/bin/taxclaw" --version 2>/dev/null || echo taxclaw) setup complete"
 echo
 echo "First-run check (read-only; it installs and downloads nothing):"
 echo

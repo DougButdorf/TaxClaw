@@ -18,6 +18,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from . import __version__
 from .ai import ensure_backend_ready
 from .classify import classify_document
 from .config import CONFIG_PATH, load_config, save_config
@@ -51,12 +52,28 @@ init_db()
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
-app = FastAPI(title="TaxClaw", version="0.1.2")
+app = FastAPI(title="TaxClaw", version=__version__)
 
 
 # ---------------------------------------------------------------------------
 # Security middleware (headers + loopback host/origin enforcement)
 # ---------------------------------------------------------------------------
+
+# Every page is served by this app and uses only same-origin scripts, styles,
+# images and fetches; nothing is loaded from a CDN. Inline <script>/<style>
+# blocks in the templates need 'unsafe-inline'.
+CONTENT_SECURITY_POLICY = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline'; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data: blob:; "
+    "connect-src 'self'; "
+    "object-src 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self'; "
+    "frame-ancestors 'self'"
+)
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -64,19 +81,29 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        # HTML only: keep browsers' built-in PDF/image viewers working for /doc/{id}/file.
+        if response.headers.get("content-type", "").startswith("text/html"):
+            response.headers["Content-Security-Policy"] = CONTENT_SECURITY_POLICY
         return response
 
 
 class LoopbackHostOriginMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        if request.method in {"POST", "DELETE"}:
-            hostname = _host_header_hostname(request)
-            if not _is_loopback_host(hostname):
-                return Response("Forbidden", status_code=403)
+    """Reject any request (GET included) whose Host or Origin is not loopback.
 
-            origin = request.headers.get("origin")
-            if origin is not None and not _is_loopback_host(urlparse(origin).hostname):
-                return Response("Forbidden", status_code=403)
+    Checking GET as well as POST/DELETE closes DNS-rebinding reads: a page on
+    attacker.example that rebinds its hostname to 127.0.0.1 still sends
+    ``Host: attacker.example``, so it cannot read document pages, previews,
+    downloads or exports.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        hostname = _host_header_hostname(request)
+        if not _is_loopback_host(hostname):
+            return Response("Forbidden", status_code=403)
+
+        origin = request.headers.get("origin")
+        if origin is not None and not _is_loopback_host(urlparse(origin).hostname):
+            return Response("Forbidden", status_code=403)
 
         return await call_next(request)
 
@@ -96,12 +123,14 @@ def _is_loopback_host(hostname: str | None) -> bool:
     if not hostname:
         return False
     h = hostname.lower()
-    return h in {"127.0.0.1", "localhost"} or h.endswith(".localhost")
+    return h in {"127.0.0.1", "localhost", "::1"} or h.endswith(".localhost")
 
 
 def _host_header_hostname(request: Request) -> str | None:
-    host = (request.headers.get("host") or "").lower()
-    return host.rsplit("@", 1)[-1].split(":", 1)[0]
+    host = (request.headers.get("host") or "").lower().rsplit("@", 1)[-1]
+    if host.startswith("["):  # IPv6 literal, e.g. "[::1]:8421"
+        return host[1:].split("]", 1)[0]
+    return host.split(":", 1)[0]
 
 
 def _get_or_create_csrf_token(request: Request) -> str:

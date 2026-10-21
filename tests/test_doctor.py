@@ -210,7 +210,7 @@ class CloudAndHostedTest(Isolated):
         self.assertEqual([p["provider"] for p in cloud["usable"]], ["anthropic", "openai", "gemini", "openrouter"])
         first = cloud["usable"][0]
         self.assertEqual(first["model"], "claude-haiku-5-5")
-        self.assertIn("224/224", first["evidence"])
+        self.assertIn("562/562", first["evidence"])
         self.assertEqual(first["switch_command"], "taxclaw use-cloud anthropic --model claude-haiku-5-5 --accept-privacy")
         self.assertEqual(cloud["usable"][1]["evidence"], "not benchmarked")
         self.assertIn("--model <", cloud["usable"][1]["switch_command"])  # no invented model id

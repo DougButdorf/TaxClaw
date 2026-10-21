@@ -4,17 +4,20 @@
 # lists, key presence) happens at run time; this file only holds the
 # recommendation rules.
 #
-# IMPORTANT: local recommendations are PROVISIONAL until the accuracy
-# benchmark (TaxClaw issue #3, WP-F) publishes measured numbers. Replace the
-# `source`/`as_of` fields when it does.
+# IMPORTANT: the measured numbers below come from a SYNTHETIC benchmark
+# (TaxClaw issue #3, WP-F): eight invented PDFs (clean + degraded scan of
+# 1099-R, 1099-G, 1099-K and K-1), 224 graded fields per model. They are not
+# real-world accuracy and not tax-preparation accuracy. Clairic is unbenchmarked.
+# The claude-haiku-5-5 row is the later 26-document release gate (2026-10-21).
+# Refresh `source`/`as_of` and the figures when the benchmark is rerun.
 
 catalog_version: 1
-source: "provisional: maintainer smoke runs on a synthetic W-2 (gemma3:4b 7/7 fields in ~29 s, gemma3:12b 7/7 in ~99 s, M4 Mac mini 16 GB); not a benchmark"
-as_of: "2026-10-20"
+source: "Local-model figures: benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md (synthetic benchmark, 8 documents per model). claude-haiku-5-5 gate: benchmarks/taxclaw_accuracy/results/2026-10-21-main-b2c4f4c/RESULTS.md (synthetic, 26 documents; on the benchmark branch, commit 3dcc5a1, until merged). Not real-world accuracy; Clairic unbenchmarked"
+as_of: "2026-10-21"
 
 tier1_local:
   title: "Local-first (default): Ollama on this machine"
-  status: "provisional until benchmark"
+  status: "measured on a synthetic benchmark (2026-10-20); assisted extraction only, review every value"
   reference_machine: "Apple M4 Mac mini, 16 GB unified memory (treated as standard low-end)"
   # Buckets are matched in order; first bucket whose max_ram_gb >= this machine's RAM wins.
   ram_buckets:
@@ -22,20 +25,24 @@ tier1_local:
       label: "8 GB or less"
       default: "gemma3:4b"
       accuracy: null
-      note: "gemma3:4b is the only recommended option at this size; expect slower runs."
+      note: "gemma3:4b is the only recommended option at this size; fastest; assisted extraction, review every value. Measured: 158/224 fields (70.5%), 0/8 exact documents, 18.88 s/page (benchmark hardware not stated in the results); expect slower runs on less memory."
     - max_ram_gb: 31
       label: "16 GB class (reference machine)"
       default: "gemma3:4b"
       accuracy: "gemma3:12b"
-      note: "gemma3:4b is the default; gemma3:12b is more accurate on hard scans but about 3x slower."
+      note: "gemma3:4b is the default (fastest; assisted extraction, review every value): 158/224 fields (70.5%), 0/8 exact documents, 18.88 s/page. gemma3:12b is the more accurate local option, slower: 176/224 fields (78.6%), 0/8 exact documents, 65.95 s/page. Neither produced an exact document; verify every value."
     - max_ram_gb: null   # no upper bound
       label: "32 GB or more"
       default: "gemma3:12b"
       accuracy: "gemma3:12b"
-      note: "gemma3:12b fits comfortably; use gemma3:4b if you want speed."
+      note: "gemma3:12b is the more accurate local option, slower (176/224 fields, 78.6%, 0/8 exact documents, 65.95 s/page); use gemma3:4b if you want speed (158/224, 70.5%, 18.88 s/page). Review every value either way."
   known_weak:
     - model: "glm-ocr"
-      note: "vision OCR model; 4/7 fields on the synthetic W-2 smoke run"
+      note: "vision OCR model; parses output but classified both K-1 documents as 1099-DIV (classification 6/8) in the synthetic benchmark"
+    - model: "qwen3.5"
+      note: "5 of 8 extractions failed (empty or truncated JSON) in the synthetic benchmark"
+    - model: "gemma4"
+      note: "1 of 8 extractions returned no provider response after 180.11 s in the synthetic benchmark"
     - model: "llama3.2"
       note: "text-only; cannot read document images"
 
@@ -49,7 +56,8 @@ tier2_cloud:
   #      `balance_patterns` entry that has any match; `strongest` likewise
   #      with `strongest_patterns`. "Newest" = highest version numbers in the
   #      id, preferring undated, non-preview aliases.
-  # These picks are UNBENCHMARKED for tax forms.
+  # Only claude-haiku-5-5 was benchmarked (synthetic data); every other pick
+  # below is UNBENCHMARKED for tax forms.
   heuristic_label: "unbenchmarked heuristic: newest balance-tier (mini/flash/haiku) and flagship model from the live list"
   providers:
     anthropic:
@@ -60,7 +68,7 @@ tier2_cloud:
       confirmed:
         balance: "claude-haiku-5-5"
         strongest: "claude-sonnet-5-5"
-      confirmed_note: "confirmed current Anthropic model IDs; all current Claude models accept images"
+      confirmed_note: "confirmed current Anthropic model IDs; all current Claude models accept images. claude-haiku-5-5: release gate on 13 supported form types, clean and degraded scan (synthetic): 562/562 fields, 26/26 exact documents, 26/26 classifications, zero runtime failures (2026-10-21). Measured through a subscription CLI adapter, not the production Anthropic API backend. Assisted extraction: review every value. Synthetic benchmark, not real-world accuracy."
     openai:
       label: "OpenAI"
       env: ["OPENAI_API_KEY"]
@@ -150,10 +158,10 @@ doctor:
       terms_url: "https://www.anthropic.com/legal/commercial-terms"
       measured:
         model: "claude-haiku-5-5"
-        fields: "224/224"
-        exact_documents: "8/8"
-        seconds_per_page: 5.21
-        basis: "8 invented documents, run through a subscription CLI wrapper rather than TaxClaw's API path; not real-world accuracy"
+        fields: "562/562"
+        exact_documents: "26/26"
+        seconds_per_page: 4.79
+        basis: "release gate, 13 supported form types clean and degraded scan (26 invented documents), run through a subscription CLI adapter rather than TaxClaw's API backends; not real-world accuracy"
     - provider: "openai"
       terms_url: "https://openai.com/policies/"
       measured: null

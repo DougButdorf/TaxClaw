@@ -23,6 +23,16 @@
       </div>
     {% endif %}
 
+    <div class="card" style="border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.06); margin-bottom: 14px;">
+      <div style="font-weight:700;">This form leaves your machine</div>
+      <div class="muted" style="margin-top:6px;">
+        When you press Send, what you type here (and only that) is sent to
+        <a href="https://formspree.io/legal/privacy-policy" target="_blank" rel="noopener">Formspree</a>,
+        which emails it to the TaxClaw maintainers. It never attaches your documents or extracted data.
+        Don't paste SSNs, account numbers or other tax details into it. See <a href="/privacy">Privacy</a>.
+      </div>
+    </div>
+
     <div class="card">
       <form method="post" action="/contact">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />

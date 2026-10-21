@@ -16,6 +16,20 @@ TaxClaw turns messy tax PDFs into clean, reviewable structured data — **locall
 - 🧾 **Tax-form aware**: W-2, 1099s (incl. **1099-DA**), K-1, consolidated brokerage statements; Form 1040 best-effort
 - 📤 **Export-ready**: wide/long CSV and JSON
 
+## 🆕 What's new in 1.0.0
+
+TaxClaw 1.0 is the first release built for agents as well as people. Full notes: [CHANGELOG.md](CHANGELOG.md) and the [v1.0.0 release](https://github.com/DougButdorf/TaxClaw/releases/tag/v1.0.0).
+
+- **Local MCP server** (`taxclaw mcp`) so Claude Code, Claude Desktop, Codex, Cursor, Gemini CLI, Hermes and OpenClaw agents can ingest documents, read fields and export, all on your machine.
+- **Exports for accountants and tax software**: Form 8949 CSV (one row per sale from 1099-B, consolidated 1099 and 1099-DA) and TXF for TurboTax Desktop-style import.
+- **Three model tiers**: local Ollama vision models (default `gemma3:4b`), your own cloud keys (`anthropic`, `openai_compat`, `cloudflare_clairic`), with an explicit privacy acknowledgment before anything leaves the machine.
+- **First-run doctor** (`taxclaw doctor`) that tells you exactly what's missing and the next step.
+- **New forms**: 1099-R, 1099-G and 1099-K; K-1 coded boxes use canonical keys.
+- **Upgraded and pinned dependencies**, security hardening for the local web UI, and CI on Python 3.11 and 3.13.
+- **Measured accuracy** on a published synthetic benchmark (13 form types, clean and degraded scans). See [CHANGELOG.md](CHANGELOG.md#measured-accuracy-synthetic-benchmark). TaxClaw is assisted extraction: always verify values against the original document.
+
+> Upgrading from 0.1.x? Python 3.11+ is required, re-run `bash setup.sh`, and change `local_model: llama3.2` to a vision model such as `gemma3:4b`.
+
 ## 🚀 Quick Start
 
 ### Install (OpenClaw)
@@ -124,7 +138,8 @@ set `TAXCLAW_PYTHON=/path/to/python3.11+`.
 Tax documents are extremely sensitive.
 
 - **Local mode (default)**: extraction runs on your machine via Ollama; your documents and extracted data never leave it.
-- **Cloud mode (optional)**: document content is sent to the configured AI provider.
+- **Cloud mode (optional)**: full page images of each document (everything printed on it, including SSNs and account numbers) are sent to the one AI provider you chose, only after you acknowledge the privacy warning. See [PRIVACY.md](PRIVACY.md) for exactly what goes where.
+- **Web UI**: listens on `127.0.0.1` only, refuses requests whose Host or Origin isn't loopback (blocks DNS-rebinding reads), sends a strict Content-Security-Policy and loads no third-party scripts.
 - **Contact form (optional)**: the in-app Contact page sends only what you type into it (name, email, message) to [Formspree](https://formspree.io), which forwards it to us. It never includes your documents or extracted tax data, and nothing is sent unless you submit the form.
 
 You can configure the backend + model via the settings UI:
@@ -136,9 +151,14 @@ You can configure the backend + model via the settings UI:
 
 1. **Local-first (default)**: Ollama vision models installed on this machine, and a
    recommendation for its RAM, with the `ollama pull` command if it is missing.
-   Starting points, *provisional until the accuracy benchmark*: 8 GB or less:
-   `gemma3:4b`; 16 GB (reference: M4 Mac mini 16 GB): `gemma3:4b` default,
-   `gemma3:12b` for higher accuracy (slower); 32 GB or more: `gemma3:12b`.
+   Starting points: 8 GB or less: `gemma3:4b`; 16 GB (reference: M4 Mac mini
+   16 GB): `gemma3:4b` default, `gemma3:12b` for higher accuracy (slower);
+   32 GB or more: `gemma3:12b`. Measured on a synthetic 8-document benchmark
+   ([results](benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md)),
+   not real-world accuracy; Clairic is unbenchmarked:
+   - `gemma3:4b` 158/224 fields (70.5%), 0/8 exact documents, 18.88 s/page; `gemma3:12b` 176/224 (78.6%), 0/8 exact, 65.95 s/page. Assisted extraction only: review every value.
+   - `claude-haiku-5-5` passed the 26-document release gate (13 form types, clean and degraded scan): 562/562 fields, 26/26 exact documents, 26/26 classifications (2026-10-21; via a subscription CLI adapter, not the production API backends). Through the `openai_compat` OpenRouter backend the same documents scored 561/562 fields and 25/26 exact documents in each of two runs, so review every value. Earlier 8-document run: 224/224 fields, 8/8 exact, 5.21 s/page.
+   - `glm-ocr` misclassified the K-1s; `qwen3.5:4b` had 5 failed extractions; `gemma4:latest` had 1.
 2. **Cloud you already have configured**: detected by the *presence* of
    `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`/`GOOGLE_API_KEY`,
    `OPENROUTER_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`+`CLOUDFLARE_API_TOKEN` (values are
@@ -259,6 +279,20 @@ Claude Desktop, Cursor and Gemini CLI snippets were checked against each
 product's current documentation but not run on this machine; the Claude Code and
 Codex commands were run.
 
+## ☁️ TaxClaw Cloud: hosted MCP for personal agents (coming soon)
+
+The local MCP server above is free and stays free. **TaxClaw Cloud** is a hosted version for people whose agents don't run on a machine with a local model, or who don't want to set one up.
+
+What's planned:
+
+- **A remote MCP server** your personal agent connects to over HTTPS, with sign-in (OAuth) or an API key. No install, no Ollama, no GPU.
+- **The same TaxClaw 1.0 extraction core** and output formats: structured fields with confidence, review flags, Form 8949 CSV and TXF, plus a multi-document tax packet for your accountant.
+- **Pay per page**, with a free starter allowance. Payment by card, or directly by your agent over x402. Pricing will be published before launch.
+- **Explicit data handling**: every response says which AI provider saw what. Documents are deleted after processing, and we keep only billing metadata. The full provider data map will be in the privacy policy before launch.
+- **Directory listings** for agent platforms once the service is live.
+
+It isn't available yet. `taxclaw doctor` will show the hosted option when it is. Questions: lando@outbranch.net.
+
 ## 🤖 Supported Forms
 
 | Form | Supported | Notes |
@@ -360,6 +394,8 @@ By default:
 - Data dir: `~/.local/share/taxclaw/`
   - SQLite DB: `tax.db`
   - Stored uploads: `uploads/`
+
+Exports (CSV, JSON, 8949, TXF) hold the same sensitive data. Save them somewhere private, not a synced folder, and delete them when you're done.
 
 ## 🤝 Contributing
 

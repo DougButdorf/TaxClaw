@@ -38,6 +38,7 @@ from pydantic import Field
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
+from . import __version__
 from .config import load_config
 from .db import init_db
 from .provenance import notice_line, parse_processed_by, processed_by_for_documents
@@ -53,7 +54,7 @@ SERVER_INSTRUCTIONS = (
     "is not tax advice; always verify values against the original document."
 )
 
-mcp = MCPServer(name="taxclaw", instructions=SERVER_INSTRUCTIONS, log_level="WARNING")
+mcp = MCPServer(name="taxclaw", version=__version__, instructions=SERVER_INSTRUCTIONS, log_level="WARNING")
 
 _DOC_KEYS = (
     "id", "doc_type", "tax_year", "filer", "status", "needs_review", "overall_confidence",

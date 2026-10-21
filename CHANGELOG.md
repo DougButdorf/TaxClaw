@@ -1,6 +1,58 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 - 2026-10-21
+
+TaxClaw turns tax documents into structured data for accountants and tax software. It is local-first, and 1.0 is the first release built for agents as well as people. It is not tax preparation and not tax advice.
+
+### Upgrade notes
+- Python 3.11 or newer is required. Re-run `bash setup.sh` after updating so the venv picks up the new pinned dependencies.
+- The default local model is now `gemma3:4b` (vision). If your `~/.config/taxclaw/config.yaml` still says `local_model: llama3.2`, change it: llama3.2 is text-only and can't read documents. TaxClaw now stops with a clear message instead of failing every page.
+- `model_backend: cloud` still works and means `anthropic`. Every non-local backend needs `privacy_acknowledged: true`.
+- New: `taxclaw --version`.
+
+### Highlights
+- **Dependencies:** everything upgraded and pinned to exact versions (FastAPI 0.152, Starlette 1.9, Uvicorn 0.54, PyMuPDF 2.0, Pillow 13, Jinja2 3.1.6, python-multipart 0.0.32, Anthropic SDK 1.15, Ollama 0.6.3, MCP SDK 2.3). This replaces the Jinja2 3.1.4 and Pillow 10.4.0 pins that scanners flagged in 0.1.x. Starlette 1.x had made every web page return 500 until the template calls were fixed.
+- **Fixes:** the CLI works from any directory and through symlinks; Ollama errors are readable ("Ollama is not reachable at …", model missing, model has no vision) instead of raw tracebacks; replies from models like glm-ocr that add trailing text now parse; W-2 and K-1 required-field review rules actually run; `export --all --format json` includes extracted fields; the upload page shows server errors; the config template ships under a name ClawHub publishes (`config.example.yaml`), so `setup.sh` can create a config from a ClawHub install.
+- **Agent Skills portability:** SKILL.md is a short, agent-first procedure that follows the Agent Skills spec and uses `{baseDir}` instead of hardcoded OpenClaw paths, and the README gives install paths for OpenClaw, Claude Code, Codex, Gemini CLI and Hermes. `ingest`, `list` and `models` take `--json`, and `ingest` has documented exit codes. Install with `openclaw skills install @dougbutdorf/taxclaw`.
+- **Model tiers and backends:** `taxclaw models` (and the Settings page) shows three tiers: (1) local Ollama vision models with a recommendation for this machine's RAM, (2) cloud providers whose API keys are already set (presence only, never values), (3) Cloudflare Workers AI Clairic with setup steps. Backends: `local` (Ollama, default), `anthropic`, `openai_compat` (OpenAI, OpenRouter, Google Gemini or any OpenAI-compatible URL) and `cloudflare_clairic` (typed fields with per-field confidence). New schemas for 1099-R, 1099-G and 1099-K; K-1 coded boxes use canonical keys like `13W`.
+- **MCP server:** `taxclaw mcp` runs a local stdio MCP server with `ingest_document`, `list_documents`, `get_document`, `export_documents` and `list_models`. The README has configs for Claude Code, Claude Desktop, Codex, Cursor and Gemini CLI.
+- **Exports for accountants and tax software:** `taxclaw export --format 8949` writes a Form 8949 CSV with one row per sale from 1099-B, consolidated 1099 and 1099-DA documents, with the 2025 check-box category, adjustment codes (W, D) and `needs_review` flags. Missing basis or holding periods are flagged, never guessed. `--format txf` writes TXF v042 for TurboTax Desktop-style import. Both are on the dashboard, document pages and the MCP `export_documents` tool. 1099-B statements get a per-sale extraction pass.
+- **Privacy and security:**
+  - Every cloud backend refuses to send anything until the privacy warning is acknowledged, in the web UI, CLI and MCP alike.
+  - The docs and Settings now say what actually leaves the machine in cloud mode (full page images, to the one provider you chose), name each provider host, and disclose the optional Formspree contact form, which also gets an on-page warning.
+  - The web UI refuses any request, GET included, whose Host or Origin isn't loopback, which blocks DNS-rebinding reads of documents and exports. It sends a Content-Security-Policy and no longer loads htmx from unpkg (it was never used).
+  - GitHub Sponsors links are removed. CI runs the smoke test and unit tests on Python 3.11 and 3.13.
+
+### Measured accuracy (synthetic benchmark)
+All figures are on invented documents. They are not real-world accuracy or tax-preparation accuracy, and TaxClaw remains assisted extraction: verify every value against the original document. Clairic was not benchmarked.
+
+**Release gate, 13 supported form types (2026-10-21, application `b2c4f4c`).** Each type as a clean PDF and as an image-only degraded scan: 26 documents, 562 graded fields. Best-effort Form 1040 is not part of this gate. Evidence: [`RESULTS.md`](https://github.com/DougButdorf/TaxClaw/blob/3dcc5a1390961708d94ebfb556dc26e23c87476c/benchmarks/taxclaw_accuracy/results/2026-10-21-main-b2c4f4c/RESULTS.md) (kept on the benchmark branch, commit `3dcc5a1`, until it is merged), PR #10 comment 6310221862.
+- Via the subscription CLI adapter (`claude-haiku-5-5`, not TaxClaw's production API backends): clean 281/281 fields and 13/13 exact documents; degraded scans 281/281 and 13/13 exact; 26/26 classifications correct; zero runtime failures. This is the gate result.
+- Via the production `openai_compat` backend (OpenRouter preset, `anthropic/claude-haiku-5.5`, TaxClaw's own `extract_document_with_meta` code, same 26 fixtures, two runs on 2026-10-21): 26/26 classifications and zero runtime failures both times, but each run missed one field in one clean document. Run 1: clean 280/281 fields, 12/13 exact (1099-DA `aggregate_flag` returned `1` where the form is blank); degraded 281/281, 13/13. Run 2: clean 280/281, 12/13 exact (K-1 `other_deductions.13A` returned null instead of 125.00); degraded 281/281, 13/13. Each run cost about $0.02 on OpenRouter. So the production path scores 561/562 fields and 25/26 exact documents per run, and does not meet the strict all-exact gate; the subscription-adapter result is not a verification of this path.
+
+**Earlier changed-form run (2026-10-20, application `87efee5`).** Source: [`benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md`](benchmarks/taxclaw_accuracy/results/2026-10-20-main-87efee5/RESULTS.md). Eight invented documents per model (1099-R, 1099-G, 1099-K and K-1, each clean and as a degraded scan), 224 graded fields. Local-model numbers come only from this run; the gate above did not include local models.
+- `claude-haiku-5-5`: 224/224 fields, 8/8 exact documents, 5.21 s/page. Run through a subscription CLI wrapper, not the production API path or its privacy controls.
+- `gemma3:12b`: 176/224 fields (78.6%), 0/8 exact documents, 65.95 s/page.
+- `gemma3:4b`: 158/224 fields (70.5%), 0/8 exact documents, 18.88 s/page.
+- `glm-ocr` parsed its output but classified both K-1 documents as 1099-DIV (classification 6/8). `qwen3.5:4b` had 5 failed extractions (empty or truncated JSON). `gemma4:latest` had 1 extraction error (no response after 180.11 s).
+- An earlier 12-form strict run ([`results/2026-10-20/RESULTS.md`](benchmarks/taxclaw_accuracy/results/2026-10-20/RESULTS.md)) scored lower on a different corpus: `claude-haiku-5-5` 190/233 (81.55%) frozen and 193/233 (82.83%) exploratory, `gemma3:12b` 177/233 (75.97%), `gemma3:4b` 155/233 (66.52%). It reports no model passing its strict gate and makes no release recommendation.
+
+### Known limitations
+- **Local models are for assisted extraction, not unattended use.** In the synthetic benchmark no local model produced an exact document (0/8 for `gemma3:4b` and `gemma3:12b`). Small local models such as `gemma3:4b` can misread checkboxes and miss values such as wash-sale adjustments. A human must verify every value against the original document, whether or not it is flagged. The local default is `gemma3:4b` for speed; `gemma3:12b` is more accurate but slower.
+- **The Form 8949 CSV is a review worksheet** when produced with a small local model, not a filing-ready schedule. Check every row, especially those with `needs_review=true`.
+- **TXF can't carry 1099-DA boxes G–L.** TXF v042 has no codes for them, so those sales are skipped with a warning and appear only in the 8949 CSV.
+- **Clairic isn't live-tested, and `openai_compat` is only lightly live-tested.** Clairic is covered by unit tests with mocked responses only. `openai_compat` has two full 26-document runs through OpenRouter (see Measured accuracy); the other presets (OpenAI, Gemini, custom URLs) are mocked-response tests only. The Anthropic API backend itself has not been run against the benchmark.
+
+<details>
+<summary>Detailed change list</summary>
+
+### Security
+- Web UI: the loopback Host/Origin check now covers every request, not only POST/DELETE, so a DNS-rebinding page can't read document pages, previews, downloads or exports. IPv6 loopback (`[::1]`) is parsed correctly.
+- Web UI: `Content-Security-Policy` header (same-origin scripts, styles, images and fetches only; `object-src 'none'`; `frame-ancestors 'self'`). Removed the unused `https://unpkg.com/htmx.org` script from `templates/base.html`.
+- `requirements.txt`: `starlette` and `python-multipart` pinned to exact versions like the rest.
+- PRIVACY.md, README, SKILL.md and Settings: cloud mode sends full rendered page images (plus the text layer for Clairic) to the selected provider; all provider hosts listed; model-list requests and `OLLAMA_HOST` disclosed; export files flagged as sensitive (RUNBOOK uses `umask 077`). SKILL.md's permission table lists every environment variable and file TaxClaw reads, setup's PyPI install, and the contact form.
+- Contact page: warning that the form is sent to Formspree and shouldn't contain tax details.
+- Version: `src/__init__.py` `__version__` is the single source; the FastAPI app, export metadata, TXF header, MCP server info, `taxclaw --version` and `setup.sh` use it, and unit tests check SKILL.md and RUNBOOK.md against it.
 
 ### Added
 - First-run doctor (issue #3): `taxclaw doctor` (alias `setup`, `--json` for agents) runs read-only checks and prints three explicit paths. (1) Local: Ollama missing / installed but server not reachable (respects `OLLAMA_HOST`) / running with no vision model (recommends the model for this machine's RAM from the catalog, with its approx. download size and `ollama pull <model>`; never downloads) / ready, plus RAM and free-disk warnings. (2) Cloud with your own keys: providers detected by key presence (src/models.py tier 2), best to worst by the catalog's measured data, what would be sent, and the explicit switch `taxclaw use-cloud <backend> [--model M] --accept-privacy`. (3) TaxClaw Cloud (hosted): one "coming soon" line behind `hosted.enabled: false` in the catalog; the pricing text is kept in the catalog and shown only when the flag is on. `taxclaw use-local [--model M]` switches back with no consent. Consent is recorded as `privacy_acknowledged_at` and `cloud_provider` next to `privacy_acknowledged`; switching to local clears it.
@@ -9,7 +61,7 @@
 - Settings shows the same three paths and the consent time; saving a cloud backend with the privacy checkbox records consent.
 - Accountant/tax-software exports (WP-G): `taxclaw export --format 8949|txf [--id ID ...|--all]`, dashboard and document-page buttons (same CSRF check as other exports), and MCP `export_documents` formats `8949_csv` and `txf` (with `warnings` and `notice`). `src/accountant_exports.py` normalizes sales from 1099-DA transactions (UI-edited `extracted_fields` first), 1099-B/consolidated-1099 lots and the flat single-sale 1099-B fields. The Form 8949 CSV has one row per sale with columns (a)–(h), the 2025 check-box `category` (A/B/D/E for 1099-B, G/H/J/K for 1099-DA), `payer`, `confidence`, `needs_review` and `review_reasons`. Gain/loss is `Decimal` arithmetic, filled in only when proceeds and basis are both present. Wash sales map to code W and market discount to code D (IRS worksheet). Missing basis, unknown holding period or basis reporting, and a mismatch with the statement's printed gain/loss are flagged, never guessed. TXF v042 writes Format 4/5 records (refnums 321/711/323/713, CR+LF) and skips rows it can't represent, with warnings. TXF has no refnums for 1099-DA boxes G–L. README documents sources and which tax software still imports TXF.
 - 1099-B and consolidated-1099 documents get a second, per-page extraction pass that reads individual sales (description, dates, proceeds, basis, wash sale, market discount, printed gain/loss, term, basis-reported flag, printed 8949 box) into a new `transactions_1099b` table, shown on the document page. Pages with a text layer that don't look like 1099-B detail are skipped. A failure here flags the document for review but keeps the main extraction. The main extraction output is unchanged.
-- Three-tier model selection (WP-D): `taxclaw models [--json] [--offline] [--short]`, the Settings page and the MCP `list_models` tool show (1) installed Ollama vision models with a RAM-based recommendation and `ollama pull` commands, (2) cloud providers detected by API-key presence only (values never read into output; OpenClaw-configured providers by name only) with live vision-model lists and a balance/strongest pick, (3) Cloudflare Clairic with setup steps. Recommendations live in `src/model_catalog.yaml` with `source`/`as_of` (local picks are provisional until the accuracy benchmark). `setup.sh` prints a short version.
+- Three-tier model selection (WP-D): `taxclaw models [--json] [--offline] [--short]`, the Settings page and the MCP `list_models` tool show (1) installed Ollama vision models with a RAM-based recommendation and `ollama pull` commands, (2) cloud providers detected by API-key presence only (values never read into output; OpenClaw-configured providers by name only) with live vision-model lists and a balance/strongest pick, (3) Cloudflare Clairic with setup steps. Recommendations live in `src/model_catalog.yaml` with `source`/`as_of` (local picks cite the synthetic accuracy benchmark). `setup.sh` prints a short version.
 - Backend interface (`src/backends.py`) with `local`, `anthropic`, `openai_compat` (OpenAI, OpenRouter, Gemini's OpenAI-compatible endpoint or a custom base URL + key env var name; image as data URL; `json_schema` -> `json_object` -> plain fallback) and `cloudflare_clairic` (typed fields mapped from each form schema, per-field confidence stored in `extracted_fields.confidence`, review flags from confidence < 0.8 or ambiguous `p_null`, max 4 images per call with batching; 1099-DA transaction tables and generic forms use `clairic_fallback_backend`). Clairic is unit-tested with mocked responses only; not live-tested.
 - Local MCP server (WP-E): `taxclaw mcp` (stdio, official `mcp` SDK `MCPServer`) with `ingest_document`, `list_documents`, `get_document`, `export_documents`, `list_models`. README has config snippets for Claude Code, Claude Desktop, Codex, Cursor and Gemini CLI.
 - `--json` output for `taxclaw ingest`, `list` and `models`.
@@ -18,9 +70,6 @@
 - K-1 coded boxes use canonical keys of box number + code (e.g. `13W`, `20Z`); keys returned as bare codes or "Box 13, code W" are normalized. New K-1 fields for boxes 11, 18, 19 and 21.
 - `scripts/smoke.sh` is now a real test (isolated HOME, CLI from a foreign cwd, Ollama-down error, offline parser/schema/classification checks, export with fields, every HTML route 200, compileall) and fails on any error.
 - GitHub Actions CI (`.github/workflows/ci.yml`): Python 3.11 and 3.13, setup + smoke + compileall.
-
-### Fixed
-- `tax_year` output contract: every top-level `tax_year` is a 4-digit string or null (the compact 1099-DIV/consolidated/B/MISC/OID prompts now declare it, and the structured-output schema pins it), and the 1099-DA `header.tax_year` is an integer or null. `extract_document_with_meta` (CLI, MCP, web upload and every backend) normalizes `2025`/`2025.0`/`" 2025 "` to the contract type; an implausible value (not a year in 1990-2100) is kept as returned and added to the document's review fields.
 
 ### Changed
 - SKILL.md rewritten as a short agent-first procedure that follows the Agent Skills spec (validates with `skills-ref`): frontmatter is `name`, `description`, `license`, `compatibility`, `metadata` (version, homepage, `metadata.openclaw` gating); dropped `version`, `argument-hint`, `requires`, `optional` and `allowed-tools`; hardcoded `~/.openclaw/workspace/skills/taxclaw` paths replaced with `{baseDir}`; documents that installs must land in a directory named `taxclaw`.
@@ -33,6 +82,7 @@
 - Privacy docs disclose that the optional in-app contact form sends what you type to Formspree (never documents or tax data).
 
 ### Fixed
+- `tax_year` output contract: every top-level `tax_year` is a 4-digit string or null (the compact 1099-DIV/consolidated/B/MISC/OID prompts now declare it, and the structured-output schema pins it), and the 1099-DA `header.tax_year` is an integer or null. `extract_document_with_meta` (CLI, MCP, web upload and every backend) normalizes `2025`/`2025.0`/`" 2025 "` to the contract type; an implausible value (not a year in 1990-2100) is kept as returned and added to the document's review fields.
 - `config.yaml.example` was renamed to `config.example.yaml`: ClawHub only publishes files with known text extensions, so the old name was dropped from the published bundle and `setup.sh` could not create a config.
 - `bin/taxclaw` and `bin/tax-extract` now work from any working directory (and through symlinks); previously they failed with `ModuleNotFoundError: No module named 'src'` unless run from the skill directory. Relative file arguments still resolve against the caller's cwd.
 - Default `local_model` is now `gemma3:4b` (vision-capable). The old default `llama3.2` is text-only, so every extraction failed with "model does not support multimodal requests".
@@ -44,10 +94,13 @@
 - Required-field review rules for W-2 and K-1 were never applied (keys `w2`/`k1` never matched the normalized types `w_2`/`k_1`).
 - CLI `ingest` refuses cloud mode until `privacy_acknowledged: true`, matching the web UI, and exits non-zero with a message on stderr when extraction fails.
 - Upload page now shows server-side errors (e.g. Ollama not running) instead of silently reloading.
+- Starlette BadHost exposure (2026-05-27): loopback checks read the raw `Host` header instead of `request.url.hostname`.
 
 ### Removed
 - GitHub Sponsors links (README badge, web UI footer, `.github/FUNDING.yml` `github:` entry), the dead `https://taxclaw.net/sponsor` funding URL and the unverified `ko_fi` entry.
 - `AGENTS.md` and `CLAUDE.md` (internal agent instructions); both are now gitignored.
+
+</details>
 
 ## 0.1.2 - 2026-05-20
 
