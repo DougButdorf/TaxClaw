@@ -126,3 +126,6 @@ secrets.env
 # Local agent instruction files (keep out of the published skill)
 AGENTS.md
 CLAUDE.md
+
+# Claude Code local approvals can contain secrets (agent-secrets weekly 2026-11-08)
+.claude/settings.local.json
