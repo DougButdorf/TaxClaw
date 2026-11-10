@@ -104,10 +104,10 @@ CONFIG_BEFORE="$(cat "$HOME/.config/taxclaw/config.yaml")"
 "$SKILL_DIR/bin/taxclaw" doctor > "$OTHER_CWD/doctor.txt" 2> "$OTHER_CWD/doctor.err" || { cat "$OTHER_CWD/doctor.err" >&2; fail "taxclaw doctor"; }
 "$SKILL_DIR/bin/taxclaw" doctor --json > "$OTHER_CWD/doctor.json" || fail "taxclaw doctor --json"
 "$SKILL_DIR/bin/taxclaw" setup --json > "$OTHER_CWD/setup.json" || fail "taxclaw setup --json (alias)"
-for marker in "PATH 1 - Local" "PATH 2 - Cloud with your own API keys" "PATH 3 - TaxClaw Cloud" "coming soon" "Next step:"; do
+for marker in "PATH 1 - Local" "PATH 2 - Cloud with your own API keys" "PATH 3 - TaxClaw Cloud" "https://mcp.taxclaw.net/mcp" "\$0.08 per page" "Next step:"; do
   grep -q "$marker" "$OTHER_CWD/doctor.txt" || { cat "$OTHER_CWD/doctor.txt" >&2; fail "doctor text is missing: $marker"; }
 done
-if grep -Eq '\$0\.10|x402|free pages' "$OTHER_CWD/doctor.txt"; then fail "doctor advertises hosted pricing while hosted is disabled"; fi
+if grep -Eqi '\$0\.10|coming[ ]soon' "$OTHER_CWD/doctor.txt"; then fail "doctor shows stale hosted text (old price or not-yet-live wording)"; fi
 # Same check with ollama off PATH (and no server): the install path, with the link.
 EMPTY_BIN="$(mktemp -d)"
 NO_OLLAMA_PATH="$EMPTY_BIN:/usr/bin:/bin"
@@ -131,7 +131,8 @@ assert d["local"]["next_step"] and d["next_step"] == d["local"]["next_step"]
 assert d["current"]["backend"] == "local" and d["current"]["documents_left_machine"] is False
 assert d["current"]["privacy_acknowledged"] is False and d["current"]["privacy_acknowledged_at"] is None
 assert d["cloud"]["usable"] == [], d["cloud"]["usable"]
-assert d["hosted"]["status"] == "coming_soon" and d["hosted"]["enabled"] is False and "pricing" not in d["hosted"]
+assert d["hosted"]["status"] == "available" and d["hosted"]["enabled"] is True and d["hosted"]["url"] == "https://mcp.taxclaw.net/mcp"
+assert d["hosted"]["pricing"]["price_per_page_usd"] == 0.08 and d["hosted"]["pricing"]["price_per_page_usd_after_50"] == 0.05
 assert any("Never choose cloud" in r for r in d["agent_rules"])
 if sys.argv[2] == "check":
     n = json.loads((w / "doctor-no-ollama.json").read_text())["local"]
@@ -309,9 +310,9 @@ assert client.get("/affiliate-info", follow_redirects=False).status_code == 301
 settings_html = client.get("/settings").text
 assert "not reachable" in settings_html and "127.0.0.1:9" in settings_html
 for marker in ("Tier 1", "Tier 2", "Tier 3", 'value="anthropic"', 'value="openai_compat"', 'value="cloudflare_clairic"', "privacy-ack",
-               "Path 1 · Local", "Path 2 · Cloud with your own API keys", "Path 3 · TaxClaw Cloud", "coming soon", "No cloud consent recorded"):
+               "Path 1 · Local", "Path 2 · Cloud with your own API keys", "Path 3 · TaxClaw Cloud", "https://mcp.taxclaw.net/mcp", "No cloud consent recorded"):
     assert marker in settings_html, marker
-assert "$0.10 per page" not in settings_html and "x402" not in settings_html and "10 free pages" not in settings_html
+assert "$0.10 per page" not in settings_html and "coming" " soon" not in settings_html.lower() and "$0.08 per page" in settings_html
 assert "sponsors" not in client.get("/").text.lower()
 print(f"[smoke] {len(routes)} HTML routes returned 200 (Settings shows tiers 1-3)")
 

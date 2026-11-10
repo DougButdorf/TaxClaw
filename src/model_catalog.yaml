@@ -175,17 +175,21 @@ doctor:
       terms_url: "https://www.cloudflare.com/terms/"
       measured: null
 
-# TaxClaw Cloud (hosted). Not available yet: while `enabled` is false, every surface shows
-# only `coming_soon` and NO pricing. The pricing text is ready for launch; flip `enabled`
-# when the service exists. Using it will need the same explicit, recorded consent as any
-# other cloud path.
+# TaxClaw Cloud (hosted): live remote MCP server (public beta). The user's agent connects to it
+# directly and pays per page; the local skill never sends documents there. Every surface shows
+# the URL and this pricing while `enabled` is true; set it to false to fall back to `unavailable`.
 hosted:
-  enabled: false
+  enabled: true
   name: "TaxClaw Cloud"
-  coming_soon: "TaxClaw Cloud (hosted) is coming soon. Nothing to set up yet."
+  status_label: "Public beta"
+  url: "https://mcp.taxclaw.net/mcp"
+  terms_url: "https://mcp.taxclaw.net/terms"
+  privacy_url: "https://mcp.taxclaw.net/privacy"
+  unavailable: "TaxClaw Cloud (hosted) is not available right now."
   pricing:
     free_pages: 10
-    price_per_page_usd: 0.10
-    payment: "paid by your agent via x402"
-    retention: "documents processed and not stored"
-    text: "10 free pages, then $0.10 per page, paid by your agent via x402. Documents are processed and not stored."
+    price_per_page_usd: 0.08
+    price_per_page_usd_after_50: 0.05
+    payment: "paid by your agent in USDC on Base via x402"
+    retention: "documents processed in memory and not stored; results readable for at most 1 hour"
+    text: "10 free pages per wallet, then $0.08 per page ($0.05 after page 50), paid by your agent in USDC on Base via x402. Documents are processed in memory and not stored; results readable for at most 1 hour."

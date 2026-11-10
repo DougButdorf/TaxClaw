@@ -19,7 +19,9 @@ from typing import Any
 
 from mcp import ClientSession, StdioServerParameters, stdio_client
 
-EXPECTED_TOOLS = {"ingest_document", "list_documents", "get_document", "export_documents", "list_models", "setup_status"}
+EXPECTED_TOOLS = {
+    "ingest_document", "list_documents", "get_document", "export_documents", "delete_document", "list_models", "setup_status",
+}
 
 
 def _package_version() -> str:
@@ -77,7 +79,7 @@ async def run(server: str, ingest: str | None, expect: dict[str, str]) -> int:
             st = _payload(r)
             assert st["read_only"] is True and st["local"]["state"] in (
                 "ollama_missing", "server_unreachable", "no_vision_model", "model_not_selected", "ready"), st
-            assert st["hosted"]["status"] == "coming_soon" and "pricing" not in st["hosted"], st["hosted"]
+            assert st["hosted"]["status"] == "available" and st["hosted"]["url"] == "https://mcp.taxclaw.net/mcp", st["hosted"]
             assert st["current"]["documents_left_machine"] is False and st["current"]["backend"] == "local", st["current"]
             assert not any(set(t.input_schema.get("properties", {})) & {"accept_privacy", "privacy_acknowledged", "model_backend"} for t in tools.tools)
             log(f"setup_status ok: local={st['local']['state']} ready={st['ready']} hosted={st['hosted']['status']}")

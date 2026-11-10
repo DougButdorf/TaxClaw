@@ -362,7 +362,14 @@ def build_report(cfg: Config, *, live: bool = True, ollama_models: list[dict[str
             tier2_cloud(cfg, live=live),
             tier3_setup(cfg),
         ],
+        "hosted": _hosted(),
     }
+
+
+def _hosted() -> dict[str, Any]:
+    from .doctor import hosted_status
+
+    return hosted_status()
 
 
 # ---------------------------------------------------------------------------
@@ -420,6 +427,11 @@ def format_report(report: dict[str, Any], *, short: bool = False) -> str:
         if not short:
             for i, step in enumerate(o.get("setup") or [], 1):
                 lines.append(f"    {i}. {step}")
+    hosted = report.get("hosted") or {}
+    if hosted:
+        lines.append("")
+        lines.append("Hosted - TaxClaw Cloud (not this skill: a remote MCP server your agent connects to)")
+        lines.append(f"  {hosted.get('message')}")
     lines.append("")
     lines.append(f"Recommendations: {report['catalog']['source']} (as of {report['catalog']['as_of']})")
     return "\n".join(lines) + "\n"
