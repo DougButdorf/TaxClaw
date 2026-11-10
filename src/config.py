@@ -91,6 +91,9 @@ class Config:
     # Security limits
     max_upload_bytes: int = 10 * 1024 * 1024  # 10MB
     storage_cap_bytes: int = 2 * 1024 * 1024 * 1024  # 2GB total stored originals
+    # Longest PDF accepted for one synchronous ingest (0 = no limit). Extraction is one model
+    # call per page, so a long statement can outlast an agent's tool timeout.
+    max_pages: int = 40
 
     @property
     def backend(self) -> str:
@@ -210,9 +213,47 @@ def load_config(*, create_dirs: bool = True) -> Config:
     # hasn't acknowledged cloud privacy yet. Enforce acknowledgement at call sites.
 
     if create_dirs:
-        cfg.data_path.mkdir(parents=True, exist_ok=True)
-        cfg.uploads_dir.mkdir(parents=True, exist_ok=True)
+        make_private_dir(cfg.data_path)
+        make_private_dir(cfg.uploads_dir)
     return cfg
+
+
+def make_private_dir(path: Path) -> None:
+    """mkdir -p with owner-only access: the data dir holds SSN-bearing copies and the database.
+
+    New directories are created 0700; an existing directory TaxClaw owns is tightened to 0700
+    (best effort; a user-chosen shared ``data_dir`` that we cannot chmod is left alone).
+    """
+
+    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    try:
+        if path.stat().st_mode & 0o077:
+            os.chmod(path, 0o700)
+    except OSError:
+        pass
+
+
+# Rough per-page extraction time (seconds) for estimates shown to agents and users.
+# Local: measured 18.9 s/page (gemma3:4b) to 66 s/page (gemma3:12b), slower on less memory.
+# Cloud: measured about 5 s/page (claude-haiku-5-5), more with the per-sale pass on 1099-Bs.
+LOCAL_SECONDS_PER_PAGE = (15, 100)
+CLOUD_SECONDS_PER_PAGE = (5, 20)
+
+
+def seconds_per_page(cfg: Config) -> tuple[int, int]:
+    return CLOUD_SECONDS_PER_PAGE if cfg.is_cloud else LOCAL_SECONDS_PER_PAGE
+
+
+def estimate_text(pages: int, cfg: Config) -> str:
+    """"about 15-100 s per page x 12 pages = about 3-20 min" for the configured backend."""
+
+    lo, hi = seconds_per_page(cfg)
+    where = "a cloud model" if cfg.is_cloud else "a local model"
+
+    def _fmt(s: int) -> str:
+        return f"{s} s" if s < 120 else f"{round(s / 60)} min"
+
+    return f"about {lo}-{hi} s per page on {where} x {pages} page(s) = about {_fmt(lo * pages)}-{_fmt(hi * pages)}"
 
 
 def cloud_api_key_in_config_file() -> bool:
@@ -261,6 +302,7 @@ def save_config(*, cfg: Config) -> None:
             "data_dir": cfg.data_dir,
             "max_upload_bytes": int(cfg.max_upload_bytes),
             "storage_cap_bytes": int(cfg.storage_cap_bytes),
+            "max_pages": int(cfg.max_pages),
         }
     )
 

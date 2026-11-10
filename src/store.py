@@ -11,7 +11,7 @@ from typing import Any, Iterable
 
 import pymupdf
 
-from .config import Config
+from .config import Config, estimate_text, make_private_dir
 from .db import db, json_dumps, row_to_dict
 from .provenance import processed_by_for
 
@@ -71,11 +71,13 @@ def _utc_now_iso() -> str:
 
 
 def validate_input_file(src_path: str, cfg: Config, original_name: str | None = None) -> tuple[str, str]:
-    """Validate a file before ingesting it, without copying or reading more than the header.
+    """Validate a file before ingesting it, without copying it anywhere.
 
     Returns (ext, sniffed_mime). Raises FileNotFoundError / ValueError with a
     user-facing message. Same rules as web uploads: existing regular file,
     size <= max_upload_bytes, extension allowlist, magic bytes must match.
+    PDFs must also open (not corrupt, not password-protected) and have at most
+    ``max_pages`` pages.
     """
 
     src = Path(src_path)
@@ -106,7 +108,38 @@ def validate_input_file(src_path: str, cfg: Config, original_name: str | None = 
     }[ext]
     if sniffed != expected:
         raise ValueError(f"file extension .{ext} does not match detected type")
+    if ext == "pdf":
+        check_pdf(src, cfg)
     return ext, sniffed
+
+
+def check_pdf(path: Path, cfg: Config) -> int:
+    """Open the PDF once: readable, not encrypted, within max_pages. Returns the page count."""
+
+    try:
+        doc = pymupdf.open(str(path), filetype="pdf")
+    except Exception:  # noqa: BLE001  (pymupdf.FileDataError and friends)
+        raise ValueError("not a readable PDF (the file is damaged or not really a PDF)") from None
+    try:
+        if doc.needs_pass:
+            raise ValueError("password-protected PDF: remove the password first")
+        try:
+            pages = int(doc.page_count)
+            if pages > 0:
+                doc.load_page(0)
+        except Exception:  # noqa: BLE001
+            raise ValueError("not a readable PDF (the file is damaged or not really a PDF)") from None
+        if pages <= 0:
+            raise ValueError("not a readable PDF (it has no pages)")
+    finally:
+        doc.close()
+    limit = int(cfg.max_pages or 0)
+    if limit > 0 and pages > limit:
+        raise ValueError(
+            f"PDF has {pages} pages; the limit is {limit} (max_pages). At {estimate_text(pages, cfg)}. "
+            "Split the PDF into smaller files, or raise max_pages in ~/.config/taxclaw/config.yaml"
+        )
+    return pages
 
 
 def ingest_file(src_path: str, cfg: Config, original_name: str | None = None) -> tuple[str, str, str, str]:
@@ -156,7 +189,7 @@ def ingest_file(src_path: str, cfg: Config, original_name: str | None = None) ->
     file_hash = sha256_file(str(src))
 
     files_dir = cfg.data_path / "files"
-    files_dir.mkdir(parents=True, exist_ok=True)
+    make_private_dir(files_dir)
 
     dest_path = files_dir / f"{file_hash}.{ext}"
 
@@ -221,6 +254,65 @@ def get_document(doc_id: str) -> dict[str, Any] | None:
     with db() as con:
         r = con.execute("SELECT * FROM documents WHERE id = ?", (doc_id,)).fetchone()
         return row_to_dict(r)
+
+
+def has_extraction(doc_id: str) -> bool:
+    with db() as con:
+        r = con.execute("SELECT 1 FROM form_extractions WHERE document_id=? LIMIT 1", (doc_id,)).fetchone()
+        return r is not None
+
+
+def is_retryable(doc: dict[str, Any]) -> bool:
+    """An earlier ingest of this file never finished, so ingesting it again should re-run extraction.
+
+    ``processing``: the run was killed (client timeout, closed terminal, sleep, Ollama died).
+    ``error``: the web UI's hard-failure state. ``needs_review`` with no stored extraction:
+    extraction raised (the CLI/MCP exit-1 path), so there is nothing to review.
+    """
+
+    status = doc.get("status")
+    if status in ("processing", "error", "received"):
+        return True
+    return status == "needs_review" and not has_extraction(doc["id"])
+
+
+_DERIVED_TABLES = ("extracted_fields", "form_sections", "form_extractions", "transactions_1099da", "transactions_1099b", "review_queue")
+
+
+def reset_document_for_retry(
+    *,
+    cfg: Config,
+    doc_id: str,
+    file_path: str,
+    doc_type: str,
+    page_count: int,
+    classification_confidence: float | None,
+    filer: str | None,
+    tax_year: int | None,
+) -> None:
+    """Reuse an existing row for a fresh classify/extract run: drop prior results, back to ``processing``."""
+
+    with db() as con:
+        for table in _DERIVED_TABLES:
+            con.execute(f"DELETE FROM {table} WHERE document_id=?", (doc_id,))
+        con.execute(
+            """UPDATE documents
+               SET file_path=?, doc_type=?, page_count=?, classification_confidence=?,
+                   filer=COALESCE(?, filer), tax_year=COALESCE(?, tax_year),
+                   status='processing', needs_review=0, overall_confidence=NULL,
+                   extracted_at=NULL, notes=NULL, processed_by=?
+               WHERE id=?""",
+            (
+                file_path,
+                doc_type,
+                page_count,
+                classification_confidence,
+                filer,
+                tax_year,
+                json.dumps(processed_by_for(cfg), separators=(",", ":")),
+                doc_id,
+            ),
+        )
 
 
 def list_documents(
@@ -566,17 +658,33 @@ def set_display_name_if_empty(*, doc_id: str, display_name: str | None) -> None:
         )
 
 
-def delete_document(doc_id: str) -> None:
+def delete_document(doc_id: str, cfg: Config | None = None) -> bool:
+    """Delete a document, everything extracted from it and TaxClaw's stored copy of the file.
+
+    Returns False when there is no such document. The user's original file is never touched:
+    only a copy inside ``data_dir`` is removed.
+    """
+
     with db() as con:
         r = con.execute("SELECT file_path FROM documents WHERE id=?", (doc_id,)).fetchone()
-        file_path = r[0] if r else None
+        if r is None:
+            return False
+        file_path = r[0]
+        for table in _DERIVED_TABLES:
+            con.execute(f"DELETE FROM {table} WHERE document_id=?", (doc_id,))
         con.execute("DELETE FROM documents WHERE id=?", (doc_id,))
 
     if file_path and os.path.exists(file_path):
-        try:
-            os.remove(file_path)
-        except Exception:
-            pass
+        if cfg is None:
+            from .config import load_config
+
+            cfg = load_config(create_dirs=False)
+        if Path(file_path).resolve().is_relative_to(cfg.data_path.resolve()):
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
+    return True
 
 
 def page_count_for_pdf(path: str) -> int:

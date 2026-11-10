@@ -35,7 +35,7 @@ def cmd_ingest(args: argparse.Namespace) -> int:
 
     cfg = load_config()
     try:
-        result = ingest_path(args.path, cfg, filer=args.filer, tax_year=args.year)
+        result = ingest_path(args.path, cfg, filer=args.filer, tax_year=args.year, force=args.force)
     except IngestError as e:
         next_step = None
         if e.stage == "backend":
@@ -86,6 +86,22 @@ def cmd_list(args: argparse.Namespace) -> int:
         print(
             f"{d['id']}\t{d.get('doc_type')}\t{d.get('tax_year')}\t{d.get('filer')}\tneeds_review={d.get('needs_review')}\t{d.get('status')}"
         )
+    return 0
+
+
+def cmd_delete(args: argparse.Namespace) -> int:
+    from .store import delete_document
+
+    init_db()
+    deleted = delete_document(args.id)
+    if args.json:
+        _print_json({"ok": deleted, "deleted": deleted, "document_id": args.id} | ({} if deleted else {"error": "document not found"}))
+    elif deleted:
+        print(args.id)
+    if not deleted:
+        if not args.json:
+            _err(f"document not found: {args.id}")
+        return 2
     return 0
 
 
@@ -290,7 +306,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
     skill_dir = Path(__file__).resolve().parents[1]
     os.chdir(str(skill_dir))
 
-    uvicorn.run("src.main:app", host="127.0.0.1", port=cfg.port, reload=True)
+    uvicorn.run("src.main:app", host="127.0.0.1", port=cfg.port)
     return 0
 
 
@@ -304,7 +320,21 @@ def build_parser() -> argparse.ArgumentParser:
     p_ing.add_argument("--filer", default=None)
     p_ing.add_argument("--year", type=int, default=None)
     p_ing.add_argument("--json", action="store_true", help="print a JSON result (document_id, doc_type, needs_review, ...)")
+    p_ing.add_argument(
+        "--force",
+        action="store_true",
+        help="re-run classification and extraction even if this file is already stored and finished "
+        "(replaces its previous results, including corrections made in the web UI)",
+    )
     p_ing.set_defaults(func=cmd_ingest)
+
+    p_del = sp.add_parser(
+        "delete",
+        help="delete a document, its extracted data and TaxClaw's stored copy (your original file is kept)",
+    )
+    p_del.add_argument("id", help="document id")
+    p_del.add_argument("--json", action="store_true", help="print JSON")
+    p_del.set_defaults(func=cmd_delete)
 
     p_ls = sp.add_parser("list", help="list documents")
     p_ls.add_argument("--filer", default=None)
@@ -341,7 +371,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="first-run check: local status, cloud with your own keys, hosted (read-only)",
         description=(
             "Read-only checks and three explicit paths: (1) local Ollama on this machine, (2) cloud with your own "
-            "keys, (3) TaxClaw Cloud (hosted, coming soon). Installs and downloads nothing, writes nothing, and "
+            "keys, (3) TaxClaw Cloud (hosted remote MCP server at https://mcp.taxclaw.net/mcp, pay per page). "
+            "Installs and downloads nothing, writes nothing, and "
             "never switches to cloud."
         ),
     )

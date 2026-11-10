@@ -1,4 +1,4 @@
-# TaxClaw v1.0.0 Runbook
+# TaxClaw v1.1.0 Runbook
 
 ## Setup
 
@@ -35,6 +35,17 @@ cd /path/to/taxclaw   # the skill directory
 
 ./bin/taxclaw list
 ```
+
+- Extraction is one model call per page: about 15-100 s per page on a local model.
+  PDFs over `max_pages` (default 40, in `~/.config/taxclaw/config.yaml`; 0 = no
+  limit) are refused with exit 2, the page count and a time estimate.
+- Corrupt and password-protected PDFs are refused with exit 2 before anything is stored.
+- If an ingest was interrupted (closed terminal, client timeout, Ollama stopped) or
+  extraction failed (exit 1), run the same command again: the same document is
+  re-extracted (`retried: true` in `--json`).
+- `--force` re-runs a finished document (replaces its results, including web UI corrections).
+- `./bin/taxclaw delete <doc-id>` removes a document, its extracted data and the stored
+  copy in the data dir (exit 2 for an unknown id). Your original file is not touched.
 
 ## Export
 

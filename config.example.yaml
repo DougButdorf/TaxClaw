@@ -30,3 +30,6 @@ review_confidence_threshold: 0.8  # per-field confidence below this flags the do
 
 port: 8421
 data_dir: ~/.local/share/taxclaw/
+
+# Longest PDF accepted for one ingest (0 = no limit); each page is one model call
+max_pages: 40

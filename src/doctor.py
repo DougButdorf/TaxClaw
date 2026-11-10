@@ -414,7 +414,7 @@ def switch_to_local(cfg: Config, model: str | None) -> Config:
 
 
 # ---------------------------------------------------------------------------
-# Path 3: hosted (coming soon)
+# Path 3: hosted TaxClaw Cloud (remote MCP server, pay per page)
 # ---------------------------------------------------------------------------
 
 
@@ -423,16 +423,26 @@ def hosted_status() -> dict[str, Any]:
     enabled = bool(h.get("enabled"))
     name = h.get("name") or "TaxClaw Cloud"
     if not enabled:
-        # No pricing anywhere until the flag is on.
-        return {"enabled": False, "name": name, "status": "coming_soon", "message": h.get("coming_soon") or f"{name} (hosted) is coming soon."}
+        # No pricing anywhere while the flag is off.
+        return {"enabled": False, "name": name, "status": "unavailable", "message": h.get("unavailable") or f"{name} (hosted) is not available right now."}
     pricing = h.get("pricing") or {}
+    url = h.get("url") or ""
+    label = h.get("status_label") or ""
     return {
         "enabled": True,
         "name": name,
         "status": "available",
-        "message": f"{name} (hosted): {pricing.get('text', '')}".strip(),
+        "status_label": label,
+        "url": url,
+        "terms_url": h.get("terms_url"),
+        "privacy_url": h.get("privacy_url"),
+        "message": f"{name} (hosted{'; ' + label if label else ''}): remote MCP server at {url}. {pricing.get('text', '')}".strip(),
         "pricing": pricing,
-        "consent": "Using it sends documents to TaxClaw Cloud and needs the same explicit, recorded consent as any cloud path.",
+        "consent": (
+            "It runs on TaxClaw's servers, not this machine: the user's agent connects to the URL as a remote MCP "
+            "server and pays from its own wallet, and page images go to the hosted service and its model providers. "
+            "This skill never sends documents there; connecting is the user's choice."
+        ),
     }
 
 

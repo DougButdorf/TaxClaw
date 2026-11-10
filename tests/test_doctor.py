@@ -233,33 +233,47 @@ class CloudAndHostedTest(Isolated):
         self.assertEqual(usable[0]["use_cloud_name"], "cloudflare_clairic")
         self.assertEqual(usable[0]["switch_command"], "taxclaw use-cloud cloudflare_clairic --accept-privacy")
 
-    def test_hosted_is_one_line_with_no_pricing_while_disabled(self):
+    def test_hosted_is_live_with_url_and_pricing(self):
         r = self.report()
         h = r["hosted"]
-        self.assertFalse(h["enabled"])
-        self.assertEqual(h["status"], "coming_soon")
-        self.assertNotIn("pricing", h)
+        self.assertTrue(h["enabled"])
+        self.assertEqual((h["status"], h["status_label"]), ("available", "Public beta"))
+        self.assertEqual(h["url"], "https://mcp.taxclaw.net/mcp")
+        self.assertEqual(h["terms_url"], "https://mcp.taxclaw.net/terms")
+        self.assertEqual(h["privacy_url"], "https://mcp.taxclaw.net/privacy")
+        self.assertIn("10 free pages per wallet, then $0.08 per page ($0.05 after page 50)", h["message"])
+        self.assertIn("USDC on Base via x402", h["message"])
+        self.assertIn("not stored", h["message"])
+        self.assertIn("not this machine", h["consent"])
         text = doctor.format_report(r)
-        self.assertIn("coming soon", text)
-        for word in ("$0.10", "x402", "10 free", "free pages"):
-            self.assertNotIn(word, text)
-            self.assertNotIn(word, json.dumps(r))
+        self.assertIn("https://mcp.taxclaw.net/mcp", text)
+        for stale in ("coming" " soon", "$0.10"):  # split so a repo-wide grep for the stale phrase stays empty
+            self.assertNotIn(stale, text.lower())
+            self.assertNotIn(stale, json.dumps(r).lower())
 
-    def test_hosted_pricing_appears_only_when_the_flag_is_enabled(self):
+    def test_hosted_disabled_shows_no_pricing(self):
         cat = json.loads(json.dumps(models.load_catalog()))
-        cat["hosted"]["enabled"] = True
+        cat["hosted"]["enabled"] = False
         with mock.patch.object(models, "load_catalog", return_value=cat):
             r = self.report()
-        self.assertTrue(r["hosted"]["enabled"])
-        self.assertIn("10 free pages, then $0.10 per page, paid by your agent via x402", r["hosted"]["message"])
-        self.assertIn("not stored", r["hosted"]["message"])
-        self.assertIn("explicit, recorded consent", r["hosted"]["consent"])
+        h = r["hosted"]
+        self.assertEqual((h["enabled"], h["status"]), (False, "unavailable"))
+        self.assertNotIn("pricing", h)
+        for word in ("$0.08", "x402", "free pages"):
+            self.assertNotIn(word, json.dumps(r))
 
-    def test_catalog_ships_hosted_disabled_with_pricing_ready(self):
+    def test_catalog_ships_hosted_live_with_pricing(self):
         h = models.load_catalog()["hosted"]
-        self.assertIs(h["enabled"], False)
+        self.assertIs(h["enabled"], True)
+        self.assertEqual(h["url"], "https://mcp.taxclaw.net/mcp")
         self.assertEqual(h["pricing"]["free_pages"], 10)
-        self.assertEqual(h["pricing"]["price_per_page_usd"], 0.10)
+        self.assertEqual(h["pricing"]["price_per_page_usd"], 0.08)
+        self.assertEqual(h["pricing"]["price_per_page_usd_after_50"], 0.05)
+
+    def test_models_report_includes_hosted(self):
+        r = models.build_report(config.load_config(create_dirs=False), live=False, ollama_models=[])
+        self.assertEqual(r["hosted"]["url"], "https://mcp.taxclaw.net/mcp")
+        self.assertIn("$0.08 per page", models.format_report(r))
 
 
 class UseCloudTest(Isolated):
@@ -481,7 +495,7 @@ class McpTest(Isolated):
         tools = asyncio.run(mcp_server.mcp.list_tools())
         self.assertEqual(
             {t.name for t in tools},
-            {"ingest_document", "list_documents", "get_document", "export_documents", "list_models", "setup_status"},
+            {"ingest_document", "list_documents", "get_document", "export_documents", "delete_document", "list_models", "setup_status"},
         )
         for t in tools:
             props = set((t.input_schema or {}).get("properties", {}))

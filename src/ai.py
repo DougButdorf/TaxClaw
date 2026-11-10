@@ -8,6 +8,7 @@ and imports keep working.
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from .config import Config
@@ -74,6 +75,19 @@ def parse_json_text(text: str) -> Any:
     if first_err is not None:
         raise ValueError(f"model response was not valid JSON ({first_err.msg}); response began: {snippet!r}")
     raise ValueError(f"model response contained no JSON object; response began: {snippet!r}")
+
+
+_MODEL_REPLY_SNIPPET = re.compile(r";?\s*response began: .*\Z", re.S)
+
+
+def strip_model_reply(message: str) -> str:
+    """Drop the "response began: ..." snippet of a model reply from an error message.
+
+    The snippet helps on stderr, but a model that echoes the page would carry an SSN with it, so
+    it is kept out of anything stored (``documents.notes``) or returned to an agent.
+    """
+
+    return _MODEL_REPLY_SNIPPET.sub("", str(message)).rstrip()
 
 
 def with_untrusted_note(prompt: str) -> str:

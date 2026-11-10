@@ -3,10 +3,11 @@
 Run with ``taxclaw mcp`` (or ``bin/taxclaw mcp``). Uses whatever backend
 ~/.config/taxclaw/config.yaml selects (local Ollama by default). Tools:
 
-- ingest_document(path, filer?, tax_year?)
-- list_documents(filer?, tax_year?, doc_type?, needs_review?)
-- get_document(document_id)
-- export_documents(document_id? | all, format)
+- ingest_document(path, filer?, tax_year?, force?)
+- list_documents(filer?, tax_year?, doc_type?, needs_review?, redact_identifiers?)
+- get_document(document_id, redact_identifiers?)
+- export_documents(document_id? | all, format, redact_identifiers?)
+- delete_document(document_id)
 - list_models()
 - setup_status()   (the `taxclaw doctor` report: read-only)
 
@@ -15,6 +16,9 @@ Safety:
   existing regular file of an allowed type (PDF/PNG/JPEG/TIFF/WebP) within
   ``max_upload_bytes``; the same validators as web uploads apply;
 - tools never return original file bytes (only extracted data and metadata);
+- SSNs, TINs, EINs and account numbers are masked to their last four characters
+  unless the caller sets ``redact_identifiers=false``: whatever a tool returns goes
+  wherever the agent's model runs;
 - nothing but protocol messages is written to stdout (the SDK diverts fd 1 to
   stderr while serving; this module never prints);
 - cloud backends still require ``privacy_acknowledged: true``;
@@ -39,9 +43,13 @@ from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
 from . import __version__
-from .config import load_config
+from .config import LOCAL_SECONDS_PER_PAGE, Config, load_config
 from .db import init_db
 from .provenance import notice_line, parse_processed_by, processed_by_for_documents
+from .redact import redact_csv, redact_json_text, redact_obj
+
+_LO, _HI = LOCAL_SECONDS_PER_PAGE
+_DEFAULT_MAX_PAGES = Config().max_pages
 
 SERVER_INSTRUCTIONS = (
     "TaxClaw turns tax documents (W-2, 1099 variants, 1099-DA, K-1, consolidated 1099s) into structured data "
@@ -51,7 +59,17 @@ SERVER_INSTRUCTIONS = (
     "confidence -> export_documents. Extraction is local by default; cloud backends only run after the user "
     "has acknowledged the privacy warning themselves (CLI or Settings; no tool here can do it). Every result "
     "carries processed_by (backend, model, documents_left_machine). TaxClaw does not prepare or file returns and "
-    "is not tax advice; always verify values against the original document."
+    "is not tax advice; always verify values against the original document. SSNs, TINs, EINs and account "
+    "numbers come back masked (last four) unless you pass redact_identifiers=false; only do that when the user "
+    "needs the full value, because whatever you receive goes wherever your model runs. If an ingest was "
+    "interrupted or failed, ingest the same file again (it is retried) or call delete_document."
+)
+
+_REDACT_FIELD = Field(
+    description=(
+        "Mask SSNs, TINs, EINs and account numbers to their last four characters (default true). Set false only "
+        "when the user needs the full value: tool results go wherever this agent's model runs."
+    )
 )
 
 mcp = MCPServer(name="taxclaw", version=__version__, instructions=SERVER_INSTRUCTIONS, log_level="WARNING")
@@ -76,15 +94,25 @@ def _doc_public(d: dict[str, Any]) -> dict[str, Any]:
         "Classify and extract one tax document (PDF, PNG, JPEG, TIFF or WebP) from an absolute local file path, "
         "and store the structured fields in TaxClaw's local database. Uses the backend configured in TaxClaw "
         "(local Ollama by default). Returns the document id, detected form type, confidence and whether it needs "
-        "human review. Re-ingesting the same file returns the existing document (duplicate=true). Takes ~30-120 s "
-        "per page on a local model."
+        "human review. Re-ingesting a file that is already stored and finished returns it (duplicate=true); if the "
+        "earlier run was interrupted or failed, the same document is re-extracted (retried=true). force=true "
+        "re-runs extraction for a finished document. Time is per page times pages: about "
+        f"{_LO}-{_HI} s per page on a local model, so a 10-page PDF takes about {_LO * 10 // 60}-{-(-_HI * 10 // 60)} "
+        f"min and a 30-page one about {_LO * 30 // 60}-{-(-_HI * 30 // 60)} min (cloud backends are several times "
+        f"faster). PDFs longer than max_pages (default {_DEFAULT_MAX_PAGES}) are refused as an invalid file with the "
+        "page count and the estimate; make sure the client's tool timeout covers the estimate."
     ),
 )
 def ingest_document(
     path: Annotated[str, Field(description="Absolute path to the document file on this machine (~ is expanded).")],
     filer: Annotated[str | None, Field(description="Optional label for whose document this is, e.g. 'doug'.")] = None,
     tax_year: Annotated[int | None, Field(description="Optional tax year, e.g. 2025.", ge=1990, le=2100)] = None,
+    force: Annotated[
+        bool,
+        Field(description="Re-run classification and extraction even if this file is already stored and finished (replaces its previous results)."),
+    ] = False,
 ) -> dict[str, Any]:
+    from .ai import strip_model_reply
     from .pipeline import IngestError, ingest_path
 
     p = Path(os.path.expanduser(path))
@@ -92,10 +120,15 @@ def ingest_document(
         raise ToolError("path must be absolute (the server does not resolve paths against its own working directory)")
     cfg = load_config()
     try:
-        return ingest_path(str(p), cfg, filer=filer, tax_year=tax_year)
+        return ingest_path(str(p), cfg, filer=filer, tax_year=tax_year, force=force)
     except IngestError as e:
         prefix = {"validate": "invalid file", "backend": "backend not ready", "extract": "extraction failed"}[e.stage]
-        suffix = f" (document_id={e.document_id}, flagged for review)" if e.document_id else ""
+        suffix = (
+            f" (document_id={e.document_id}, flagged for review; call ingest_document with the same path to retry, "
+            "or delete_document to remove it)"
+            if e.document_id
+            else ""
+        )
         hint = ""
         if e.stage == "backend":
             from .doctor import backend_next_step
@@ -105,7 +138,7 @@ def ingest_document(
                 "\nCall setup_status for the full report. Do not switch the user to cloud yourself: only the user can, "
                 "with `taxclaw use-cloud <backend> --accept-privacy` or in Settings."
             )
-        raise ToolError(f"{prefix}: {e}{suffix}{hint}") from None
+        raise ToolError(f"{prefix}: {strip_model_reply(str(e))}{suffix}{hint}") from None
 
 
 @mcp.tool(
@@ -117,6 +150,7 @@ def list_documents(
     tax_year: Annotated[int | None, Field(description="Only this tax year.")] = None,
     doc_type: Annotated[str | None, Field(description="Only this form type, e.g. 'W-2', '1099-INT', 'K-1'.")] = None,
     needs_review: Annotated[bool | None, Field(description="true = only documents flagged for human review; false = only unflagged.")] = None,
+    redact_identifiers: Annotated[bool, _REDACT_FIELD] = True,
 ) -> dict[str, Any]:
     from .store import list_documents as _list
 
@@ -127,7 +161,8 @@ def list_documents(
         doc_type=doc_type,
         needs_review=None if needs_review is None else int(needs_review),
     )
-    return {"count": len(docs), "documents": [_doc_public(d) for d in docs]}
+    out = [_doc_public(d) for d in docs]
+    return {"count": len(docs), "documents": redact_obj(out) if redact_identifiers else out}
 
 
 @mcp.tool(
@@ -135,11 +170,13 @@ def list_documents(
     description=(
         "Return a document's metadata and every extracted field (field_path, field_value, confidence). "
         "confidence is per-field when the backend provides it (Cloudflare Clairic) and null otherwise; "
-        "overall_confidence and needs_review are always set. Never returns the original file."
+        "overall_confidence and needs_review are always set. SSNs, TINs, EINs and account numbers are masked to "
+        "their last four characters unless redact_identifiers=false. Never returns the original file."
     ),
 )
 def get_document(
     document_id: Annotated[str, Field(description="Document id from ingest_document or list_documents.")],
+    redact_identifiers: Annotated[bool, _REDACT_FIELD] = True,
 ) -> dict[str, Any]:
     from .db import db
     from .store import get_document as _get
@@ -163,12 +200,16 @@ def get_document(
             extraction = json.loads(raw[0])
         except Exception:  # noqa: BLE001
             extraction = None
-    return {
+    out = {
         "document": _doc_public(d),
         "fields": [{"field_path": r[0], "field_value": r[1], "confidence": r[2]} for r in rows],
         "extraction": extraction,
         "notice": "Extracted by AI; verify against the original document. Not tax advice.",
     }
+    if redact_identifiers:
+        out = redact_obj(out)
+    out["identifiers_redacted"] = bool(redact_identifiers)
+    return out
 
 
 @mcp.tool(
@@ -179,7 +220,9 @@ def get_document(
         "(one row per field), 8949_csv (Form 8949-ready CSV, one row per sale from 1099-B, consolidated 1099 "
         "and 1099-DA documents, with the check-box category and needs_review per row) or txf (TXF v042 for "
         "desktop tax software import; 1099-DA rows and rows missing basis/dates are skipped and listed in "
-        "warnings). Returns the content, never the original files. AI-extracted data; not tax advice."
+        "warnings). Returns the content, never the original files. SSNs, TINs, EINs and account numbers are "
+        "masked to their last four characters unless redact_identifiers=false (the CLI export is never masked). "
+        "AI-extracted data; not tax advice."
     ),
 )
 def export_documents(
@@ -188,6 +231,7 @@ def export_documents(
     ] = "json",
     document_id: Annotated[str | None, Field(description="Export only this document.")] = None,
     all: Annotated[bool, Field(description="Export every document. Set this or document_id.")] = False,  # noqa: A002
+    redact_identifiers: Annotated[bool, _REDACT_FIELD] = True,
 ) -> dict[str, Any]:
     from . import exporter
     from .store import get_document as _get
@@ -215,6 +259,8 @@ def export_documents(
             "notice": NOTICE_TEXT,
             "processed_by": res.processed_by,
             "processed_by_notice": res.processed_by_line,
+            # 8949/TXF rows carry no taxpayer identifiers (descriptions, dates, amounts only).
+            "identifiers_redacted": bool(redact_identifiers),
             "content": res.content,
         }
     fn = {
@@ -226,6 +272,8 @@ def export_documents(
         ("long_csv", True): exporter.export_all_csv_long,
     }[(format, bool(all))]
     content = fn() if all else fn(document_id)
+    if redact_identifiers:
+        content = redact_json_text(content) if format == "json" else redact_csv(content)
     pb = processed_by_for_documents(None if all else [document_id])
     return {
         "format": format,
@@ -233,8 +281,28 @@ def export_documents(
         "content_type": "application/json" if format == "json" else "text/csv",
         "processed_by": pb,
         "processed_by_notice": notice_line(pb),
+        "identifiers_redacted": bool(redact_identifiers),
         "content": content,
     }
+
+
+@mcp.tool(
+    title="Delete a document",
+    description=(
+        "Delete one document from TaxClaw's local database: its record, every extracted field and TaxClaw's stored "
+        "copy of the file. The user's original file is not touched. Use it to clear a failed or unwanted ingest; "
+        "ask the user first, because corrections made in the web UI are lost."
+    ),
+)
+def delete_document(
+    document_id: Annotated[str, Field(description="Document id from ingest_document or list_documents.")],
+) -> dict[str, Any]:
+    from .store import delete_document as _delete
+
+    init_db()
+    if not _delete(document_id):
+        raise ToolError(f"document not found: {document_id}")
+    return {"deleted": True, "document_id": document_id}
 
 
 @mcp.tool(
@@ -259,7 +327,9 @@ def list_models() -> dict[str, Any]:
         "now (ready), the one next step, and three explicit paths: (1) local Ollama on this machine with its exact "
         "state (ollama_missing, server_unreachable, no_vision_model, model_not_selected, ready) and the command to "
         "fix it, (2) cloud with the user's own API keys (key presence only; documents would leave the machine), "
-        "(3) hosted TaxClaw Cloud (coming soon). It installs nothing, downloads nothing and changes no settings. "
+        "(3) hosted TaxClaw Cloud, a remote MCP server the user's agent connects to directly (hosted.url, pay per "
+        "page via x402; give the URL and pricing from hosted, never connect or pay for them). It installs nothing, "
+        "downloads nothing and changes no settings. "
         "If local is not ready, show the user the paths in plain words and ask which they want; never choose cloud "
         "for them and never run install or pull commands without their OK. Switching to cloud is not possible from "
         "this server: the user does it with `taxclaw use-cloud <backend> --accept-privacy`."
