@@ -1,0 +1,1797 @@
+{
+  "application_revision": "533760d94d43bd7c93bf10e09e3f5f84eb55e510",
+  "gate_scope": "13 README-supported types, clean AND degraded; 1040 excluded as best-effort by Pip clarification",
+  "scorer": "Unchanged strict scorer; all fields, JSON types, extras and container shape count",
+  "haiku_transport": "Frozen subscription image adapter, NOT the application's production API path",
+  "models": {
+    "claude-haiku-5-5": {
+      "supported_13": {
+        "clean": {
+          "documents": 13,
+          "pages": 15,
+          "correct_fields": 280,
+          "expected_fields": 281,
+          "field_accuracy": 0.99644128113879,
+          "populated_correct": 244,
+          "populated_fields": 245,
+          "blank_correct": 36,
+          "blank_fields": 36,
+          "exact_documents": 12,
+          "classifications_correct": 13,
+          "runtime_errors": 0,
+          "extraction_seconds_per_page": 4.232927615754306,
+          "release_gate_passed": false,
+          "failed_exact_documents": [
+            {
+              "fixture_id": "full_gate_1099_misc_clean",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            }
+          ]
+        },
+        "degraded_scan": {
+          "documents": 13,
+          "pages": 15,
+          "correct_fields": 279,
+          "expected_fields": 281,
+          "field_accuracy": 0.9928825622775801,
+          "populated_correct": 243,
+          "populated_fields": 245,
+          "blank_correct": 36,
+          "blank_fields": 36,
+          "exact_documents": 11,
+          "classifications_correct": 13,
+          "runtime_errors": 0,
+          "extraction_seconds_per_page": 4.800428892858326,
+          "release_gate_passed": false,
+          "failed_exact_documents": [
+            {
+              "fixture_id": "full_gate_consolidated_1099_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            },
+            {
+              "fixture_id": "full_gate_1099_b_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            }
+          ]
+        },
+        "both": {
+          "documents": 26,
+          "pages": 30,
+          "correct_fields": 559,
+          "expected_fields": 562,
+          "field_accuracy": 0.994661921708185,
+          "populated_correct": 487,
+          "populated_fields": 490,
+          "blank_correct": 72,
+          "blank_fields": 72,
+          "exact_documents": 23,
+          "classifications_correct": 26,
+          "runtime_errors": 0,
+          "extraction_seconds_per_page": 4.516678254306316,
+          "release_gate_passed": false,
+          "failed_exact_documents": [
+            {
+              "fixture_id": "full_gate_consolidated_1099_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            },
+            {
+              "fixture_id": "full_gate_1099_b_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            },
+            {
+              "fixture_id": "full_gate_1099_misc_clean",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            }
+          ]
+        }
+      },
+      "best_effort_1040": {
+        "clean": {
+          "documents": 1,
+          "pages": 1,
+          "correct_fields": 0,
+          "expected_fields": 19,
+          "field_accuracy": 0.0,
+          "populated_correct": 0,
+          "populated_fields": 18,
+          "blank_correct": 0,
+          "blank_fields": 1,
+          "exact_documents": 0,
+          "classifications_correct": 1,
+          "runtime_errors": 0,
+          "extraction_seconds_per_page": 3.4640537025406957,
+          "release_gate_passed": null,
+          "failed_exact_documents": [
+            {
+              "fixture_id": "full_gate_1040_clean",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_name",
+                  "kind": "text",
+                  "expected": "Morgan Sample",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_ssn",
+                  "kind": "identifier",
+                  "expected": "XXX-XX-0000",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "filing_status",
+                  "kind": "text",
+                  "expected": "Single",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "wages",
+                  "kind": "money",
+                  "expected": "82456.78",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "tax_exempt_interest",
+                  "kind": "money",
+                  "expected": null,
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_interest",
+                  "kind": "money",
+                  "expected": "1245.67",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "qualified_dividends",
+                  "kind": "money",
+                  "expected": "1875.09",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "ordinary_dividends",
+                  "kind": "money",
+                  "expected": "2350.12",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjustments",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjusted_gross_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "standard_or_itemized_deduction",
+                  "kind": "money",
+                  "expected": "15750.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_income",
+                  "kind": "money",
+                  "expected": "70302.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_tax",
+                  "kind": "money",
+                  "expected": "10380.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "federal_withheld",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_payments",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "refund",
+                  "kind": "money",
+                  "expected": "854.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "amount_owed",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [
+                "10 Adjustments to income",
+                "11a Adjusted gross income",
+                "12e Standard deduction or itemized deductions",
+                "15 Taxable income",
+                "1a Total amount from Form(s) W-2, box 1",
+                "24 Total tax",
+                "25a Federal income tax withheld from W-2",
+                "2a Tax-exempt interest",
+                "2b Taxable interest",
+                "33 Total payments",
+                "35a Amount to be refunded to you",
+                "37 Amount you owe",
+                "3a Qualified dividends",
+                "3b Ordinary dividends",
+                "9 Total income",
+                "Filing status",
+                "For the year",
+                "Your first name and middle initial / Last name",
+                "Your social security number"
+              ],
+              "shape_errors": []
+            }
+          ]
+        },
+        "degraded_scan": {
+          "documents": 1,
+          "pages": 1,
+          "correct_fields": 0,
+          "expected_fields": 19,
+          "field_accuracy": 0.0,
+          "populated_correct": 0,
+          "populated_fields": 18,
+          "blank_correct": 0,
+          "blank_fields": 1,
+          "exact_documents": 0,
+          "classifications_correct": 1,
+          "runtime_errors": 0,
+          "extraction_seconds_per_page": 5.76202339399606,
+          "release_gate_passed": null,
+          "failed_exact_documents": [
+            {
+              "fixture_id": "full_gate_1040_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_name",
+                  "kind": "text",
+                  "expected": "Morgan Sample",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_ssn",
+                  "kind": "identifier",
+                  "expected": "XXX-XX-0000",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "filing_status",
+                  "kind": "text",
+                  "expected": "Single",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "wages",
+                  "kind": "money",
+                  "expected": "82456.78",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "tax_exempt_interest",
+                  "kind": "money",
+                  "expected": null,
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_interest",
+                  "kind": "money",
+                  "expected": "1245.67",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "qualified_dividends",
+                  "kind": "money",
+                  "expected": "1875.09",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "ordinary_dividends",
+                  "kind": "money",
+                  "expected": "2350.12",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjustments",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjusted_gross_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "standard_or_itemized_deduction",
+                  "kind": "money",
+                  "expected": "15750.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_income",
+                  "kind": "money",
+                  "expected": "70302.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_tax",
+                  "kind": "money",
+                  "expected": "10380.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "federal_withheld",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_payments",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "refund",
+                  "kind": "money",
+                  "expected": "854.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "amount_owed",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [
+                "10 Adjustments to income",
+                "11a Adjusted gross income",
+                "12e Standard deduction or itemized deductions",
+                "15 Taxable income",
+                "1a Total amount from Form(s) W-2, box 1",
+                "24 Total tax",
+                "25a Federal income tax withheld from W-2",
+                "2a Tax-exempt interest",
+                "2b Taxable interest",
+                "33 Total payments",
+                "35a Amount to be refunded to you",
+                "37 Amount you owe",
+                "3a Qualified dividends",
+                "3b Ordinary dividends",
+                "9 Total income",
+                "Filing status",
+                "For the year",
+                "Your first name and middle initial / Last name",
+                "Your social security number"
+              ],
+              "shape_errors": []
+            }
+          ]
+        },
+        "both": {
+          "documents": 2,
+          "pages": 2,
+          "correct_fields": 0,
+          "expected_fields": 38,
+          "field_accuracy": 0.0,
+          "populated_correct": 0,
+          "populated_fields": 36,
+          "blank_correct": 0,
+          "blank_fields": 2,
+          "exact_documents": 0,
+          "classifications_correct": 2,
+          "runtime_errors": 0,
+          "extraction_seconds_per_page": 4.613038548268378,
+          "release_gate_passed": null,
+          "failed_exact_documents": [
+            {
+              "fixture_id": "full_gate_1040_clean",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_name",
+                  "kind": "text",
+                  "expected": "Morgan Sample",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_ssn",
+                  "kind": "identifier",
+                  "expected": "XXX-XX-0000",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "filing_status",
+                  "kind": "text",
+                  "expected": "Single",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "wages",
+                  "kind": "money",
+                  "expected": "82456.78",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "tax_exempt_interest",
+                  "kind": "money",
+                  "expected": null,
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_interest",
+                  "kind": "money",
+                  "expected": "1245.67",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "qualified_dividends",
+                  "kind": "money",
+                  "expected": "1875.09",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "ordinary_dividends",
+                  "kind": "money",
+                  "expected": "2350.12",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjustments",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjusted_gross_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "standard_or_itemized_deduction",
+                  "kind": "money",
+                  "expected": "15750.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_income",
+                  "kind": "money",
+                  "expected": "70302.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_tax",
+                  "kind": "money",
+                  "expected": "10380.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "federal_withheld",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_payments",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "refund",
+                  "kind": "money",
+                  "expected": "854.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "amount_owed",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [
+                "10 Adjustments to income",
+                "11a Adjusted gross income",
+                "12e Standard deduction or itemized deductions",
+                "15 Taxable income",
+                "1a Total amount from Form(s) W-2, box 1",
+                "24 Total tax",
+                "25a Federal income tax withheld from W-2",
+                "2a Tax-exempt interest",
+                "2b Taxable interest",
+                "33 Total payments",
+                "35a Amount to be refunded to you",
+                "37 Amount you owe",
+                "3a Qualified dividends",
+                "3b Ordinary dividends",
+                "9 Total income",
+                "Filing status",
+                "For the year",
+                "Your first name and middle initial / Last name",
+                "Your social security number"
+              ],
+              "shape_errors": []
+            },
+            {
+              "fixture_id": "full_gate_1040_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_name",
+                  "kind": "text",
+                  "expected": "Morgan Sample",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_ssn",
+                  "kind": "identifier",
+                  "expected": "XXX-XX-0000",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "filing_status",
+                  "kind": "text",
+                  "expected": "Single",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "wages",
+                  "kind": "money",
+                  "expected": "82456.78",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "tax_exempt_interest",
+                  "kind": "money",
+                  "expected": null,
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_interest",
+                  "kind": "money",
+                  "expected": "1245.67",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "qualified_dividends",
+                  "kind": "money",
+                  "expected": "1875.09",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "ordinary_dividends",
+                  "kind": "money",
+                  "expected": "2350.12",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjustments",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjusted_gross_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "standard_or_itemized_deduction",
+                  "kind": "money",
+                  "expected": "15750.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_income",
+                  "kind": "money",
+                  "expected": "70302.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_tax",
+                  "kind": "money",
+                  "expected": "10380.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "federal_withheld",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_payments",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "refund",
+                  "kind": "money",
+                  "expected": "854.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "amount_owed",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [
+                "10 Adjustments to income",
+                "11a Adjusted gross income",
+                "12e Standard deduction or itemized deductions",
+                "15 Taxable income",
+                "1a Total amount from Form(s) W-2, box 1",
+                "24 Total tax",
+                "25a Federal income tax withheld from W-2",
+                "2a Tax-exempt interest",
+                "2b Taxable interest",
+                "33 Total payments",
+                "35a Amount to be refunded to you",
+                "37 Amount you owe",
+                "3a Qualified dividends",
+                "3b Ordinary dividends",
+                "9 Total income",
+                "Filing status",
+                "For the year",
+                "Your first name and middle initial / Last name",
+                "Your social security number"
+              ],
+              "shape_errors": []
+            }
+          ]
+        }
+      },
+      "original_12_comparison": {
+        "clean": {
+          "documents": 12,
+          "pages": 14,
+          "correct_fields": 236,
+          "expected_fields": 256,
+          "field_accuracy": 0.921875,
+          "populated_correct": 203,
+          "populated_fields": 222,
+          "blank_correct": 33,
+          "blank_fields": 34,
+          "exact_documents": 10,
+          "classifications_correct": 12,
+          "runtime_errors": 0,
+          "extraction_seconds_per_page": 4.243088622777058,
+          "release_gate_passed": null,
+          "failed_exact_documents": [
+            {
+              "fixture_id": "full_gate_1099_misc_clean",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            },
+            {
+              "fixture_id": "full_gate_1040_clean",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_name",
+                  "kind": "text",
+                  "expected": "Morgan Sample",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_ssn",
+                  "kind": "identifier",
+                  "expected": "XXX-XX-0000",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "filing_status",
+                  "kind": "text",
+                  "expected": "Single",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "wages",
+                  "kind": "money",
+                  "expected": "82456.78",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "tax_exempt_interest",
+                  "kind": "money",
+                  "expected": null,
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_interest",
+                  "kind": "money",
+                  "expected": "1245.67",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "qualified_dividends",
+                  "kind": "money",
+                  "expected": "1875.09",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "ordinary_dividends",
+                  "kind": "money",
+                  "expected": "2350.12",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjustments",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjusted_gross_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "standard_or_itemized_deduction",
+                  "kind": "money",
+                  "expected": "15750.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_income",
+                  "kind": "money",
+                  "expected": "70302.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_tax",
+                  "kind": "money",
+                  "expected": "10380.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "federal_withheld",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_payments",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "refund",
+                  "kind": "money",
+                  "expected": "854.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "amount_owed",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [
+                "10 Adjustments to income",
+                "11a Adjusted gross income",
+                "12e Standard deduction or itemized deductions",
+                "15 Taxable income",
+                "1a Total amount from Form(s) W-2, box 1",
+                "24 Total tax",
+                "25a Federal income tax withheld from W-2",
+                "2a Tax-exempt interest",
+                "2b Taxable interest",
+                "33 Total payments",
+                "35a Amount to be refunded to you",
+                "37 Amount you owe",
+                "3a Qualified dividends",
+                "3b Ordinary dividends",
+                "9 Total income",
+                "Filing status",
+                "For the year",
+                "Your first name and middle initial / Last name",
+                "Your social security number"
+              ],
+              "shape_errors": []
+            }
+          ]
+        },
+        "degraded_scan": {
+          "documents": 12,
+          "pages": 14,
+          "correct_fields": 235,
+          "expected_fields": 256,
+          "field_accuracy": 0.91796875,
+          "populated_correct": 202,
+          "populated_fields": 222,
+          "blank_correct": 33,
+          "blank_fields": 34,
+          "exact_documents": 9,
+          "classifications_correct": 12,
+          "runtime_errors": 0,
+          "extraction_seconds_per_page": 4.83688747882843,
+          "release_gate_passed": null,
+          "failed_exact_documents": [
+            {
+              "fixture_id": "full_gate_consolidated_1099_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            },
+            {
+              "fixture_id": "full_gate_1099_b_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            },
+            {
+              "fixture_id": "full_gate_1040_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_name",
+                  "kind": "text",
+                  "expected": "Morgan Sample",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_ssn",
+                  "kind": "identifier",
+                  "expected": "XXX-XX-0000",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "filing_status",
+                  "kind": "text",
+                  "expected": "Single",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "wages",
+                  "kind": "money",
+                  "expected": "82456.78",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "tax_exempt_interest",
+                  "kind": "money",
+                  "expected": null,
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_interest",
+                  "kind": "money",
+                  "expected": "1245.67",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "qualified_dividends",
+                  "kind": "money",
+                  "expected": "1875.09",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "ordinary_dividends",
+                  "kind": "money",
+                  "expected": "2350.12",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjustments",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjusted_gross_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "standard_or_itemized_deduction",
+                  "kind": "money",
+                  "expected": "15750.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_income",
+                  "kind": "money",
+                  "expected": "70302.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_tax",
+                  "kind": "money",
+                  "expected": "10380.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "federal_withheld",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_payments",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "refund",
+                  "kind": "money",
+                  "expected": "854.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "amount_owed",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [
+                "10 Adjustments to income",
+                "11a Adjusted gross income",
+                "12e Standard deduction or itemized deductions",
+                "15 Taxable income",
+                "1a Total amount from Form(s) W-2, box 1",
+                "24 Total tax",
+                "25a Federal income tax withheld from W-2",
+                "2a Tax-exempt interest",
+                "2b Taxable interest",
+                "33 Total payments",
+                "35a Amount to be refunded to you",
+                "37 Amount you owe",
+                "3a Qualified dividends",
+                "3b Ordinary dividends",
+                "9 Total income",
+                "Filing status",
+                "For the year",
+                "Your first name and middle initial / Last name",
+                "Your social security number"
+              ],
+              "shape_errors": []
+            }
+          ]
+        },
+        "both": {
+          "documents": 24,
+          "pages": 28,
+          "correct_fields": 471,
+          "expected_fields": 512,
+          "field_accuracy": 0.919921875,
+          "populated_correct": 405,
+          "populated_fields": 444,
+          "blank_correct": 66,
+          "blank_fields": 68,
+          "exact_documents": 19,
+          "classifications_correct": 24,
+          "runtime_errors": 0,
+          "extraction_seconds_per_page": 4.5399880508027435,
+          "release_gate_passed": null,
+          "failed_exact_documents": [
+            {
+              "fixture_id": "full_gate_consolidated_1099_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            },
+            {
+              "fixture_id": "full_gate_1099_b_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            },
+            {
+              "fixture_id": "full_gate_1099_misc_clean",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": 2025,
+                  "present": true,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [],
+              "shape_errors": []
+            },
+            {
+              "fixture_id": "full_gate_1040_clean",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_name",
+                  "kind": "text",
+                  "expected": "Morgan Sample",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_ssn",
+                  "kind": "identifier",
+                  "expected": "XXX-XX-0000",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "filing_status",
+                  "kind": "text",
+                  "expected": "Single",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "wages",
+                  "kind": "money",
+                  "expected": "82456.78",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "tax_exempt_interest",
+                  "kind": "money",
+                  "expected": null,
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_interest",
+                  "kind": "money",
+                  "expected": "1245.67",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "qualified_dividends",
+                  "kind": "money",
+                  "expected": "1875.09",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "ordinary_dividends",
+                  "kind": "money",
+                  "expected": "2350.12",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjustments",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjusted_gross_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "standard_or_itemized_deduction",
+                  "kind": "money",
+                  "expected": "15750.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_income",
+                  "kind": "money",
+                  "expected": "70302.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_tax",
+                  "kind": "money",
+                  "expected": "10380.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "federal_withheld",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_payments",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "refund",
+                  "kind": "money",
+                  "expected": "854.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "amount_owed",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [
+                "10 Adjustments to income",
+                "11a Adjusted gross income",
+                "12e Standard deduction or itemized deductions",
+                "15 Taxable income",
+                "1a Total amount from Form(s) W-2, box 1",
+                "24 Total tax",
+                "25a Federal income tax withheld from W-2",
+                "2a Tax-exempt interest",
+                "2b Taxable interest",
+                "33 Total payments",
+                "35a Amount to be refunded to you",
+                "37 Amount you owe",
+                "3a Qualified dividends",
+                "3b Ordinary dividends",
+                "9 Total income",
+                "Filing status",
+                "For the year",
+                "Your first name and middle initial / Last name",
+                "Your social security number"
+              ],
+              "shape_errors": []
+            },
+            {
+              "fixture_id": "full_gate_1040_degraded_scan",
+              "wrong_fields": [
+                {
+                  "path": "tax_year",
+                  "kind": "text",
+                  "expected": "2025",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_name",
+                  "kind": "text",
+                  "expected": "Morgan Sample",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxpayer_ssn",
+                  "kind": "identifier",
+                  "expected": "XXX-XX-0000",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "filing_status",
+                  "kind": "text",
+                  "expected": "Single",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "wages",
+                  "kind": "money",
+                  "expected": "82456.78",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "tax_exempt_interest",
+                  "kind": "money",
+                  "expected": null,
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_interest",
+                  "kind": "money",
+                  "expected": "1245.67",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "qualified_dividends",
+                  "kind": "money",
+                  "expected": "1875.09",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "ordinary_dividends",
+                  "kind": "money",
+                  "expected": "2350.12",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjustments",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "adjusted_gross_income",
+                  "kind": "money",
+                  "expected": "86052.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "standard_or_itemized_deduction",
+                  "kind": "money",
+                  "expected": "15750.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "taxable_income",
+                  "kind": "money",
+                  "expected": "70302.57",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_tax",
+                  "kind": "money",
+                  "expected": "10380.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "federal_withheld",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "total_payments",
+                  "kind": "money",
+                  "expected": "11234.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "refund",
+                  "kind": "money",
+                  "expected": "854.56",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                },
+                {
+                  "path": "amount_owed",
+                  "kind": "money",
+                  "expected": "0.00",
+                  "actual": null,
+                  "present": false,
+                  "correct": false
+                }
+              ],
+              "extra_fields": [
+                "10 Adjustments to income",
+                "11a Adjusted gross income",
+                "12e Standard deduction or itemized deductions",
+                "15 Taxable income",
+                "1a Total amount from Form(s) W-2, box 1",
+                "24 Total tax",
+                "25a Federal income tax withheld from W-2",
+                "2a Tax-exempt interest",
+                "2b Taxable interest",
+                "33 Total payments",
+                "35a Amount to be refunded to you",
+                "37 Amount you owe",
+                "3a Qualified dividends",
+                "3b Ordinary dividends",
+                "9 Total income",
+                "Filing status",
+                "For the year",
+                "Your first name and middle initial / Last name",
+                "Your social security number"
+              ],
+              "shape_errors": []
+            }
+          ]
+        }
+      }
+    }
+  },
+  "bindings": {
+    "haiku-subscription": {
+      "results.jsonl": "bdec32212f25ae7b439ff9bd954806f128a2159573ffde74c1db54fbbfba545b",
+      "scored-results.jsonl": "bdec32212f25ae7b439ff9bd954806f128a2159573ffde74c1db54fbbfba545b",
+      "scoring.json": "30abce537f394104b4c5bb17de8d2c3e40c4fc868532fd9f44746d81d1b884a7"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "runs": {
+    "haiku-subscription": {
+      "records_verified": 28,
+      "raw_sha256": "bdec32212f25ae7b439ff9bd954806f128a2159573ffde74c1db54fbbfba545b",
+      "scored_sha256": "bdec32212f25ae7b439ff9bd954806f128a2159573ffde74c1db54fbbfba545b",
+      "raw_page_outputs_reconstructed": true,
+      "all_scores_independently_recomputed": true
+    }
+  },
+  "gate_report_sha256": "65be08653bc84e48195c5a6493c24d4cc5dcadb61b6b1d3b69efdca4d5ff9fe7",
+  "release_views_sha256": "e91708a2dd624377eb38cf3b9195706fe37d3dcdf2767a99f7245f8d84e21d1b",
+  "verifier_sha256": "150cab17569f2616344c0d01d2531abeabd3909654a84497d781f70247a26312",
+  "manifest_bound_rows": true
+}

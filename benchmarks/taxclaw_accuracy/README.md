@@ -159,3 +159,7 @@ Haiku subscription CLI matched 224/224 fields and 8/8 documents exactly (5.21 ex
 **Release recommendation:** the benchmark execution is complete. These results support positioning TaxClaw as assisted document extraction requiring a person to verify every extracted value; they do not support unattended filing, guaranteed accuracy, or automatic acceptance based on a model confidence score. Pip owns the version/release decision. Haiku's production API path and Clairic were not verified by this suite. A small synthetic grid corpus cannot establish representative real-document accuracy.
 
 Two reporting defects found during the run are fixed for future executions: summaries now identify actual variants, and regrading preserves a transport error when no model response arrived instead of calling it a model-identity mismatch. Historical artifacts remain immutable and explain their original labels; the numeric scores are unaffected.
+
+## Full current-main gate (533760d)
+
+[Full clean/degraded current-main evidence](results/2026-10-20-main-533760d/RESULTS.md) includes all 13 README-supported information-form types plus best-effort 1040. The clarified release gate covers the supported 13 only; 1040 is reported separately, with an original-12 comparison retained. The strict scorer is unchanged. Haiku subscription inference is complete; local-model inference is pending in that evidence directory.
