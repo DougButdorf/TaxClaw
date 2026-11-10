@@ -16,10 +16,11 @@ import pymupdf
 from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
+from starlette.concurrency import run_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from . import __version__
-from .ai import ensure_backend_ready
+from .ai import ensure_backend_ready, strip_model_reply
 from .classify import classify_document
 from .config import CONFIG_PATH, load_config, save_config
 from .db import db, init_db
@@ -35,12 +36,15 @@ from .store import (
     get_document,
     get_document_by_hash,
     ingest_file,
+    is_retryable,
     list_documents,
     mark_error,
     mark_needs_review,
     mark_processed,
     page_count_for_pdf,
+    reset_document_for_retry,
     set_display_name_if_empty,
+    validate_input_file,
     store_1099da_transactions,
     store_extracted_fields,
     store_raw_extraction,
@@ -675,6 +679,7 @@ async def upload(
         # Internal UUID-based path for disk writes
         tmp_path = incoming / f"{uuid.uuid4().hex}{claimed_ext}"
         tmp_path.write_bytes(data)
+        del data
     except HTTPException as e:
         return _render(
             request,
@@ -700,13 +705,15 @@ async def upload(
             },
         )
 
-    try:
-        dest_path, file_hash, original_filename, mime_type = ingest_file(str(tmp_path), cfg, original_name=safe_name)
-    except Exception as e:
-        try:
-            tmp_path.unlink(missing_ok=True)
-        except Exception:
-            pass
+    # Classification and extraction take minutes: run them in the threadpool so the rest of the
+    # web UI keeps answering while a document is processed.
+    return await run_in_threadpool(_ingest_upload, request, tmp_path, safe_name, filer, year)
+
+
+def _ingest_upload(request: Request, tmp_path: Path, safe_name: str, filer: str | None, year: int | None) -> Response:
+    """Validate, store and extract one uploaded file (sync; called from the threadpool)."""
+
+    def _error(msg: str) -> Response:
         return _render(
             request,
             "upload.html",
@@ -715,9 +722,16 @@ async def upload(
                 "model_backend": "cloud" if cfg.is_cloud else "local",
                 "cloud_model": cfg.selected_model_label(),
                 "local_model": cfg.local_model,
-                "error": f"Unsupported or unsafe upload: {str(e)}",
+                "error": msg,
             },
         )
+
+    try:
+        # Same checks as the CLI/MCP: readable, not password-protected, within max_pages.
+        validate_input_file(str(tmp_path), cfg, original_name=safe_name)
+        dest_path, file_hash, original_filename, mime_type = ingest_file(str(tmp_path), cfg, original_name=safe_name)
+    except Exception as e:
+        return _error(f"Unsupported or unsafe upload: {str(e)}")
     finally:
         try:
             tmp_path.unlink(missing_ok=True)
@@ -725,7 +739,7 @@ async def upload(
             pass
 
     existing = get_document_by_hash(file_hash)
-    if existing:
+    if existing and not is_retryable(existing):
         return RedirectResponse(url=f"/doc/{existing['id']}", status_code=303)
 
     page_count = page_count_for_pdf(dest_path) if dest_path.lower().endswith(".pdf") else 1
@@ -738,20 +752,35 @@ async def upload(
         doc_type = cls.get("doc_type") or "unknown"
         classification_confidence = float(cls.get("confidence") or 0.0)
     except Exception as e:
-        classify_note = f"classification failed: {str(e)}"
+        classify_note = f"classification failed: {strip_model_reply(str(e))}"
 
-    doc_id = create_document_record(
-        cfg=cfg,
-        file_path=dest_path,
-        file_hash=file_hash,
-        original_filename=original_filename,
-        mime_type=mime_type,
-        filer=filer,
-        tax_year=year,
-        doc_type=doc_type,
-        page_count=page_count,
-        classification_confidence=classification_confidence,
-    )
+    if existing:
+        # An earlier upload of this file never finished (server stopped mid-extraction, or it failed):
+        # re-run it on the same document instead of showing the dead record.
+        doc_id = existing["id"]
+        reset_document_for_retry(
+            cfg=cfg,
+            doc_id=doc_id,
+            file_path=dest_path,
+            doc_type=doc_type,
+            page_count=page_count,
+            classification_confidence=classification_confidence,
+            filer=filer,
+            tax_year=year,
+        )
+    else:
+        doc_id = create_document_record(
+            cfg=cfg,
+            file_path=dest_path,
+            file_hash=file_hash,
+            original_filename=original_filename,
+            mime_type=mime_type,
+            filer=filer,
+            tax_year=year,
+            doc_type=doc_type,
+            page_count=page_count,
+            classification_confidence=classification_confidence,
+        )
 
     if classify_note:
         update_document_metadata(doc_id=doc_id, filer=None, tax_year=None, doc_type=None, notes=classify_note)
@@ -845,8 +874,9 @@ async def upload(
             notes="; ".join(review_notes) or None,
         )
     except Exception as e:
-        # Hard failure (including JSON parse errors) → mark error, don't crash.
-        mark_error(doc_id=doc_id, error=str(e))
+        # Hard failure (including JSON parse errors) → mark error, don't crash. The stored note
+        # never carries the model's reply text (it can echo the page).
+        mark_error(doc_id=doc_id, error=strip_model_reply(str(e)))
 
     return RedirectResponse(url=f"/doc/{doc_id}", status_code=303)
 
@@ -935,7 +965,7 @@ def doc_delete(request: Request, doc_id: str, csrf_token: str = Form(...)):
     except Exception:
         return Response("Forbidden", status_code=403)
 
-    delete_document(doc_id)
+    delete_document(doc_id, cfg)
     return RedirectResponse(url="/documents", status_code=303)
 
 

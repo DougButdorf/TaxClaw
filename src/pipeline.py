@@ -3,13 +3,17 @@
 validate -> backend ready check -> copy into the data dir -> classify ->
 extract -> store fields (with per-field confidence when the backend has it)
 -> review flags. Returns a JSON-serializable summary (never file bytes).
+
+Re-ingesting a file whose earlier run never finished (killed mid-extraction,
+or extraction failed) re-runs it on the same document id (``retried=true``);
+a finished document is returned as ``duplicate=true`` unless ``force``.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from .ai import ensure_backend_ready
+from .ai import ensure_backend_ready, strip_model_reply
 from .classify import classify_document
 from .config import Config
 from .db import init_db
@@ -22,9 +26,11 @@ from .store import (
     get_document,
     get_document_by_hash,
     ingest_file,
+    is_retryable,
     mark_needs_review,
     mark_processed,
     page_count_for_pdf,
+    reset_document_for_retry,
     store_1099da_transactions,
     store_extracted_fields,
     store_raw_extraction,
@@ -60,8 +66,19 @@ def document_summary(doc_id: str) -> dict[str, Any]:
     }
 
 
-def ingest_path(path: str, cfg: Config, *, filer: str | None = None, tax_year: int | None = None) -> dict[str, Any]:
-    """Ingest one file. Raises IngestError; on extraction failure the document is kept and flagged."""
+def ingest_path(
+    path: str,
+    cfg: Config,
+    *,
+    filer: str | None = None,
+    tax_year: int | None = None,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Ingest one file. Raises IngestError; on extraction failure the document is kept and flagged.
+
+    ``force`` re-runs classification and extraction for a file that is already stored and finished,
+    replacing its previous results (including field corrections made in the web UI).
+    """
 
     init_db()
     try:
@@ -76,12 +93,19 @@ def ingest_path(path: str, cfg: Config, *, filer: str | None = None, tax_year: i
     except Exception as e:  # noqa: BLE001
         raise IngestError(str(e), stage="backend", exit_code=3) from None
 
-    dest_path, file_hash, original_filename, mime_type = ingest_file(path, cfg)
+    try:
+        dest_path, file_hash, original_filename, mime_type = ingest_file(path, cfg)
+    except (FileNotFoundError, ValueError) as e:  # e.g. storage cap exceeded
+        raise IngestError(str(e), stage="validate", exit_code=2) from None
     existing = get_document_by_hash(file_hash)
+    retried = False
     if existing:
-        out = document_summary(existing["id"])
-        out["duplicate"] = True
-        return out
+        if not (force or is_retryable(existing)):
+            out = document_summary(existing["id"])
+            out["duplicate"] = True
+            out["retried"] = False
+            return out
+        retried = True
 
     page_count = page_count_for_pdf(dest_path) if dest_path.lower().endswith(".pdf") else 1
 
@@ -92,18 +116,31 @@ def ingest_path(path: str, cfg: Config, *, filer: str | None = None, tax_year: i
     doc_type = cls.get("doc_type") or "unknown"
     classification_confidence = float(cls.get("confidence") or 0.0)
 
-    doc_id = create_document_record(
-        cfg=cfg,
-        file_path=dest_path,
-        file_hash=file_hash,
-        original_filename=original_filename,
-        mime_type=mime_type,
-        filer=filer,
-        tax_year=tax_year,
-        doc_type=doc_type,
-        page_count=page_count,
-        classification_confidence=classification_confidence,
-    )
+    if existing:
+        doc_id = existing["id"]
+        reset_document_for_retry(
+            cfg=cfg,
+            doc_id=doc_id,
+            file_path=dest_path,
+            doc_type=doc_type,
+            page_count=page_count,
+            classification_confidence=classification_confidence,
+            filer=filer,
+            tax_year=tax_year,
+        )
+    else:
+        doc_id = create_document_record(
+            cfg=cfg,
+            file_path=dest_path,
+            file_hash=file_hash,
+            original_filename=original_filename,
+            mime_type=mime_type,
+            filer=filer,
+            tax_year=tax_year,
+            doc_type=doc_type,
+            page_count=page_count,
+            classification_confidence=classification_confidence,
+        )
 
     try:
         result = extract_document_with_meta(dest_path, doc_type, cfg)
@@ -129,11 +166,13 @@ def ingest_path(path: str, cfg: Config, *, filer: str | None = None, tax_year: i
         if nr and notes:
             mark_needs_review(doc_id=doc_id, notes="; ".join(notes))
     except Exception as e:  # noqa: BLE001
-        mark_needs_review(doc_id=doc_id, notes=str(e))
+        # Stored notes never carry the model's reply text (it can echo the page); stderr does.
+        mark_needs_review(doc_id=doc_id, notes=f"extraction failed: {strip_model_reply(str(e))}; ingest the file again to retry")
         raise IngestError(f"extraction failed for {doc_id} ({doc_type}): {e}", stage="extract", exit_code=1, document_id=doc_id) from None
 
     out = document_summary(doc_id)
     out["duplicate"] = False
+    out["retried"] = retried
     out["extraction_method"] = result.method
     out["missing_required"] = missing
     out["low_confidence_fields"] = list(result.review_fields)

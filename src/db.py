@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
 
-from .config import load_config
+from .config import load_config, make_private_dir
 
 
 SCHEMA = """
@@ -183,8 +184,14 @@ def _db_path() -> Path:
 
 def connect() -> sqlite3.Connection:
     path = _db_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
+    make_private_dir(path.parent)
     con = sqlite3.connect(str(path))
+    # Owner-only: the database holds SSNs/TINs. SQLite gives the -wal/-shm files the same mode.
+    try:
+        if path.stat().st_mode & 0o077:
+            os.chmod(path, 0o600)
+    except OSError:
+        pass
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA journal_mode=WAL;")
     con.execute("PRAGMA foreign_keys=ON;")
