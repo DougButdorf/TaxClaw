@@ -35,6 +35,8 @@ When you use TaxClaw in **Local Mode** (powered by Ollama running on your device
 **AI processing in Local Mode:**  
 All AI extraction is performed by Ollama, running entirely on your local machine. No document data leaves your device during extraction. (If you point `OLLAMA_HOST` at another computer, page images go to that Ollama server instead; the default is `127.0.0.1:11434`.)
 
+**Using TaxClaw through an AI agent:** extracted values that TaxClaw returns to an agent (through its MCP server or skill commands) go wherever that agent's model runs, which may be a cloud provider even in Local Mode; TaxClaw's MCP tools mask SSNs, TINs, EINs and account numbers to the last four characters by default.
+
 **Export files:** CSV, JSON, Form 8949 CSV and TXF exports contain the same sensitive data as your documents. Save them somewhere private and delete them when you no longer need them; files in synced folders (iCloud, Dropbox, Google Drive) leave your machine.
 
 **No accounts required:**  

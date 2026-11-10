@@ -16,6 +16,14 @@ TaxClaw turns messy tax PDFs into clean, reviewable structured data — **locall
 - 🧾 **Tax-form aware**: W-2, 1099s (incl. **1099-DA**), K-1, consolidated brokerage statements; Form 1040 best-effort
 - 📤 **Export-ready**: wide/long CSV and JSON
 
+## 🆕 What's new in 1.1.0
+
+- **Interrupted or failed ingests are retried**: ingest the same file again and the unfinished document is re-extracted on the same id. `taxclaw ingest --force` (MCP `force: true`) re-runs a finished one, and `taxclaw delete ID` / the `delete_document` MCP tool removes a document.
+- **Bounded ingest time**: PDFs over `max_pages` (default 40) are refused up front with the page count and a time estimate; corrupt and password-protected PDFs get a clear error instead of a traceback.
+- **Identifiers masked for agents**: MCP results mask SSNs, TINs, EINs and account numbers to the last four characters by default (`redact_identifiers`).
+- **TaxClaw Cloud is live** (Public beta): a hosted remote MCP server at `https://mcp.taxclaw.net/mcp`, paid per page by your agent over x402. See below.
+- Fixes: official IRS 1099-R/G/K/MISC/DA layouts no longer classify as 1099-NEC; the web UI stays responsive during an upload; data dir and database are owner-only. Full notes: [CHANGELOG.md](CHANGELOG.md).
+
 ## 🆕 What's new in 1.0.0
 
 TaxClaw 1.0 is the first release built for agents as well as people. Full notes: [CHANGELOG.md](CHANGELOG.md) and the [v1.0.0 release](https://github.com/DougButdorf/TaxClaw/releases/tag/v1.0.0).
@@ -83,7 +91,11 @@ It reports three explicit paths, and you choose:
    gets `model_backend`, the model, `privacy_acknowledged: true`,
    `privacy_acknowledged_at` (UTC time) and `cloud_provider`. Go back any time, with no
    consent needed and the consent record cleared: `taxclaw use-local [--model gemma3:4b]`.
-3. **TaxClaw Cloud (hosted).** Coming soon. Nothing to set up yet.
+3. **TaxClaw Cloud (hosted, Public beta).** A remote MCP server at
+   `https://mcp.taxclaw.net/mcp` that your agent connects to directly: 10 free pages per
+   wallet, then $0.08 per page ($0.05 after page 50), paid by your agent in USDC on Base
+   via x402. Documents leave this machine (they go to TaxClaw Cloud and its model
+   providers). See "TaxClaw Cloud" below.
 
 TaxClaw never silently switches from local to cloud, and no MCP tool can: only you
 switch, with the command above or the Settings page (which needs the privacy
@@ -187,15 +199,29 @@ stay on your machine unless you chose a cloud backend in TaxClaw.
 
 | Tool | What it does |
 |---|---|
-| `ingest_document(path, filer?, tax_year?)` | Classify + extract one PDF/image at an absolute path |
-| `list_documents(filer?, tax_year?, doc_type?, needs_review?)` | List stored documents |
-| `get_document(document_id)` | Fields with per-field confidence (when the backend provides it) |
-| `export_documents(document_id? \| all, format)` | `json`, `wide_csv` or `long_csv` content as a string |
+| `ingest_document(path, filer?, tax_year?, force?)` | Classify + extract one PDF/image at an absolute path |
+| `list_documents(filer?, tax_year?, doc_type?, needs_review?, redact_identifiers?)` | List stored documents |
+| `get_document(document_id, redact_identifiers?)` | Fields with per-field confidence (when the backend provides it) |
+| `export_documents(document_id? \| all, format, redact_identifiers?)` | `json`, `wide_csv`, `long_csv`, `8949_csv` or `txf` content as a string |
+| `delete_document(document_id)` | Remove a document, its extracted data and TaxClaw's stored copy (your original file is kept) |
 | `list_models()` | The three model tiers above |
 | `setup_status()` | The `taxclaw doctor` report (read-only): is a backend ready, the next step, the three paths |
 
 If `ingest_document` finds the backend not ready, its error carries the doctor's next step.
 No tool can switch to cloud or record cloud consent; that is the human's step.
+
+**Time and retries.** Extraction is one model call per page, so a call takes per-page time
+times pages: about 15-100 s per page on a local model (a 10-page PDF is about 2-17 min).
+PDFs longer than `max_pages` (default 40, in `~/.config/taxclaw/config.yaml`; 0 = no limit)
+are refused as an invalid file with the page count and that estimate. Set your client's tool
+timeout to cover it. If a call is cut off or extraction fails, ingest the same file again: the
+unfinished document is re-extracted on the same id (`retried: true`). `force: true` re-runs a
+finished one; `delete_document` (or `taxclaw delete ID`) removes it.
+
+**Identifiers.** Whatever a tool returns goes wherever your agent's model runs. So
+`get_document`, `list_documents` and `export_documents` mask SSNs, TINs, EINs and account
+numbers to their last four characters by default; pass `redact_identifiers: false` only when
+the user needs the full value. CLI exports and the web UI are not masked.
 
 The server only reads the exact file path it is given (an existing regular PDF,
 PNG, JPEG, TIFF or WebP within the upload size limit), never returns original
@@ -279,19 +305,58 @@ Claude Desktop, Cursor and Gemini CLI snippets were checked against each
 product's current documentation but not run on this machine; the Claude Code and
 Codex commands were run.
 
-## ☁️ TaxClaw Cloud: hosted MCP for personal agents (coming soon)
+## ☁️ TaxClaw Cloud: hosted MCP for personal agents
 
-The local MCP server above is free and stays free. **TaxClaw Cloud** is a hosted version for people whose agents don't run on a machine with a local model, or who don't want to set one up.
+**Public beta.** TaxClaw Cloud is a hosted remote MCP server for agents that don't run on a
+machine with a local model. It is a service of Outbranch Network LLC. The local skill above
+stays free and open source; nothing in it sends documents to TaxClaw Cloud.
 
-What's planned:
+- **Endpoint:** `https://mcp.taxclaw.net/mcp` (Streamable HTTP). No accounts, no sign-up, no
+  OAuth, no API keys and no card payments: your agent pays per page over x402.
+- **Pricing:** 10 free pages per wallet (lifetime, claimed with a wallet signature via
+  `get_free_claim_message` then `claim_free_pages`), then $0.08 per page for pages 11-50 and
+  $0.05 per page from page 51. Unclaimed free pages bill at $0.08. Paid in USDC on Base
+  mainnet, charged only when an extraction succeeds; `quote` is free. Prices exclude any tax;
+  no sales tax is computed or collected today. Each paid call returns a signed receipt;
+  receipts are Merkle-batched and anchored daily on Base via EAS (`verify_receipt`).
+- **Tools:** `quote`, `get_free_claim_message`, `claim_free_pages`, `extract_document`,
+  `get_job`, `get_wallet_status`, `verify_receipt`, and `build_tax_packet` (not connected yet;
+  charges nothing).
+- **Forms:** W-2, 1099-DA, 1099-NEC, 1099-INT, 1099-DIV, 1099-R, 1099-B, 1099-MISC, 1099-OID,
+  1099-G, 1099-K, Schedule K-1 and consolidated brokerage 1099s; Form 1040 best-effort. Input:
+  PDF, JPEG or PNG.
+- **Paying:** any Base wallet (EOA or smart wallet) holding USDC, with an x402 client such as
+  `@x402/fetch`, `@x402/mcp` or Coinbase AgentKit. Flow: `quote` -> `get_free_claim_message` ->
+  `claim_free_pages` (first 10 pages free) -> `extract_document` (the server answers with a 402
+  challenge; the agent signs a USDC authorization and retries with `PAYMENT-SIGNATURE`) ->
+  `verify_receipt`. Refunds are discretionary, sent to the paying wallet: lando@outbranch.net.
 
-- **A remote MCP server** your personal agent connects to over HTTPS, with sign-in (OAuth) or an API key. No install, no Ollama, no GPU.
-- **The same TaxClaw 1.0 extraction core** and output formats: structured fields with confidence, review flags, Form 8949 CSV and TXF, plus a multi-document tax packet for your accountant.
-- **Pay per page**, with a free starter allowance. Payment by card, or directly by your agent over x402. Pricing will be published before launch.
-- **Explicit data handling**: every response says which AI provider saw what. Documents are deleted after processing, and we keep only billing metadata. The full provider data map will be in the privacy policy before launch.
-- **Directory listings** for agent platforms once the service is live.
+**Data handling.** Unlike local mode, your documents leave your machine. Document bytes are
+processed in memory and never written to disk or the database. Page images (not the text
+layer) go to the model providers OpenAI and Anthropic through their APIs. Job results are
+readable for at most 1 hour after completion. Kept for accounting: usage records (document
+SHA-256, page counts, prices, wallet address, timestamps), payment transaction hashes and
+signed receipts; receipt attestations hold no personal data and are anchored on the public
+Base chain, which is permanent. Full details:
+[Terms](https://mcp.taxclaw.net/terms) and [Privacy](https://mcp.taxclaw.net/privacy).
 
-It isn't available yet. `taxclaw doctor` will show the hosted option when it is. Questions: lando@outbranch.net.
+**Connect:**
+- **Claude Desktop / claude.ai:** Settings -> Connectors -> Add custom connector -> URL
+  `https://mcp.taxclaw.net/mcp`, no auth. claude.ai cannot pass local file bytes to a remote
+  server: give a `file_url` the server can fetch (public HTTPS), or use the local skill.
+- **Claude Code:** `claude mcp add --transport http taxclaw https://mcp.taxclaw.net/mcp`
+- **ChatGPT:** Settings -> Connectors -> Developer mode -> Add MCP server, same URL, no auth
+  (custom connector; not in the apps directory).
+- **Cursor** (`~/.cursor/mcp.json`):
+  ```json
+  {"mcpServers": {"taxclaw-cloud": {"url": "https://mcp.taxclaw.net/mcp"}}}
+  ```
+- **OpenClaw:** add an MCP server with the same URL, or install the local skill.
+
+Machine-readable details: `https://mcp.taxclaw.net/llms.txt` and
+`https://mcp.taxclaw.net/.well-known/mcp-server-card`. `taxclaw doctor` and `taxclaw models`
+show the URL and pricing. TaxClaw Cloud extracts data; it does not prepare or file returns
+and is not tax advice. Questions: lando@outbranch.net.
 
 ## 🤖 Supported Forms
 
@@ -391,9 +456,9 @@ Sources:
 
 By default:
 - Config: `~/.config/taxclaw/config.yaml`
-- Data dir: `~/.local/share/taxclaw/`
-  - SQLite DB: `tax.db`
-  - Stored uploads: `uploads/`
+- Data dir: `~/.local/share/taxclaw/` (owner-only, mode 0700)
+  - SQLite DB: `tax.db` (mode 0600)
+  - Stored copies of ingested files: `files/` (removed by `taxclaw delete ID`)
 
 Exports (CSV, JSON, 8949, TXF) hold the same sensitive data. Save them somewhere private, not a synced folder, and delete them when you're done.
 

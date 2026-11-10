@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.1.0 - 2026-11-11
+
+Fixes for documents that could get stuck, long statements that outlast an agent's tool timeout, and identifiers reaching an agent's model. TaxClaw Cloud (hosted) is live. Not tax preparation and not tax advice.
+
+### Upgrade notes
+- Pull and re-run `bash setup.sh` (no dependency changes). Existing databases need no migration.
+- Documents stuck in `processing`, or flagged after a failed extraction, can now be fixed by ingesting the same file again.
+- New config key `max_pages` (default 40; 0 = no limit). Longer PDFs are refused with exit 2 / "invalid file" and a time estimate; raise it if your MCP client's tool timeout allows.
+- MCP `get_document`, `list_documents` and `export_documents` now mask SSNs, TINs, EINs and account numbers to the last four characters by default. Pass `redact_identifiers: false` for full values. CLI exports and the web UI are unchanged.
+- The data dir, `files/` and `tax.db` are now owner-only (0700 / 0600); existing ones are tightened the next time TaxClaw runs.
+- `bash start.sh` and `taxclaw serve` no longer run uvicorn with `--reload`.
+
+### Fixes
+- An interrupted ingest (killed mid-extraction) or a failed one (exit 1) no longer blocks the file forever: re-ingesting it re-runs classification and extraction on the same document id and returns `duplicate: false, retried: true`. Same for the web UI upload.
+- Corrupt PDFs (valid header, damaged body) are refused with exit 2 "not a readable PDF" before anything is copied, instead of a traceback and an orphan file. Password-protected PDFs get "password-protected PDF: remove the password first" (exit 2).
+- Text classification: OMB numbers outweigh form-name mentions, a "Form 1040" mention counts only when nothing else matches, and a remaining tie goes to the vision classifier instead of list order. Official IRS 1099-R, 1099-G, 1099-K, 1099-MISC and 1099-DA layouts no longer classify as 1099-NEC. Added the OMB numbers printed on the 2025 Form 1099-DA (1545-2330), W-2 (1545-0029) and 1099-OID (1545-0117).
+- The web UI upload runs extraction in a worker thread, so the dashboard and other pages keep answering during a long upload.
+- A model's reply text is no longer stored in a document's notes when extraction fails (it could echo page content); it still appears on stderr.
+- Docs: per-page time is stated the same way everywhere (15-100 s per page on a local model, times the page count); README lists the `8949_csv` and `txf` MCP export formats.
+
+### New
+- `taxclaw ingest --force` and `ingest_document(force: true)`: re-run extraction for a finished document.
+- `taxclaw delete ID` and the `delete_document` MCP tool: remove a document, its extracted data and TaxClaw's stored copy (unknown id: exit 2 / tool error).
+- `max_pages` config key, checked before anything is stored; the `ingest_document` description and SKILL.md give the total-time estimate.
+- `redact_identifiers` (default true) on the `get_document`, `list_documents` and `export_documents` MCP tools.
+- TaxClaw Cloud (hosted, Public beta) is live at `https://mcp.taxclaw.net/mcp`: 10 free pages per wallet, then $0.08 per page ($0.05 after page 50), paid by your agent in USDC on Base via x402. `taxclaw doctor`, `taxclaw models` and Settings show the URL and pricing; README has connect instructions.
+
 ## 1.0.0 - 2026-10-21
 
 TaxClaw turns tax documents into structured data for accountants and tax software. It is local-first, and 1.0 is the first release built for agents as well as people. It is not tax preparation and not tax advice.
@@ -15,7 +42,7 @@ TaxClaw turns tax documents into structured data for accountants and tax softwar
 - **Fixes:** the CLI works from any directory and through symlinks; Ollama errors are readable ("Ollama is not reachable at …", model missing, model has no vision) instead of raw tracebacks; replies from models like glm-ocr that add trailing text now parse; W-2 and K-1 required-field review rules actually run; `export --all --format json` includes extracted fields; the upload page shows server errors; the config template ships under a name ClawHub publishes (`config.example.yaml`), so `setup.sh` can create a config from a ClawHub install.
 - **Agent Skills portability:** SKILL.md is a short, agent-first procedure that follows the Agent Skills spec and uses `{baseDir}` instead of hardcoded OpenClaw paths, and the README gives install paths for OpenClaw, Claude Code, Codex, Gemini CLI and Hermes. `ingest`, `list` and `models` take `--json`, and `ingest` has documented exit codes. Install with `openclaw skills install @dougbutdorf/taxclaw`.
 - **Model tiers and backends:** `taxclaw models` (and the Settings page) shows three tiers: (1) local Ollama vision models with a recommendation for this machine's RAM, (2) cloud providers whose API keys are already set (presence only, never values), (3) Cloudflare Workers AI Clairic with setup steps. Backends: `local` (Ollama, default), `anthropic`, `openai_compat` (OpenAI, OpenRouter, Google Gemini or any OpenAI-compatible URL) and `cloudflare_clairic` (typed fields with per-field confidence). New schemas for 1099-R, 1099-G and 1099-K; K-1 coded boxes use canonical keys like `13W`.
-- **MCP server:** `taxclaw mcp` runs a local stdio MCP server with `ingest_document`, `list_documents`, `get_document`, `export_documents` and `list_models`. The README has configs for Claude Code, Claude Desktop, Codex, Cursor and Gemini CLI.
+- **MCP server:** `taxclaw mcp` runs a local stdio MCP server with `ingest_document`, `list_documents`, `get_document`, `export_documents`, `list_models` and `setup_status` (the doctor report). The README has configs for Claude Code, Claude Desktop, Codex, Cursor and Gemini CLI.
 - **Exports for accountants and tax software:** `taxclaw export --format 8949` writes a Form 8949 CSV with one row per sale from 1099-B, consolidated 1099 and 1099-DA documents, with the 2025 check-box category, adjustment codes (W, D) and `needs_review` flags. Missing basis or holding periods are flagged, never guessed. `--format txf` writes TXF v042 for TurboTax Desktop-style import. Both are on the dashboard, document pages and the MCP `export_documents` tool. 1099-B statements get a per-sale extraction pass.
 - **Privacy and security:**
   - Every cloud backend refuses to send anything until the privacy warning is acknowledged, in the web UI, CLI and MCP alike.
