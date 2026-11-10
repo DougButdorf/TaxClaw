@@ -20,9 +20,11 @@ class Classification:
 TEXT_SIGNALS: list[tuple[str, str]] = [
     ("1099-DA", "1099-DA"),
     ("OMB No. 1545-2298", "1099-DA"),
+    ("OMB No. 1545-2330", "1099-DA"),  # printed on the 2025 Form 1099-DA
     ("W-2 Wage", "W-2"),
     ("Wage and Tax Statement", "W-2"),
     ("OMB No. 1545-0008", "W-2"),
+    ("OMB No. 1545-0029", "W-2"),  # printed on the 2025 Form W-2
     ("1099-NEC", "1099-NEC"),
     ("OMB No. 1545-0116", "1099-NEC"),
     ("1099-INT", "1099-INT"),
@@ -36,6 +38,7 @@ TEXT_SIGNALS: list[tuple[str, str]] = [
     ("1099-MISC", "1099-MISC"),
     ("OMB No. 1545-0115", "1099-MISC"),
     ("1099-OID", "1099-OID"),
+    ("OMB No. 1545-0117", "1099-OID"),
     ("1099-G", "1099-G"),
     ("OMB No. 1545-0120", "1099-G"),
     ("1099-K", "1099-K"),
@@ -43,6 +46,10 @@ TEXT_SIGNALS: list[tuple[str, str]] = [
     ("Schedule K-1", "K-1"),
     ("Form 1040", "1040"),
 ]
+
+# An OMB number is printed only on its own form, while form names turn up on other forms'
+# pages (every IRS 1099 PDF's first page mentions Form 1099-NEC), so OMB hits count more.
+OMB_HIT_WEIGHT = 3
 
 # Phrases that explicitly indicate a multi-form consolidated brokerage statement
 CONSOLIDATED_SIGNALS: list[str] = [
@@ -96,6 +103,42 @@ CLASSIFY_SCHEMA: dict[str, Any] = {
 }
 
 
+def classify_text(text: str) -> dict[str, Any] | None:
+    """Classify from the text layer, or None when the text has no signal or ends in a tie."""
+
+    text_lower = text.lower()
+
+    # Count occurrences of each form type signal (frequency = document focus); OMB numbers weigh more.
+    hit_counts: dict[str, int] = {}
+    scores: dict[str, int] = {}
+    for needle, dtype in TEXT_SIGNALS:
+        count = text_lower.count(needle.lower())
+        if count:
+            hit_counts[dtype] = hit_counts.get(dtype, 0) + count
+            weight = OMB_HIT_WEIGHT if needle.startswith("OMB No.") else 1
+            scores[dtype] = scores.get(dtype, 0) + count * weight
+
+    # "Form 1040" also appears in other forms' recipient instructions ("report on Form 1040"),
+    # so it only counts when nothing else matched.
+    if len(scores) > 1:
+        scores.pop("1040", None)
+        hit_counts.pop("1040", None)
+    if not scores:
+        return None
+
+    uniq_1099 = [t for t in hit_counts if t.startswith("1099-")]
+    # Only consolidated if 3+ distinct 1099 types each with meaningful frequency (2+ hits)
+    # A plain 1099-DIV may mention INT/B once in blank sections — that's not consolidated
+    if len(uniq_1099) >= 3 and all(hit_counts[t] >= 2 for t in uniq_1099):
+        return {"doc_type": "consolidated-1099", "confidence": 0.8, "method": "text"}
+
+    top = max(scores.values())
+    leaders = [t for t, s in scores.items() if s == top]
+    if len(leaders) > 1:
+        return None  # never break a tie by list order; let the vision classifier look at the page
+    return {"doc_type": leaders[0], "confidence": 0.9, "method": "text"}
+
+
 def classify_document(file_path: str, cfg: Config) -> dict[str, Any]:
     doc = pymupdf.open(file_path)
     try:
@@ -111,24 +154,11 @@ def classify_document(file_path: str, cfg: Config) -> dict[str, Any]:
         if is_consolidated:
             return {"doc_type": "consolidated-1099", "confidence": 0.9, "method": "text"}
 
-        # Count occurrences of each form type signal (frequency = document focus)
-        hit_counts: dict[str, int] = {}
-        for needle, dtype in TEXT_SIGNALS:
-            if needle.lower() in text_lower:
-                count = text_lower.count(needle.lower())
-                hit_counts[dtype] = hit_counts.get(dtype, 0) + count
+        text_result = classify_text(text)
+        if text_result is not None:
+            return text_result
 
-        if hit_counts:
-            uniq_1099 = [t for t in hit_counts if t.startswith("1099-")]
-            # Only consolidated if 3+ distinct 1099 types each with meaningful frequency (2+ hits)
-            # A plain 1099-DIV may mention INT/B once in blank sections — that's not consolidated
-            if len(uniq_1099) >= 3 and all(hit_counts[t] >= 2 for t in uniq_1099):
-                return {"doc_type": "consolidated-1099", "confidence": 0.8, "method": "text"}
-            # Return the most-frequently-hit type
-            best = max(hit_counts, key=lambda t: hit_counts[t])
-            return {"doc_type": best, "confidence": 0.9, "method": "text"}
-
-        # Vision fallback
+        # Vision fallback (no text signal, or a tie the text cannot break)
         page = doc[0]
         mat = pymupdf.Matrix(2.0, 2.0)
         pix = page.get_pixmap(matrix=mat)
