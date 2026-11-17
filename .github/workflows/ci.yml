@@ -3,16 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
-    # Only non-contract prose. Release metadata, legal pages, and README stay covered.
-    paths-ignore:
-      - "REVIEW_NOTES.md"
-      - "benchmarks/taxclaw_accuracy/README.md"
-      - "benchmarks/taxclaw_accuracy/results/**/*.md"
   pull_request:
-    paths-ignore:
-      - "REVIEW_NOTES.md"
-      - "benchmarks/taxclaw_accuracy/README.md"
-      - "benchmarks/taxclaw_accuracy/results/**/*.md"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
